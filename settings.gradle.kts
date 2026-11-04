@@ -1,7 +1,7 @@
 rootProject.name = "goshop"
 
 include(
-    "products-service",
+    "product-service",
     "localization-service",
     "search-service",
     "store-service",

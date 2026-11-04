@@ -1,0 +1,12 @@
+[
+  {"name": "Flagship Smartphone",  "category_slug": "smartphones"},
+  {"name": "Mid-Range Smartphone", "category_slug": "smartphones"},
+  {"name": "Gaming Laptop",        "category_slug": "laptops"},
+  {"name": "Business Laptop",      "category_slug": "laptops"},
+  {"name": "OLED Television",      "category_slug": "televisions"},
+  {"name": "LED Television",       "category_slug": "televisions"},
+  {"name": "T-Shirt",              "category_slug": "mens-clothing"},
+  {"name": "Jacket",               "category_slug": "mens-clothing"},
+  {"name": "Dress",                "category_slug": "womens-clothing"},
+  {"name": "Blouse",               "category_slug": "womens-clothing"}
+]

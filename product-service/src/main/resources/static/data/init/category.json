@@ -1,0 +1,9 @@
+[
+  {"name": "Electronics",      "slug": "electronics",      "parent_slug": null},
+  {"name": "Clothing",         "slug": "clothing",         "parent_slug": null},
+  {"name": "Smartphones",      "slug": "smartphones",      "parent_slug": "electronics"},
+  {"name": "Laptops",          "slug": "laptops",          "parent_slug": "electronics"},
+  {"name": "Televisions",      "slug": "televisions",      "parent_slug": "electronics"},
+  {"name": "Men's Clothing",   "slug": "mens-clothing",    "parent_slug": "clothing"},
+  {"name": "Women's Clothing", "slug": "womens-clothing",  "parent_slug": "clothing"}
+]

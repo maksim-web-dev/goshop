@@ -1,0 +1,20 @@
+[
+  {"name": "Black",          "parameter_group_name": "Color"},
+  {"name": "White",          "parameter_group_name": "Color"},
+  {"name": "Red",            "parameter_group_name": "Color"},
+  {"name": "Blue",           "parameter_group_name": "Color"},
+  {"name": "S",              "parameter_group_name": "Size"},
+  {"name": "M",              "parameter_group_name": "Size"},
+  {"name": "L",              "parameter_group_name": "Size"},
+  {"name": "XL",             "parameter_group_name": "Size"},
+  {"name": "Cotton",         "parameter_group_name": "Material"},
+  {"name": "Polyester",      "parameter_group_name": "Material"},
+  {"name": "Linen",          "parameter_group_name": "Material"},
+  {"name": "1080p Full HD",  "parameter_group_name": "Resolution"},
+  {"name": "4K Ultra HD",    "parameter_group_name": "Resolution"},
+  {"name": "8K",             "parameter_group_name": "Resolution"},
+  {"name": "128 GB",         "parameter_group_name": "Storage Capacity"},
+  {"name": "256 GB",         "parameter_group_name": "Storage Capacity"},
+  {"name": "512 GB",         "parameter_group_name": "Storage Capacity"},
+  {"name": "1 TB",           "parameter_group_name": "Storage Capacity"}
+]
