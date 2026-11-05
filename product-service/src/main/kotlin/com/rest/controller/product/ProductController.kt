@@ -1,10 +1,12 @@
 package com.rest.controller.product
 
-import com.data.entity.Product
 import com.data.entity.ProductStatus
-import com.rest.controller.product.adapter.toDto
-import com.rest.controller.product.data.CreateProductRequest
-import com.rest.controller.product.data.UpdateProductRequest
+import com.rest.controller.product.adapter.ProductCreateDtoAdapter
+import com.rest.controller.product.adapter.ProductResponseAdapter
+import com.rest.controller.product.adapter.ProductUpdateDtoAdapter
+import com.rest.controller.product.data.ProductCreateRequest
+import com.rest.controller.product.data.ProductResponse
+import com.rest.controller.product.data.ProductUpdateRequest
 import com.service.product.ProductService
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -20,19 +22,25 @@ class ProductController(private val productService: ProductService) {
         @RequestParam categoryId: Long?,
         @RequestParam status: ProductStatus?,
         pageable: Pageable
-    ): Page<Product> = productService.findAll(categoryId, status, pageable)
+    ): Page<ProductResponse> =
+        with(ProductResponseAdapter) { productService.findAll(categoryId, status, pageable).map { it.toApiModel() } }
 
     @GetMapping("/{id}")
-    fun getById(@PathVariable id: Long): Product = productService.findById(id)
+    fun getById(@PathVariable id: Long): ProductResponse =
+        with(ProductResponseAdapter) { productService.findById(id).toApiModel() }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    fun create(@RequestBody request: CreateProductRequest): Product =
-        productService.create(request.toDto())
+    fun create(@RequestBody payload: ProductCreateRequest): ProductResponse {
+        val dto = with(ProductCreateDtoAdapter) { payload.toServiceModel() }
+        return with(ProductResponseAdapter) { productService.create(dto).toApiModel() }
+    }
 
     @PatchMapping("/{id}")
-    fun update(@PathVariable id: Long, @RequestBody request: UpdateProductRequest): Product =
-        productService.update(id, request.toDto())
+    fun update(@PathVariable id: Long, @RequestBody request: ProductUpdateRequest): ProductResponse {
+        val dto = with(ProductUpdateDtoAdapter) { request.toServiceModel() }
+        return with(ProductResponseAdapter) { productService.update(id, dto).toApiModel() }
+    }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
