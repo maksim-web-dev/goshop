@@ -1,0 +1,30 @@
+server:
+  port: ${RECOMMENDATIONS_SERVER_PORT:8085}
+  servlet:
+    context-path: ${RECOMMENDATIONS_API_PREFIX:/api}
+
+spring:
+  application:
+    name: recommendations-service
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+
+app:
+  seed:
+    mode: ${RECOMMENDATIONS_SEED_MODE:init}
+    stop-count: ${RECOMMENDATIONS_SEED_STOP_COUNT:1}
+    enable: ${RECOMMENDATIONS_SEED_ENABLE:false}
+  datasource:
+    postgres:
+      host: ${RECOMMENDATIONS_POSTGRES_HOST:localhost}
+      port: ${RECOMMENDATIONS_POSTGRES_PORT:5432}
+      db: ${RECOMMENDATIONS_POSTGRES_DB}
+      user: ${RECOMMENDATIONS_POSTGRES_USER}
+      pass: ${RECOMMENDATIONS_POSTGRES_PASSWORD}
+      ssl: disable
+      pool-max: ${RECOMMENDATIONS_HIKARI_POOL_MAX:25}
+      pool-min: ${RECOMMENDATIONS_HIKARI_POOL_MIN:2}
+      pool-timeout-millis: ${RECOMMENDATIONS_HIKARI_POOL_TIMEOUT_MILLIS:30000}
+      show-sql: ${RECOMMENDATIONS_POSTGRES_SHOW_SQL:true}
+      ddl-auto: ${RECOMMENDATIONS_POSTGRES_DDL_AUTO:update}

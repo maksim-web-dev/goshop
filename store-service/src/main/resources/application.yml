@@ -1,0 +1,30 @@
+server:
+  port: ${STORE_SERVER_PORT:8087}
+  servlet:
+    context-path: ${STORE_API_PREFIX:/api}
+
+spring:
+  application:
+    name: store-service
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+
+app:
+  seed:
+    mode: ${STORE_SEED_MODE:init}
+    stop-count: ${STORE_SEED_STOP_COUNT:1}
+    enable: ${STORE_SEED_ENABLE:false}
+  datasource:
+    postgres:
+      host: ${STORE_POSTGRES_HOST:localhost}
+      port: ${STORE_POSTGRES_PORT:5432}
+      db: ${STORE_POSTGRES_DB}
+      user: ${STORE_POSTGRES_USER}
+      pass: ${STORE_POSTGRES_PASSWORD}
+      ssl: disable
+      pool-max: ${STORE_HIKARI_POOL_MAX:25}
+      pool-min: ${STORE_HIKARI_POOL_MIN:2}
+      pool-timeout-millis: ${STORE_HIKARI_POOL_TIMEOUT_MILLIS:30000}
+      show-sql: ${STORE_POSTGRES_SHOW_SQL:true}
+      ddl-auto: ${STORE_POSTGRES_DDL_AUTO:update}

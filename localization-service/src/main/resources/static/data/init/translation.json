@@ -1,0 +1,58 @@
+[
+  {
+    "entity_type": "PRODUCT",
+    "entity_id": "11111111-1111-1111-1111-111111111001",
+    "field_name": "name",
+    "language_code": "uk",
+    "translated_value": "Відеокарта NVIDIA GeForce RTX 4090"
+  },
+  {
+    "entity_type": "PRODUCT",
+    "entity_id": "11111111-1111-1111-1111-111111111001",
+    "field_name": "name",
+    "language_code": "en",
+    "translated_value": "GPU NVIDIA GeForce RTX 4090"
+  },
+  {
+    "entity_type": "PRODUCT",
+    "entity_id": "11111111-1111-1111-1111-111111111001",
+    "field_name": "description",
+    "language_code": "uk",
+    "translated_value": "Флагманська відеокарта NVIDIA архітектури Ada Lovelace з 24 ГБ GDDR6X памʼяті."
+  },
+  {
+    "entity_type": "PRODUCT",
+    "entity_id": "11111111-1111-1111-1111-111111111002",
+    "field_name": "name",
+    "language_code": "uk",
+    "translated_value": "Процесор AMD Ryzen 9 7950X"
+  },
+  {
+    "entity_type": "PRODUCT",
+    "entity_id": "11111111-1111-1111-1111-111111111002",
+    "field_name": "name",
+    "language_code": "en",
+    "translated_value": "CPU AMD Ryzen 9 7950X"
+  },
+  {
+    "entity_type": "BRAND",
+    "entity_id": "11111111-1111-1111-1111-111111111101",
+    "field_name": "name",
+    "language_code": "uk",
+    "translated_value": "НВІДІА"
+  },
+  {
+    "entity_type": "CATEGORY",
+    "entity_id": "11111111-1111-1111-1111-111111111201",
+    "field_name": "name",
+    "language_code": "uk",
+    "translated_value": "Відеокарти"
+  },
+  {
+    "entity_type": "CATEGORY",
+    "entity_id": "11111111-1111-1111-1111-111111111201",
+    "field_name": "name",
+    "language_code": "en",
+    "translated_value": "Graphics Cards"
+  }
+]
