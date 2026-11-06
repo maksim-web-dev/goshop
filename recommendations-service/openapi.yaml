@@ -1,0 +1,234 @@
+openapi: "3.0.3"
+info:
+  title: Recommendations Service
+  version: "1.0.0"
+servers:
+  - url: /api
+
+paths:
+  /recommendations/products/{id}:
+    get:
+      summary: Get all recommendations for a product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of recommended product IDs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                  format: uuid
+
+  /recommendations/products/{id}/similar:
+    get:
+      summary: Get similar products
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of similar product IDs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                  format: uuid
+
+  /recommendations/products/{id}/alternatives:
+    get:
+      summary: Get alternative products
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of alternative product IDs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                  format: uuid
+
+  /recommendations/products/{id}/accessories:
+    get:
+      summary: Get accessories for a product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of accessory product IDs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                  format: uuid
+
+  /recommendations/products/build:
+    post:
+      summary: Build PC recommendations for a set of products
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BuildRecommendationRequest'
+      responses:
+        '200':
+          description: Map of product ID to list of recommended product IDs
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+
+  /recommendations/rules:
+    get:
+      summary: Get all recommendation rules
+      responses:
+        '200':
+          description: List of recommendation rules
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RecommendationRuleResponse'
+    post:
+      summary: Create a recommendation rule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecommendationRuleCreateRequest'
+      responses:
+        '201':
+          description: Recommendation rule created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecommendationRuleResponse'
+
+  /recommendations/rules/{id}:
+    put:
+      summary: Update a recommendation rule
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecommendationRuleUpdateRequest'
+      responses:
+        '200':
+          description: Recommendation rule updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecommendationRuleResponse'
+
+components:
+  schemas:
+    RecommendationStrategy:
+      type: string
+      enum: [SIMILAR_ATTRIBUTES, SAME_CATEGORY, PRICE_RANGE, COMPATIBILITY_BASED, POPULAR_IN_CATEGORY]
+
+    BuildRecommendationRequest:
+      type: object
+      required: [productIds]
+      properties:
+        productIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    RecommendationRuleCreateRequest:
+      type: object
+      required: [name, strategy]
+      properties:
+        name:
+          type: string
+        strategy:
+          $ref: '#/components/schemas/RecommendationStrategy'
+        parameters:
+          type: string
+          nullable: true
+        priority:
+          type: integer
+          default: 0
+        enabled:
+          type: boolean
+          default: true
+
+    RecommendationRuleUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          nullable: true
+        parameters:
+          type: string
+          nullable: true
+        priority:
+          type: integer
+          nullable: true
+        enabled:
+          type: boolean
+          nullable: true
+
+    RecommendationRuleResponse:
+      type: object
+      required: [id, name, strategy, priority, enabled]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        strategy:
+          $ref: '#/components/schemas/RecommendationStrategy'
+        parameters:
+          type: string
+          nullable: true
+        priority:
+          type: integer
+        enabled:
+          type: boolean

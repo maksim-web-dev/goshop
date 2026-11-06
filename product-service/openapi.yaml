@@ -1,0 +1,1192 @@
+openapi: "3.0.3"
+info:
+  title: Product Service
+  version: "1.0.0"
+servers:
+  - url: /api
+
+paths:
+  /products:
+    get:
+      summary: Get all products
+      parameters:
+        - name: categoryId
+          in: query
+          schema:
+            type: integer
+            format: int64
+          required: false
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/ProductStatus'
+          required: false
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+          required: false
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+          required: false
+        - name: sort
+          in: query
+          schema:
+            type: string
+          required: false
+      responses:
+        '200':
+          description: Paginated list of products
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductPage'
+    post:
+      summary: Create a product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductCreateRequest'
+      responses:
+        '201':
+          description: Product created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+
+  /products/{id}:
+    get:
+      summary: Get product by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Product found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+    patch:
+      summary: Update a product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductUpdateRequest'
+      responses:
+        '200':
+          description: Product updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+    delete:
+      summary: Archive a product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Product archived
+
+  /products/{productId}/attributes:
+    get:
+      summary: Get product attributes
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: List of product attributes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProductAttributeResponse'
+    put:
+      summary: Set product attributes
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductAttributeSetRequest'
+      responses:
+        '200':
+          description: Attributes set
+
+  /brands:
+    get:
+      summary: Get all brands
+      responses:
+        '200':
+          description: List of brands
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BrandResponse'
+    post:
+      summary: Create a brand
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BrandCreateRequest'
+      responses:
+        '201':
+          description: Brand created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrandResponse'
+
+  /brands/{id}:
+    get:
+      summary: Get brand by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Brand found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrandResponse'
+    patch:
+      summary: Update a brand
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BrandUpdateRequest'
+      responses:
+        '200':
+          description: Brand updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrandResponse'
+    delete:
+      summary: Delete a brand
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Brand deleted
+
+  /categories:
+    get:
+      summary: Get all categories
+      responses:
+        '200':
+          description: List of categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CategoryResponse'
+    post:
+      summary: Create a category
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryCreateRequest'
+      responses:
+        '201':
+          description: Category created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryResponse'
+
+  /categories/{id}:
+    get:
+      summary: Get category by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Category found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryResponse'
+    patch:
+      summary: Update a category
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryUpdateRequest'
+      responses:
+        '200':
+          description: Category updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryResponse'
+    delete:
+      summary: Delete a category
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Category deleted
+
+  /category-parameters:
+    get:
+      summary: Get category parameters by category
+      parameters:
+        - name: categoryId
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: List of category parameters
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CategoryParameterResponse'
+    post:
+      summary: Create a category parameter
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryParameterCreateRequest'
+      responses:
+        '201':
+          description: Category parameter created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryParameterResponse'
+
+  /category-parameters/{id}:
+    get:
+      summary: Get category parameter by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Category parameter found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryParameterResponse'
+    patch:
+      summary: Update a category parameter
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryParameterUpdateRequest'
+      responses:
+        '200':
+          description: Category parameter updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryParameterResponse'
+    delete:
+      summary: Delete a category parameter
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Category parameter deleted
+
+  /components/groups:
+    get:
+      summary: Get all component groups
+      responses:
+        '200':
+          description: List of component groups
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ComponentGroupResponse'
+    post:
+      summary: Create a component group
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ComponentGroupCreateRequest'
+      responses:
+        '201':
+          description: Component group created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComponentGroupResponse'
+
+  /components:
+    get:
+      summary: Get components by group
+      parameters:
+        - name: groupId
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: List of components
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ComponentResponse'
+    post:
+      summary: Create a component
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ComponentCreateRequest'
+      responses:
+        '201':
+          description: Component created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComponentResponse'
+
+  /components/{id}:
+    get:
+      summary: Get component by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Component found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComponentResponse'
+    patch:
+      summary: Update a component
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ComponentUpdateRequest'
+      responses:
+        '200':
+          description: Component updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComponentResponse'
+    delete:
+      summary: Delete a component
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Component deleted
+
+  /parameter-groups:
+    get:
+      summary: Get all parameter groups
+      responses:
+        '200':
+          description: List of parameter groups
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ParameterGroupResponse'
+    post:
+      summary: Create a parameter group
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ParameterGroupCreateRequest'
+      responses:
+        '201':
+          description: Parameter group created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParameterGroupResponse'
+
+  /parameter-groups/{id}:
+    get:
+      summary: Get parameter group by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Parameter group found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParameterGroupResponse'
+    patch:
+      summary: Update a parameter group
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ParameterGroupUpdateRequest'
+      responses:
+        '200':
+          description: Parameter group updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParameterGroupResponse'
+    delete:
+      summary: Delete a parameter group
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Parameter group deleted
+
+  /parameter-groups/{id}/items:
+    get:
+      summary: Get items for a parameter group
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: List of parameter group items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ParameterGroupItemResponse'
+    post:
+      summary: Add item to parameter group
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ParameterGroupItemAddRequest'
+      responses:
+        '201':
+          description: Item added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParameterGroupItemResponse'
+
+  /parameter-groups/items/{itemId}:
+    delete:
+      summary: Delete a parameter group item
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Item deleted
+
+  /product-types:
+    get:
+      summary: Get all product types
+      responses:
+        '200':
+          description: List of product types
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProductTypeResponse'
+    post:
+      summary: Create a product type
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductTypeCreateRequest'
+      responses:
+        '201':
+          description: Product type created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductTypeResponse'
+
+  /product-types/{id}:
+    get:
+      summary: Get product type by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Product type found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductTypeResponse'
+    patch:
+      summary: Update a product type
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductTypeUpdateRequest'
+      responses:
+        '200':
+          description: Product type updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductTypeResponse'
+    delete:
+      summary: Delete a product type
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Product type deleted
+
+  /product-types/{id}/attributes:
+    get:
+      summary: Get attribute schema for a product type
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: List of category parameters forming the attribute schema
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CategoryParameterResponse'
+
+components:
+  schemas:
+    ProductStatus:
+      type: string
+      enum: [DRAFT, ACTIVE, ARCHIVED]
+
+    ParameterType:
+      type: string
+      enum: [INT, DOUBLE_2, DOUBLE_3, STRING, BOOLEAN, LIST]
+
+    ProductCreateRequest:
+      type: object
+      required: [sku, name, brandId, categoryId, productTypeId]
+      properties:
+        sku:
+          type: string
+        name:
+          type: string
+        brandId:
+          type: integer
+          format: int64
+        categoryId:
+          type: integer
+          format: int64
+        productTypeId:
+          type: integer
+          format: int64
+        description:
+          type: string
+          nullable: true
+
+    ProductUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          nullable: true
+        brandId:
+          type: integer
+          format: int64
+          nullable: true
+        categoryId:
+          type: integer
+          format: int64
+          nullable: true
+        productTypeId:
+          type: integer
+          format: int64
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        status:
+          $ref: '#/components/schemas/ProductStatus'
+
+    ProductResponse:
+      type: object
+      required: [id, sku, name, brandId, categoryId, productTypeId, status, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+          format: int64
+        sku:
+          type: string
+        name:
+          type: string
+        brandId:
+          type: integer
+          format: int64
+        categoryId:
+          type: integer
+          format: int64
+        productTypeId:
+          type: integer
+          format: int64
+        description:
+          type: string
+          nullable: true
+        status:
+          $ref: '#/components/schemas/ProductStatus'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ProductPage:
+      type: object
+      required: [content, totalElements, totalPages, size, number]
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductResponse'
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+        size:
+          type: integer
+        number:
+          type: integer
+
+    ProductAttributeSetRequest:
+      type: object
+      required: [attributes]
+      properties:
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductAttributeItemRequest'
+
+    ProductAttributeItemRequest:
+      type: object
+      required: [categoryParameterId, value]
+      properties:
+        categoryParameterId:
+          type: integer
+          format: int64
+        value:
+          type: string
+
+    ProductAttributeResponse:
+      type: object
+      required: [id, productId, categoryParameterId, value]
+      properties:
+        id:
+          type: integer
+          format: int64
+        productId:
+          type: integer
+          format: int64
+        categoryParameterId:
+          type: integer
+          format: int64
+        value:
+          type: string
+
+    BrandCreateRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        websiteUrl:
+          type: string
+          nullable: true
+
+    BrandUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          nullable: true
+        websiteUrl:
+          type: string
+          nullable: true
+
+    BrandResponse:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        websiteUrl:
+          type: string
+          nullable: true
+
+    CategoryCreateRequest:
+      type: object
+      required: [name, slug]
+      properties:
+        parentId:
+          type: integer
+          format: int64
+          nullable: true
+        name:
+          type: string
+        slug:
+          type: string
+
+    CategoryUpdateRequest:
+      type: object
+      properties:
+        parentId:
+          type: integer
+          format: int64
+          nullable: true
+        name:
+          type: string
+          nullable: true
+        slug:
+          type: string
+          nullable: true
+
+    CategoryResponse:
+      type: object
+      required: [id, name, slug]
+      properties:
+        id:
+          type: integer
+          format: int64
+        parentId:
+          type: integer
+          format: int64
+          nullable: true
+        name:
+          type: string
+        slug:
+          type: string
+
+    CategoryParameterCreateRequest:
+      type: object
+      required: [name, categoryId, parameterType]
+      properties:
+        name:
+          type: string
+        order:
+          type: integer
+          default: 0
+        categoryId:
+          type: integer
+          format: int64
+        parameterType:
+          $ref: '#/components/schemas/ParameterType'
+        intValue:
+          type: integer
+          nullable: true
+        doubleValue2:
+          type: integer
+          nullable: true
+        doubleValue3:
+          type: integer
+          nullable: true
+        booleanValue:
+          type: boolean
+          nullable: true
+        stringValue:
+          type: string
+          nullable: true
+        parameterGroupId:
+          type: integer
+          format: int64
+          nullable: true
+
+    CategoryParameterUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          nullable: true
+        order:
+          type: integer
+          nullable: true
+        parameterType:
+          $ref: '#/components/schemas/ParameterType'
+        intValue:
+          type: integer
+          nullable: true
+        doubleValue2:
+          type: integer
+          nullable: true
+        doubleValue3:
+          type: integer
+          nullable: true
+        booleanValue:
+          type: boolean
+          nullable: true
+        stringValue:
+          type: string
+          nullable: true
+        parameterGroupId:
+          type: integer
+          format: int64
+          nullable: true
+
+    CategoryParameterResponse:
+      type: object
+      required: [id, name, order, categoryId, parameterType]
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        order:
+          type: integer
+        categoryId:
+          type: integer
+          format: int64
+        parameterType:
+          $ref: '#/components/schemas/ParameterType'
+        intValue:
+          type: integer
+          nullable: true
+        doubleValue2:
+          type: integer
+          nullable: true
+        doubleValue3:
+          type: integer
+          nullable: true
+        booleanValue:
+          type: boolean
+          nullable: true
+        stringValue:
+          type: string
+          nullable: true
+        parameterGroupId:
+          type: integer
+          format: int64
+          nullable: true
+
+    ComponentGroupCreateRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+
+    ComponentGroupResponse:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+
+    ComponentCreateRequest:
+      type: object
+      required: [name, componentGroupId]
+      properties:
+        name:
+          type: string
+        componentGroupId:
+          type: integer
+          format: int64
+
+    ComponentUpdateRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+
+    ComponentResponse:
+      type: object
+      required: [id, name, componentGroupId]
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        componentGroupId:
+          type: integer
+          format: int64
+
+    ParameterGroupCreateRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+
+    ParameterGroupUpdateRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+
+    ParameterGroupResponse:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+
+    ParameterGroupItemAddRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+
+    ParameterGroupItemResponse:
+      type: object
+      required: [id, name, parameterGroupId]
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        parameterGroupId:
+          type: integer
+          format: int64
+
+    ProductTypeCreateRequest:
+      type: object
+      required: [categoryId, name]
+      properties:
+        categoryId:
+          type: integer
+          format: int64
+        name:
+          type: string
+
+    ProductTypeUpdateRequest:
+      type: object
+      properties:
+        categoryId:
+          type: integer
+          format: int64
+          nullable: true
+        name:
+          type: string
+          nullable: true
+
+    ProductTypeResponse:
+      type: object
+      required: [id, categoryId, name]
+      properties:
+        id:
+          type: integer
+          format: int64
+        categoryId:
+          type: integer
+          format: int64
+        name:
+          type: string

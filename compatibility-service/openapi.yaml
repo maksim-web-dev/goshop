@@ -1,0 +1,242 @@
+openapi: "3.0.3"
+info:
+  title: Compatibility Service
+  version: "1.0.0"
+servers:
+  - url: /api
+
+paths:
+  /compatibility/check:
+    post:
+      summary: Check compatibility for a list of products
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckRequest'
+      responses:
+        '200':
+          description: Compatibility check result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckResponse'
+
+  /compatibility/pairs/check:
+    post:
+      summary: Check compatibility between two products
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PairCheckRequest'
+      responses:
+        '200':
+          description: Compatibility check result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckResponse'
+
+  /compatibility/products/{id}:
+    get:
+      summary: Find compatible product IDs for a given product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of compatible product IDs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                  format: uuid
+
+  /compatibility/rules:
+    get:
+      summary: Get all compatibility rules
+      responses:
+        '200':
+          description: List of compatibility rules
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CompatibilityRuleResponse'
+    post:
+      summary: Create a compatibility rule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompatibilityRuleCreateRequest'
+      responses:
+        '201':
+          description: Compatibility rule created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompatibilityRuleResponse'
+
+  /compatibility/rules/{id}:
+    put:
+      summary: Update a compatibility rule
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompatibilityRuleUpdateRequest'
+      responses:
+        '200':
+          description: Compatibility rule updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompatibilityRuleResponse'
+    delete:
+      summary: Disable a compatibility rule
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Compatibility rule disabled
+
+components:
+  schemas:
+    RuleType:
+      type: string
+      enum: [SOCKET_MATCH, RAM_COMPATIBILITY, POWER_CAPACITY, GPU_CLEARANCE, COOLING_TDP, FORM_FACTOR]
+
+    Severity:
+      type: string
+      enum: [ERROR, WARNING, INFO]
+
+    CheckRequest:
+      type: object
+      required: [productIds]
+      properties:
+        productIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    PairCheckRequest:
+      type: object
+      required: [sourceProductId, targetProductId]
+      properties:
+        sourceProductId:
+          type: string
+          format: uuid
+        targetProductId:
+          type: string
+          format: uuid
+
+    CompatibilityIssueResponse:
+      type: object
+      required: [ruleId, severity, messageCode]
+      properties:
+        ruleId:
+          type: string
+          format: uuid
+        severity:
+          $ref: '#/components/schemas/Severity'
+        messageCode:
+          type: string
+
+    CheckResponse:
+      type: object
+      required: [compatible, issues]
+      properties:
+        compatible:
+          type: boolean
+        issues:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompatibilityIssueResponse'
+
+    CompatibilityRuleCreateRequest:
+      type: object
+      required: [code, sourceProductTypeId, targetProductTypeId, ruleType]
+      properties:
+        code:
+          type: string
+        sourceProductTypeId:
+          type: string
+          format: uuid
+        targetProductTypeId:
+          type: string
+          format: uuid
+        ruleType:
+          $ref: '#/components/schemas/RuleType'
+        parameters:
+          type: string
+          nullable: true
+        severity:
+          $ref: '#/components/schemas/Severity'
+        enabled:
+          type: boolean
+          default: true
+
+    CompatibilityRuleUpdateRequest:
+      type: object
+      properties:
+        parameters:
+          type: string
+          nullable: true
+        severity:
+          $ref: '#/components/schemas/Severity'
+        enabled:
+          type: boolean
+          nullable: true
+
+    CompatibilityRuleResponse:
+      type: object
+      required: [id, code, sourceProductTypeId, targetProductTypeId, ruleType, severity, enabled, version]
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+        sourceProductTypeId:
+          type: string
+          format: uuid
+        targetProductTypeId:
+          type: string
+          format: uuid
+        ruleType:
+          $ref: '#/components/schemas/RuleType'
+        parameters:
+          type: string
+          nullable: true
+        severity:
+          $ref: '#/components/schemas/Severity'
+        enabled:
+          type: boolean
+        version:
+          type: integer

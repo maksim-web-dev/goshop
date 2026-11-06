@@ -1,0 +1,210 @@
+openapi: "3.0.3"
+info:
+  title: Search Service
+  version: "1.0.0"
+servers:
+  - url: /api
+
+paths:
+  /search/products:
+    get:
+      summary: Search products (simple query parameters)
+      parameters:
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: brand
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of search results
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SearchResultResponse'
+
+  /search/products/query:
+    post:
+      summary: Search products with advanced filtering
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: List of search results
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SearchResultResponse'
+
+  /search/suggestions:
+    get:
+      summary: Get search suggestions by prefix
+      parameters:
+        - name: prefix
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of suggestion strings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
+  /internal/search/reindex:
+    post:
+      summary: Trigger reindex for a list of products
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReindexRequest'
+      responses:
+        '202':
+          description: Reindex jobs accepted
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SearchIndexJobResponse'
+
+  /internal/search/index-jobs/{id}:
+    get:
+      summary: Get a search index job by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Search index job found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchIndexJobResponse'
+
+components:
+  schemas:
+    IndexJobStatus:
+      type: string
+      enum: [PENDING, IN_PROGRESS, DONE, FAILED]
+
+    IndexOperation:
+      type: string
+      enum: [INDEX, UPDATE, DELETE]
+
+    SearchRequest:
+      type: object
+      properties:
+        query:
+          type: string
+          nullable: true
+        brand:
+          type: string
+          nullable: true
+        categoryId:
+          type: string
+          format: uuid
+          nullable: true
+        minPrice:
+          type: number
+          nullable: true
+        maxPrice:
+          type: number
+          nullable: true
+        attributes:
+          type: object
+          additionalProperties:
+            type: string
+        page:
+          type: integer
+          default: 0
+        size:
+          type: integer
+          default: 20
+
+    SearchResultResponse:
+      type: object
+      required: [productId, sku, name, brand, categoryId, status, indexedAt]
+      properties:
+        productId:
+          type: string
+          format: uuid
+        sku:
+          type: string
+        name:
+          type: string
+        brand:
+          type: string
+        categoryId:
+          type: string
+          format: uuid
+        status:
+          type: string
+        indexedAt:
+          type: string
+          format: date-time
+
+    ReindexRequest:
+      type: object
+      required: [productIds]
+      properties:
+        productIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    SearchIndexJobResponse:
+      type: object
+      required: [id, productId, operation, status, attempts, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        productId:
+          type: string
+          format: uuid
+        operation:
+          $ref: '#/components/schemas/IndexOperation'
+        status:
+          $ref: '#/components/schemas/IndexJobStatus'
+        attempts:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time

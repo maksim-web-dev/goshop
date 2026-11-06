@@ -1,0 +1,358 @@
+openapi: "3.0.3"
+info:
+  title: Store Service
+  version: "1.0.0"
+servers:
+  - url: /api
+
+paths:
+  /stores:
+    get:
+      summary: Get all stores
+      responses:
+        '200':
+          description: List of stores
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StoreResponse'
+    post:
+      summary: Create a store
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StoreCreateRequest'
+      responses:
+        '201':
+          description: Store created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StoreResponse'
+
+  /stores/{id}:
+    get:
+      summary: Get store by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Store found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StoreResponse'
+    patch:
+      summary: Update a store
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StoreUpdateRequest'
+      responses:
+        '200':
+          description: Store updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StoreResponse'
+    delete:
+      summary: Deactivate a store
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Store deactivated
+
+  /stores/{storeId}/api-keys:
+    post:
+      summary: Create an API key for a store
+      parameters:
+        - name: storeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StoreApiKeyCreateRequest'
+      responses:
+        '201':
+          description: API key created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StoreApiKeyCreateResponse'
+
+  /stores/{storeId}/api-keys/{keyId}/revoke:
+    post:
+      summary: Revoke an API key
+      parameters:
+        - name: storeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: keyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: API key revoked
+
+  /stores/{storeId}/settings:
+    get:
+      summary: Get settings for a store
+      parameters:
+        - name: storeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Store settings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StoreSettingsResponse'
+    put:
+      summary: Update settings for a store
+      parameters:
+        - name: storeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StoreSettingsUpdateRequest'
+      responses:
+        '200':
+          description: Store settings updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StoreSettingsResponse'
+
+  /stores/{storeId}/webhooks:
+    post:
+      summary: Create a webhook for a store
+      parameters:
+        - name: storeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StoreWebhookCreateRequest'
+      responses:
+        '201':
+          description: Webhook created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StoreWebhookResponse'
+
+components:
+  schemas:
+    StoreStatus:
+      type: string
+      enum: [ACTIVE, INACTIVE, SUSPENDED]
+
+    ApiKeyStatus:
+      type: string
+      enum: [ACTIVE, REVOKED, EXPIRED]
+
+    StoreCreateRequest:
+      type: object
+      required: [name, domain, countryCode, defaultLanguage, defaultCurrency]
+      properties:
+        name:
+          type: string
+        domain:
+          type: string
+        countryCode:
+          type: string
+        defaultLanguage:
+          type: string
+        defaultCurrency:
+          type: string
+
+    StoreUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          nullable: true
+        defaultLanguage:
+          type: string
+          nullable: true
+        defaultCurrency:
+          type: string
+          nullable: true
+        status:
+          $ref: '#/components/schemas/StoreStatus'
+
+    StoreResponse:
+      type: object
+      required: [id, name, domain, countryCode, defaultLanguage, defaultCurrency, status, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        domain:
+          type: string
+        countryCode:
+          type: string
+        defaultLanguage:
+          type: string
+        defaultCurrency:
+          type: string
+        status:
+          $ref: '#/components/schemas/StoreStatus'
+        createdAt:
+          type: string
+          format: date-time
+
+    StoreApiKeyCreateRequest:
+      type: object
+      properties:
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    StoreApiKeyCreateResponse:
+      type: object
+      required: [id, keyPrefix, plainKey, status, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        keyPrefix:
+          type: string
+        plainKey:
+          type: string
+        status:
+          $ref: '#/components/schemas/ApiKeyStatus'
+        createdAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    StoreSettingsUpdateRequest:
+      type: object
+      properties:
+        requestsPerSecond:
+          type: integer
+          nullable: true
+        burstLimit:
+          type: integer
+          nullable: true
+        allowedLanguages:
+          type: array
+          items:
+            type: string
+          nullable: true
+
+    StoreSettingsResponse:
+      type: object
+      required: [id, storeId, requestsPerSecond, burstLimit, allowedLanguages]
+      properties:
+        id:
+          type: string
+          format: uuid
+        storeId:
+          type: string
+          format: uuid
+        requestsPerSecond:
+          type: integer
+        burstLimit:
+          type: integer
+        allowedLanguages:
+          type: array
+          items:
+            type: string
+
+    StoreWebhookCreateRequest:
+      type: object
+      required: [url, eventTypes, secretRef]
+      properties:
+        url:
+          type: string
+        eventTypes:
+          type: array
+          items:
+            type: string
+        secretRef:
+          type: string
+        enabled:
+          type: boolean
+          default: true
+
+    StoreWebhookResponse:
+      type: object
+      required: [id, storeId, url, eventTypes, secretRef, enabled]
+      properties:
+        id:
+          type: string
+          format: uuid
+        storeId:
+          type: string
+          format: uuid
+        url:
+          type: string
+        eventTypes:
+          type: array
+          items:
+            type: string
+        secretRef:
+          type: string
+        enabled:
+          type: boolean
