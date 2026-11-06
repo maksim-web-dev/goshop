@@ -21,190 +21,6 @@ services:
     networks:
       - goshop-network
 
-  # ── Services ───────────────────────────────────────────────────────────────
-
-  product-service:
-    build:
-      context: .
-      dockerfile: product-service/Dockerfile
-    container_name: product-service
-    ports:
-      - "8081:8080"
-    environment:
-      DB_HOST: postgres-product
-      DB_PORT: 5432
-      DB_NAME: product_db
-      DB_USERNAME: postgres
-      DB_PASSWORD: postgres
-    depends_on:
-      postgres-product:
-        condition: service_healthy
-    networks:
-      - goshop-network
-
-  store-service:
-    build:
-      context: .
-      dockerfile: store-service/Dockerfile
-    container_name: store-service
-    ports:
-      - "8082:8080"
-    environment:
-      DB_HOST: postgres-store
-      DB_PORT: 5432
-      DB_NAME: store_db
-      DB_USERNAME: postgres
-      DB_PASSWORD: postgres
-    depends_on:
-      postgres-store:
-        condition: service_healthy
-    networks:
-      - goshop-network
-
-  postgres-store:
-    image: postgres:16-alpine
-    container_name: postgres-store
-    environment:
-      POSTGRES_DB: store_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    volumes:
-      - postgres-store-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d store_db"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - goshop-network
-
-  pricing-service:
-    build:
-      context: .
-      dockerfile: pricing-service/Dockerfile
-    container_name: pricing-service
-    ports:
-      - "8083:8080"
-    environment:
-      DB_HOST: postgres-pricing
-      DB_PORT: 5432
-      DB_NAME: pricing_db
-      DB_USERNAME: postgres
-      DB_PASSWORD: postgres
-    depends_on:
-      postgres-pricing:
-        condition: service_healthy
-    networks:
-      - goshop-network
-
-  postgres-pricing:
-    image: postgres:16-alpine
-    container_name: postgres-pricing
-    environment:
-      POSTGRES_DB: pricing_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    volumes:
-      - postgres-pricing-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d pricing_db"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - goshop-network
-
-  localization-service:
-    build:
-      context: .
-      dockerfile: localization-service/Dockerfile
-    container_name: localization-service
-    ports:
-      - "8084:8080"
-    environment:
-      DB_HOST: postgres-localization
-      DB_PORT: 5432
-      DB_NAME: localization_db
-      DB_USERNAME: postgres
-      DB_PASSWORD: postgres
-    depends_on:
-      postgres-localization:
-        condition: service_healthy
-    networks:
-      - goshop-network
-
-  postgres-localization:
-    image: postgres:16-alpine
-    container_name: postgres-localization
-    environment:
-      POSTGRES_DB: localization_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    volumes:
-      - postgres-localization-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d localization_db"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - goshop-network
-
-  search-service:
-    build:
-      context: .
-      dockerfile: search-service/Dockerfile
-    container_name: search-service
-    ports:
-      - "8085:8080"
-    environment:
-      DB_HOST: postgres-search
-      DB_PORT: 5432
-      DB_NAME: search_db
-      DB_USERNAME: postgres
-      DB_PASSWORD: postgres
-    depends_on:
-      postgres-search:
-        condition: service_healthy
-    networks:
-      - goshop-network
-
-  postgres-search:
-    image: postgres:16-alpine
-    container_name: postgres-search
-    environment:
-      POSTGRES_DB: search_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    volumes:
-      - postgres-search-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d search_db"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - goshop-network
-
-  compatibility-service:
-    build:
-      context: .
-      dockerfile: compatibility-service/Dockerfile
-    container_name: compatibility-service
-    ports:
-      - "8086:8080"
-    environment:
-      DB_HOST: postgres-compatibility
-      DB_PORT: 5432
-      DB_NAME: compatibility_db
-      DB_USERNAME: postgres
-      DB_PASSWORD: postgres
-    depends_on:
-      postgres-compatibility:
-        condition: service_healthy
-    networks:
-      - goshop-network
-
   postgres-compatibility:
     image: postgres:16-alpine
     container_name: postgres-compatibility
@@ -212,6 +28,8 @@ services:
       POSTGRES_DB: compatibility_db
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
     volumes:
       - postgres-compatibility-data:/var/lib/postgresql/data
     healthcheck:
@@ -222,22 +40,41 @@ services:
     networks:
       - goshop-network
 
-  recommendations-service:
-    build:
-      context: .
-      dockerfile: recommendations-service/Dockerfile
-    container_name: recommendations-service
-    ports:
-      - "8087:8080"
+  postgres-localization:
+    image: postgres:16-alpine
+    container_name: postgres-localization
     environment:
-      DB_HOST: postgres-recommendations
-      DB_PORT: 5432
-      DB_NAME: recommendations_db
-      DB_USERNAME: postgres
-      DB_PASSWORD: postgres
-    depends_on:
-      postgres-recommendations:
-        condition: service_healthy
+      POSTGRES_DB: localization_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres-localization-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d localization_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - goshop-network
+
+  postgres-pricing:
+    image: postgres:16-alpine
+    container_name: postgres-pricing
+    environment:
+      POSTGRES_DB: pricing_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres-pricing-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d pricing_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - goshop-network
 
@@ -248,6 +85,8 @@ services:
       POSTGRES_DB: recommendations_db
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+    ports:
+      - "5436:5432"
     volumes:
       - postgres-recommendations-data:/var/lib/postgresql/data
     healthcheck:
@@ -255,6 +94,200 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - goshop-network
+
+  postgres-search:
+    image: postgres:16-alpine
+    container_name: postgres-search
+    environment:
+      POSTGRES_DB: search_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5437:5432"
+    volumes:
+      - postgres-search-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d search_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - goshop-network
+
+  postgres-store:
+    image: postgres:16-alpine
+    container_name: postgres-store
+    environment:
+      POSTGRES_DB: store_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5438:5432"
+    volumes:
+      - postgres-store-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d store_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - goshop-network
+
+  # ── Services ───────────────────────────────────────────────────────────────
+
+  product-service:
+    build:
+      context: .
+      dockerfile: product-service/Dockerfile
+    container_name: product-service
+    ports:
+      - "8081:8080"
+    environment:
+      PRODUCT_POSTGRES_HOST: postgres-product
+      PRODUCT_POSTGRES_PORT: 5432
+      PRODUCT_POSTGRES_DB: product_db
+      PRODUCT_POSTGRES_USER: postgres
+      PRODUCT_POSTGRES_PASSWORD: postgres
+      PRODUCT_POSTGRES_DDL_AUTO: update
+      PRODUCT_POSTGRES_SHOW_SQL: "false"
+      PRODUCT_SEED_ENABLE: "false"
+    depends_on:
+      postgres-product:
+        condition: service_healthy
+    networks:
+      - goshop-network
+
+  compatibility-service:
+    build:
+      context: .
+      dockerfile: compatibility-service/Dockerfile
+    container_name: compatibility-service
+    ports:
+      - "8082:8082"
+    environment:
+      COMPATIBILITY_POSTGRES_HOST: postgres-compatibility
+      COMPATIBILITY_POSTGRES_PORT: 5432
+      COMPATIBILITY_POSTGRES_DB: compatibility_db
+      COMPATIBILITY_POSTGRES_USER: postgres
+      COMPATIBILITY_POSTGRES_PASSWORD: postgres
+      COMPATIBILITY_POSTGRES_DDL_AUTO: update
+      COMPATIBILITY_POSTGRES_SHOW_SQL: "false"
+      COMPATIBILITY_SEED_ENABLE: "false"
+    depends_on:
+      postgres-compatibility:
+        condition: service_healthy
+    networks:
+      - goshop-network
+
+  localization-service:
+    build:
+      context: .
+      dockerfile: localization-service/Dockerfile
+    container_name: localization-service
+    ports:
+      - "8083:8083"
+    environment:
+      LOCALIZATION_POSTGRES_HOST: postgres-localization
+      LOCALIZATION_POSTGRES_PORT: 5432
+      LOCALIZATION_POSTGRES_DB: localization_db
+      LOCALIZATION_POSTGRES_USER: postgres
+      LOCALIZATION_POSTGRES_PASSWORD: postgres
+      LOCALIZATION_POSTGRES_DDL_AUTO: update
+      LOCALIZATION_POSTGRES_SHOW_SQL: "false"
+      LOCALIZATION_SEED_ENABLE: "false"
+    depends_on:
+      postgres-localization:
+        condition: service_healthy
+    networks:
+      - goshop-network
+
+  pricing-service:
+    build:
+      context: .
+      dockerfile: pricing-service/Dockerfile
+    container_name: pricing-service
+    ports:
+      - "8084:8084"
+    environment:
+      PRICING_POSTGRES_HOST: postgres-pricing
+      PRICING_POSTGRES_PORT: 5432
+      PRICING_POSTGRES_DB: pricing_db
+      PRICING_POSTGRES_USER: postgres
+      PRICING_POSTGRES_PASSWORD: postgres
+      PRICING_POSTGRES_DDL_AUTO: update
+      PRICING_POSTGRES_SHOW_SQL: "false"
+      PRICING_SEED_ENABLE: "false"
+    depends_on:
+      postgres-pricing:
+        condition: service_healthy
+    networks:
+      - goshop-network
+
+  recommendations-service:
+    build:
+      context: .
+      dockerfile: recommendations-service/Dockerfile
+    container_name: recommendations-service
+    ports:
+      - "8085:8085"
+    environment:
+      RECOMMENDATIONS_POSTGRES_HOST: postgres-recommendations
+      RECOMMENDATIONS_POSTGRES_PORT: 5432
+      RECOMMENDATIONS_POSTGRES_DB: recommendations_db
+      RECOMMENDATIONS_POSTGRES_USER: postgres
+      RECOMMENDATIONS_POSTGRES_PASSWORD: postgres
+      RECOMMENDATIONS_POSTGRES_DDL_AUTO: update
+      RECOMMENDATIONS_POSTGRES_SHOW_SQL: "false"
+      RECOMMENDATIONS_SEED_ENABLE: "false"
+    depends_on:
+      postgres-recommendations:
+        condition: service_healthy
+    networks:
+      - goshop-network
+
+  search-service:
+    build:
+      context: .
+      dockerfile: search-service/Dockerfile
+    container_name: search-service
+    ports:
+      - "8086:8086"
+    environment:
+      SEARCH_POSTGRES_HOST: postgres-search
+      SEARCH_POSTGRES_PORT: 5432
+      SEARCH_POSTGRES_DB: search_db
+      SEARCH_POSTGRES_USER: postgres
+      SEARCH_POSTGRES_PASSWORD: postgres
+      SEARCH_POSTGRES_DDL_AUTO: update
+      SEARCH_POSTGRES_SHOW_SQL: "false"
+      SEARCH_SEED_ENABLE: "false"
+    depends_on:
+      postgres-search:
+        condition: service_healthy
+    networks:
+      - goshop-network
+
+  store-service:
+    build:
+      context: .
+      dockerfile: store-service/Dockerfile
+    container_name: store-service
+    ports:
+      - "8087:8087"
+    environment:
+      STORE_POSTGRES_HOST: postgres-store
+      STORE_POSTGRES_PORT: 5432
+      STORE_POSTGRES_DB: store_db
+      STORE_POSTGRES_USER: postgres
+      STORE_POSTGRES_PASSWORD: postgres
+      STORE_POSTGRES_DDL_AUTO: update
+      STORE_POSTGRES_SHOW_SQL: "false"
+      STORE_SEED_ENABLE: "false"
+    depends_on:
+      postgres-store:
+        condition: service_healthy
     networks:
       - goshop-network
 
@@ -272,12 +305,12 @@ services:
 
 volumes:
   postgres-product-data:
-  postgres-store-data:
-  postgres-pricing-data:
-  postgres-localization-data:
-  postgres-search-data:
   postgres-compatibility-data:
+  postgres-localization-data:
+  postgres-pricing-data:
   postgres-recommendations-data:
+  postgres-search-data:
+  postgres-store-data:
 
 # ── Networks ─────────────────────────────────────────────────────────────────
 
