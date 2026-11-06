@@ -1,0 +1,17 @@
+[
+  {"name": "RAM (GB)",           "sort_order": 1, "category_slug": "smartphones",   "parameter_type": "INT"},
+  {"name": "Storage",            "sort_order": 2, "category_slug": "smartphones",   "parameter_type": "LIST", "parameter_group_name": "Storage Capacity"},
+  {"name": "Screen Size (inch)", "sort_order": 3, "category_slug": "smartphones",   "parameter_type": "DOUBLE_2"},
+  {"name": "Resolution",         "sort_order": 4, "category_slug": "smartphones",   "parameter_type": "LIST", "parameter_group_name": "Resolution"},
+  {"name": "RAM (GB)",           "sort_order": 1, "category_slug": "laptops",       "parameter_type": "INT"},
+  {"name": "Storage",            "sort_order": 2, "category_slug": "laptops",       "parameter_type": "LIST", "parameter_group_name": "Storage Capacity"},
+  {"name": "Screen Size (inch)", "sort_order": 3, "category_slug": "laptops",       "parameter_type": "DOUBLE_2"},
+  {"name": "Screen Size (inch)", "sort_order": 1, "category_slug": "televisions",   "parameter_type": "INT"},
+  {"name": "Resolution",         "sort_order": 2, "category_slug": "televisions",   "parameter_type": "LIST", "parameter_group_name": "Resolution"},
+  {"name": "Size",               "sort_order": 1, "category_slug": "mens-clothing", "parameter_type": "LIST", "parameter_group_name": "Size"},
+  {"name": "Color",              "sort_order": 2, "category_slug": "mens-clothing", "parameter_type": "LIST", "parameter_group_name": "Color"},
+  {"name": "Material",           "sort_order": 3, "category_slug": "mens-clothing", "parameter_type": "LIST", "parameter_group_name": "Material"},
+  {"name": "Size",               "sort_order": 1, "category_slug": "womens-clothing","parameter_type": "LIST", "parameter_group_name": "Size"},
+  {"name": "Color",              "sort_order": 2, "category_slug": "womens-clothing","parameter_type": "LIST", "parameter_group_name": "Color"},
+  {"name": "Material",           "sort_order": 3, "category_slug": "womens-clothing","parameter_type": "LIST", "parameter_group_name": "Material"}
+]

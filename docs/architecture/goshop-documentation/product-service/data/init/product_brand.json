@@ -1,0 +1,7 @@
+[
+  {"name": "Apple",   "website_url": "https://apple.com"},
+  {"name": "Samsung", "website_url": "https://samsung.com"},
+  {"name": "Nike",    "website_url": "https://nike.com"},
+  {"name": "Sony",    "website_url": "https://sony.com"},
+  {"name": "LG",      "website_url": "https://lg.com"}
+]

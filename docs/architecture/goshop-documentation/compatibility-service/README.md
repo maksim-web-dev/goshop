@@ -684,4 +684,4 @@ Inside `check()`, each call to `evaluateRule()` is wrapped in `runCatching { }.g
 
 ### ⚠️ `FORM_FACTOR` rule type has no seed data
 
-The `FORM_FACTOR` enum value exists in `RuleType` but no corresponding seed entry is present in `compatibility_rule.json`.
+The `FORM_FACTOR` enum value exists in `RuleType` but no corresponding seed entry is present in `data/init/compatibility_rule.json`.

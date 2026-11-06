@@ -1,0 +1,23 @@
+[
+  {
+    "name": "GoShop Main",
+    "domain": "goshop.com",
+    "country_code": "US",
+    "default_language": "en",
+    "default_currency": "USD"
+  },
+  {
+    "name": "GoShop Ukraine",
+    "domain": "goshop.ua",
+    "country_code": "UA",
+    "default_language": "uk",
+    "default_currency": "UAH"
+  },
+  {
+    "name": "GoShop Europe",
+    "domain": "goshop.eu",
+    "country_code": "DE",
+    "default_language": "en",
+    "default_currency": "EUR"
+  }
+]

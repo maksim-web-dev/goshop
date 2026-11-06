@@ -1,0 +1,47 @@
+[
+  {
+    "code": "CPU_MOTHERBOARD_SOCKET",
+    "source_product_type_id": "22222222-2222-2222-2222-222222222001",
+    "target_product_type_id": "22222222-2222-2222-2222-222222222002",
+    "rule_type": "SOCKET_MATCH",
+    "parameters": "{\"cpu_field\": \"socket\", \"motherboard_field\": \"socket\"}",
+    "severity": "ERROR",
+    "enabled": true
+  },
+  {
+    "code": "RAM_MOTHERBOARD_DDR",
+    "source_product_type_id": "22222222-2222-2222-2222-222222222003",
+    "target_product_type_id": "22222222-2222-2222-2222-222222222002",
+    "rule_type": "RAM_COMPATIBILITY",
+    "parameters": "{\"ram_field\": \"ddr_type\", \"motherboard_field\": \"supported_ddr\"}",
+    "severity": "ERROR",
+    "enabled": true
+  },
+  {
+    "code": "PSU_SYSTEM_POWER",
+    "source_product_type_id": "22222222-2222-2222-2222-222222222005",
+    "target_product_type_id": "22222222-2222-2222-2222-222222222004",
+    "rule_type": "POWER_CAPACITY",
+    "parameters": "{\"psu_field\": \"wattage\", \"safety_margin\": 1.2}",
+    "severity": "WARNING",
+    "enabled": true
+  },
+  {
+    "code": "GPU_CASE_CLEARANCE",
+    "source_product_type_id": "22222222-2222-2222-2222-222222222004",
+    "target_product_type_id": "22222222-2222-2222-2222-222222222006",
+    "rule_type": "GPU_CLEARANCE",
+    "parameters": "{\"gpu_field\": \"length_mm\", \"case_field\": \"max_gpu_length_mm\"}",
+    "severity": "ERROR",
+    "enabled": true
+  },
+  {
+    "code": "CPU_COOLER_TDP",
+    "source_product_type_id": "22222222-2222-2222-2222-222222222001",
+    "target_product_type_id": "22222222-2222-2222-2222-222222222002",
+    "rule_type": "COOLING_TDP",
+    "parameters": "{\"cpu_field\": \"tdp_w\", \"cooler_field\": \"max_tdp_w\"}",
+    "severity": "WARNING",
+    "enabled": true
+  }
+]

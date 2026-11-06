@@ -1,0 +1,38 @@
+[
+  {
+    "product_id": "11111111-1111-1111-1111-111111111001",
+    "store_id": null,
+    "amount": "1799.9900",
+    "currency_code": "USD"
+  },
+  {
+    "product_id": "11111111-1111-1111-1111-111111111001",
+    "store_id": "33333333-3333-3333-3333-333333333001",
+    "amount": "1749.9900",
+    "currency_code": "USD"
+  },
+  {
+    "product_id": "11111111-1111-1111-1111-111111111002",
+    "store_id": null,
+    "amount": "699.9900",
+    "currency_code": "USD"
+  },
+  {
+    "product_id": "11111111-1111-1111-1111-111111111003",
+    "store_id": null,
+    "amount": "349.9900",
+    "currency_code": "USD"
+  },
+  {
+    "product_id": "11111111-1111-1111-1111-111111111004",
+    "store_id": null,
+    "amount": "189.9900",
+    "currency_code": "USD"
+  },
+  {
+    "product_id": "11111111-1111-1111-1111-111111111005",
+    "store_id": null,
+    "amount": "129.9900",
+    "currency_code": "USD"
+  }
+]

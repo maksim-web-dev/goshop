@@ -1,0 +1,30 @@
+[
+  {
+    "store_domain": "goshop.com",
+    "url": "https://hooks.goshop.com/order-created",
+    "event_types": ["ORDER_CREATED", "ORDER_PAID", "ORDER_CANCELLED"],
+    "secret_ref": "webhook-secret-main-orders",
+    "enabled": true
+  },
+  {
+    "store_domain": "goshop.com",
+    "url": "https://hooks.goshop.com/product-updated",
+    "event_types": ["PRODUCT_CREATED", "PRODUCT_UPDATED", "PRODUCT_DELETED"],
+    "secret_ref": "webhook-secret-main-products",
+    "enabled": true
+  },
+  {
+    "store_domain": "goshop.ua",
+    "url": "https://hooks.goshop.ua/orders",
+    "event_types": ["ORDER_CREATED", "ORDER_PAID"],
+    "secret_ref": "webhook-secret-ua-orders",
+    "enabled": true
+  },
+  {
+    "store_domain": "goshop.eu",
+    "url": "https://hooks.goshop.eu/inventory",
+    "event_types": ["INVENTORY_LOW", "INVENTORY_OUT"],
+    "secret_ref": "webhook-secret-eu-inventory",
+    "enabled": true
+  }
+]

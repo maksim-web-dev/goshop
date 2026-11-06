@@ -1,0 +1,47 @@
+[
+  {
+    "sku": "APL-IP15PRO-256",
+    "name": "Apple iPhone 15 Pro 256GB",
+    "brand_name": "Apple",
+    "category_slug": "smartphones",
+    "product_type_name": "Flagship Smartphone",
+    "description": "Titanium design, A17 Pro chip, 48MP camera system",
+    "status": "ACTIVE"
+  },
+  {
+    "sku": "SAM-S24ULT-512",
+    "name": "Samsung Galaxy S24 Ultra 512GB",
+    "brand_name": "Samsung",
+    "category_slug": "smartphones",
+    "product_type_name": "Flagship Smartphone",
+    "description": "Built-in S Pen, 200MP camera, Snapdragon 8 Gen 3",
+    "status": "ACTIVE"
+  },
+  {
+    "sku": "APL-MBP14-M3-512",
+    "name": "Apple MacBook Pro 14 M3 512GB",
+    "brand_name": "Apple",
+    "category_slug": "laptops",
+    "product_type_name": "Business Laptop",
+    "description": "Apple M3 chip, 18-hour battery, Liquid Retina XDR display",
+    "status": "ACTIVE"
+  },
+  {
+    "sku": "SAM-QN55S90D",
+    "name": "Samsung 55 OLED 4K Smart TV",
+    "brand_name": "Samsung",
+    "category_slug": "televisions",
+    "product_type_name": "OLED Television",
+    "description": "OLED display, 4K resolution, Neural Quantum Processor",
+    "status": "ACTIVE"
+  },
+  {
+    "sku": "NIKE-TSH-DRY-BLK-L",
+    "name": "Nike Dri-FIT T-Shirt Black L",
+    "brand_name": "Nike",
+    "category_slug": "mens-clothing",
+    "product_type_name": "T-Shirt",
+    "description": "Lightweight moisture-wicking fabric",
+    "status": "ACTIVE"
+  }
+]

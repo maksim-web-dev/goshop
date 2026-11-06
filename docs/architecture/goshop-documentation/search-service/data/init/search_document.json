@@ -1,0 +1,42 @@
+[
+  {
+    "product_id": "11111111-1111-1111-1111-111111111001",
+    "sku": "GPU-RTX4090-24G",
+    "name": "NVIDIA GeForce RTX 4090 24GB",
+    "brand": "NVIDIA",
+    "category_id": "11111111-1111-1111-1111-111111111201",
+    "status": "ACTIVE"
+  },
+  {
+    "product_id": "11111111-1111-1111-1111-111111111002",
+    "sku": "CPU-R9-7950X",
+    "name": "AMD Ryzen 9 7950X 16-Core",
+    "brand": "AMD",
+    "category_id": "11111111-1111-1111-1111-111111111202",
+    "status": "ACTIVE"
+  },
+  {
+    "product_id": "11111111-1111-1111-1111-111111111003",
+    "sku": "MB-ASUS-B650E-E",
+    "name": "ASUS ProArt B650E-Creator WiFi ATX AM5",
+    "brand": "ASUS",
+    "category_id": "11111111-1111-1111-1111-111111111203",
+    "status": "ACTIVE"
+  },
+  {
+    "product_id": "11111111-1111-1111-1111-111111111004",
+    "sku": "RAM-GS-32G-DDR5",
+    "name": "G.Skill Trident Z5 RGB 32GB DDR5-6000",
+    "brand": "G.Skill",
+    "category_id": "11111111-1111-1111-1111-111111111204",
+    "status": "ACTIVE"
+  },
+  {
+    "product_id": "11111111-1111-1111-1111-111111111005",
+    "sku": "SSD-SAM-980PRO-2T",
+    "name": "Samsung 980 PRO 2TB NVMe PCIe 4.0",
+    "brand": "Samsung",
+    "category_id": "11111111-1111-1111-1111-111111111205",
+    "status": "ACTIVE"
+  }
+]
