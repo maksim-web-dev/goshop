@@ -23,7 +23,7 @@ class ComponentGroupDataSeed(
         if (!seedProps.enable) return
         if (componentGroupRepository.count() > seedProps.stopCount) return
 
-        val json = readClassPathResourceAsString("static/data/${seedProps.mode}/component_group.json")
+        val json = readClassPathResourceAsString("static/data/${seedProps.mode}/product_component_group.json")
         val dtos: Array<ComponentGroupDto> = jacksonObjectMapper().readValue(json)
         componentGroupRepository.saveAll(dtos.map { ComponentGroup(name = it.name) })
     }

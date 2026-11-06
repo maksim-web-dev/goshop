@@ -42,7 +42,7 @@ class PriceService(
         priceHistoryRepository.findByPriceIdOrderByChangedAtDesc(id)
 
     fun findBatchByProductIds(productIds: List<UUID>): List<Price> =
-        priceRepository.findByProductIdIn(productIds)
+        priceRepository.findCurrentByProductIdIn(productIds, Instant.now())
 
     @Transactional
     fun create(dto: CreatePriceDto): Price =
@@ -98,6 +98,7 @@ class PriceService(
                         .setScale(4, RoundingMode.HALF_UP)
                 com.data.entity.DiscountType.FIXED ->
                     (base.amount - best.discountValue).coerceAtLeast(BigDecimal.ZERO)
+                        .setScale(4, RoundingMode.HALF_UP)
             }
         } else base.amount
 

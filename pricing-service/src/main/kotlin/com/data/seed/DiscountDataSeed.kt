@@ -27,7 +27,7 @@ class DiscountDataSeed(
         if (!seedProps.enable) return
         if (discountRepository.count() > seedProps.stopCount) return
 
-        val json = readClassPathResourceAsString("static/data/${seedProps.mode}/discount.json")
+        val json = readClassPathResourceAsString("static/data/${seedProps.mode}/pricing_discount.json")
         val dtos: Array<DiscountDto> = jacksonObjectMapper().readValue(json)
         discountRepository.saveAll(dtos.map {
             Discount(

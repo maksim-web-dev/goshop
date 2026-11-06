@@ -23,7 +23,7 @@ class LanguageDataSeed(
         if (!seedProps.enable) return
         if (languageRepository.count() > seedProps.stopCount) return
 
-        val json = readClassPathResourceAsString("static/data/${seedProps.mode}/language.json")
+        val json = readClassPathResourceAsString("static/data/${seedProps.mode}/localization_language.json")
         val dtos: Array<LanguageDto> = jacksonObjectMapper().readValue(json)
         languageRepository.saveAll(dtos.map { Language(code = it.code, name = it.name, enabled = it.enabled) })
     }

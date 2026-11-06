@@ -4,4 +4,7 @@ import com.data.entity.Product
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor
 
-interface ProductRepository : JpaRepository<Product, Long>, JpaSpecificationExecutor<Product>
+interface ProductRepository : JpaRepository<Product, Long>, JpaSpecificationExecutor<Product> {
+    fun existsBySku(sku: String): Boolean
+    fun existsByCategoryId(categoryId: Long): Boolean
+}

@@ -34,7 +34,7 @@ class ProductDataSeed(
         val categoriesBySlug  = categoryRepository.findAll().associateBy { it.slug }
         val productTypes      = productTypeRepository.findAll()
 
-        val json = readClassPathResourceAsString("static/data/${seedProps.mode}/product.json")
+        val json = readClassPathResourceAsString("static/data/${seedProps.mode}/product_product.json")
         val dtos: Array<ProductDto> = jacksonObjectMapper().readValue(json)
 
         val items = dtos.map { dto ->

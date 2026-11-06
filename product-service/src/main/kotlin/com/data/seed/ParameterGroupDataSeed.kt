@@ -23,7 +23,7 @@ class ParameterGroupDataSeed(
         if (!seedProps.enable) return
         if (parameterGroupRepository.count() > seedProps.stopCount) return
 
-        val json = readClassPathResourceAsString("static/data/${seedProps.mode}/parameter_group.json")
+        val json = readClassPathResourceAsString("static/data/${seedProps.mode}/product_parameter_group.json")
         val dtos: Array<ParameterGroupDto> = jacksonObjectMapper().readValue(json)
         parameterGroupRepository.saveAll(dtos.map { ParameterGroup(name = it.name) })
     }

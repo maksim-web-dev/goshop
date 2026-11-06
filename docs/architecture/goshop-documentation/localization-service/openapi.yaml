@@ -1,0 +1,278 @@
+openapi: "3.0.3"
+info:
+  title: Localization Service
+  version: "1.0.0"
+servers:
+  - url: /api
+
+paths:
+  /languages:
+    get:
+      summary: Get all languages
+      responses:
+        '200':
+          description: List of languages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LanguageResponse'
+
+  /translations:
+    get:
+      summary: Get all translations
+      parameters:
+        - name: entityType
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/EntityType'
+        - name: entityId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of translations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TranslationResponse'
+    post:
+      summary: Create a translation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TranslationCreateRequest'
+      responses:
+        '201':
+          description: Translation created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranslationResponse'
+
+  /translations/{id}:
+    put:
+      summary: Update a translation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TranslationUpdateRequest'
+      responses:
+        '200':
+          description: Translation updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranslationResponse'
+    delete:
+      summary: Delete a translation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Translation deleted
+
+  /translations/resolve:
+    post:
+      summary: Resolve a translation for a given entity, field and language
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResolveTranslationRequest'
+      responses:
+        '200':
+          description: Resolved translation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranslationResponse'
+
+  /translation-jobs:
+    post:
+      summary: Create a translation job
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TranslationJobCreateRequest'
+      responses:
+        '201':
+          description: Translation job created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranslationJobResponse'
+
+  /translation-jobs/{id}:
+    get:
+      summary: Get translation job by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Translation job found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranslationJobResponse'
+
+components:
+  schemas:
+    EntityType:
+      type: string
+      enum: [PRODUCT, BRAND, CATEGORY, PRODUCT_TYPE]
+
+    TranslationStatus:
+      type: string
+      enum: [DRAFT, APPROVED, AUTO_TRANSLATED]
+
+    TranslationJobStatus:
+      type: string
+      enum: [PENDING, IN_PROGRESS, DONE, FAILED]
+
+    LanguageResponse:
+      type: object
+      required: [code, name, enabled]
+      properties:
+        code:
+          type: string
+          description: BCP 47 language code (e.g. "uk", "en")
+        name:
+          type: string
+        enabled:
+          type: boolean
+
+    TranslationCreateRequest:
+      type: object
+      required: [entityType, entityId, fieldName, languageCode, translatedValue]
+      properties:
+        entityType:
+          $ref: '#/components/schemas/EntityType'
+        entityId:
+          type: string
+          format: uuid
+        fieldName:
+          type: string
+        languageCode:
+          type: string
+        translatedValue:
+          type: string
+
+    TranslationUpdateRequest:
+      type: object
+      properties:
+        translatedValue:
+          type: string
+          nullable: true
+        status:
+          $ref: '#/components/schemas/TranslationStatus'
+
+    TranslationResponse:
+      type: object
+      required: [id, entityType, entityId, fieldName, languageCode, translatedValue, status, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        entityType:
+          $ref: '#/components/schemas/EntityType'
+        entityId:
+          type: string
+          format: uuid
+        fieldName:
+          type: string
+        languageCode:
+          type: string
+        translatedValue:
+          type: string
+        status:
+          $ref: '#/components/schemas/TranslationStatus'
+        updatedAt:
+          type: string
+          format: date-time
+
+    ResolveTranslationRequest:
+      type: object
+      required: [entityType, entityId, fieldName, preferredLanguage]
+      properties:
+        entityType:
+          $ref: '#/components/schemas/EntityType'
+        entityId:
+          type: string
+          format: uuid
+        fieldName:
+          type: string
+        preferredLanguage:
+          type: string
+        fallbackLanguage:
+          type: string
+          default: "en"
+
+    TranslationJobCreateRequest:
+      type: object
+      required: [entityType, entityId, targetLanguageCode]
+      properties:
+        entityType:
+          $ref: '#/components/schemas/EntityType'
+        entityId:
+          type: string
+          format: uuid
+        targetLanguageCode:
+          type: string
+
+    TranslationJobResponse:
+      type: object
+      required: [id, entityType, entityId, targetLanguageCode, status, attempts, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        entityType:
+          $ref: '#/components/schemas/EntityType'
+        entityId:
+          type: string
+          format: uuid
+        targetLanguageCode:
+          type: string
+        status:
+          $ref: '#/components/schemas/TranslationJobStatus'
+        attempts:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true

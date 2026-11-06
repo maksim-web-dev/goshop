@@ -1,0 +1,421 @@
+openapi: "3.0.3"
+info:
+  title: Pricing Service
+  version: "1.0.0"
+servers:
+  - url: /api
+
+paths:
+  /prices/products/{productId}:
+    get:
+      summary: Get current prices for a product
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of current prices for the product
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PriceResponse'
+
+  /prices:
+    post:
+      summary: Create a price
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PriceCreateRequest'
+      responses:
+        '201':
+          description: Price created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriceResponse'
+
+  /prices/{id}:
+    put:
+      summary: Update a price
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PriceUpdateRequest'
+      responses:
+        '200':
+          description: Price updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriceResponse'
+
+  /prices/{id}/history:
+    get:
+      summary: Get price history
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of price history entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PriceHistoryResponse'
+
+  /prices/batch:
+    post:
+      summary: Get prices for multiple products in batch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchPriceRequest'
+      responses:
+        '200':
+          description: List of prices for requested products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PriceResponse'
+
+  /prices/calculate:
+    post:
+      summary: Calculate effective price for a product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CalculatePriceRequest'
+      responses:
+        '200':
+          description: Calculated price result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalculatePriceResponse'
+
+  /discounts:
+    get:
+      summary: Get all discounts
+      responses:
+        '200':
+          description: List of discounts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DiscountResponse'
+    post:
+      summary: Create a discount
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DiscountCreateRequest'
+      responses:
+        '201':
+          description: Discount created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DiscountResponse'
+
+  /discounts/{id}:
+    put:
+      summary: Update a discount
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DiscountUpdateRequest'
+      responses:
+        '200':
+          description: Discount updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DiscountResponse'
+    delete:
+      summary: Disable a discount
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Discount disabled
+
+  /exchange-rates:
+    get:
+      summary: Get all exchange rates
+      responses:
+        '200':
+          description: List of exchange rates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ExchangeRateResponse'
+
+components:
+  schemas:
+    DiscountType:
+      type: string
+      enum: [PERCENTAGE, FIXED]
+
+    DiscountStatus:
+      type: string
+      enum: [ACTIVE, INACTIVE, EXPIRED]
+
+    PriceCreateRequest:
+      type: object
+      required: [productId, amount, currencyCode]
+      properties:
+        productId:
+          type: string
+          format: uuid
+        storeId:
+          type: string
+          format: uuid
+          nullable: true
+        amount:
+          type: number
+        currencyCode:
+          type: string
+        validFrom:
+          type: string
+          format: date-time
+        validTo:
+          type: string
+          format: date-time
+          nullable: true
+
+    PriceUpdateRequest:
+      type: object
+      properties:
+        amount:
+          type: number
+          nullable: true
+        currencyCode:
+          type: string
+          nullable: true
+        validFrom:
+          type: string
+          format: date-time
+          nullable: true
+        validTo:
+          type: string
+          format: date-time
+          nullable: true
+
+    PriceResponse:
+      type: object
+      required: [id, productId, amount, currencyCode, validFrom, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        productId:
+          type: string
+          format: uuid
+        storeId:
+          type: string
+          format: uuid
+          nullable: true
+        amount:
+          type: number
+        currencyCode:
+          type: string
+        validFrom:
+          type: string
+          format: date-time
+        validTo:
+          type: string
+          format: date-time
+          nullable: true
+        updatedAt:
+          type: string
+          format: date-time
+
+    PriceHistoryResponse:
+      type: object
+      required: [id, priceId, oldAmount, newAmount, changedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        priceId:
+          type: string
+          format: uuid
+        oldAmount:
+          type: number
+        newAmount:
+          type: number
+        changedAt:
+          type: string
+          format: date-time
+
+    BatchPriceRequest:
+      type: object
+      required: [productIds]
+      properties:
+        productIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    CalculatePriceRequest:
+      type: object
+      required: [productId, currencyCode]
+      properties:
+        productId:
+          type: string
+          format: uuid
+        storeId:
+          type: string
+          format: uuid
+          nullable: true
+        currencyCode:
+          type: string
+
+    CalculatePriceResponse:
+      type: object
+      required: [originalAmount, finalAmount, currencyCode, discountApplied]
+      properties:
+        originalAmount:
+          type: number
+        finalAmount:
+          type: number
+        currencyCode:
+          type: string
+        discountApplied:
+          type: boolean
+
+    DiscountCreateRequest:
+      type: object
+      required: [storeId, discountType, discountValue, startsAt]
+      properties:
+        storeId:
+          type: string
+          format: uuid
+        productId:
+          type: string
+          format: uuid
+          nullable: true
+        discountType:
+          $ref: '#/components/schemas/DiscountType'
+        discountValue:
+          type: number
+        startsAt:
+          type: string
+          format: date-time
+        endsAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    DiscountUpdateRequest:
+      type: object
+      properties:
+        discountValue:
+          type: number
+          nullable: true
+        startsAt:
+          type: string
+          format: date-time
+          nullable: true
+        endsAt:
+          type: string
+          format: date-time
+          nullable: true
+        status:
+          $ref: '#/components/schemas/DiscountStatus'
+
+    DiscountResponse:
+      type: object
+      required: [id, storeId, discountType, discountValue, startsAt, status]
+      properties:
+        id:
+          type: string
+          format: uuid
+        storeId:
+          type: string
+          format: uuid
+        productId:
+          type: string
+          format: uuid
+          nullable: true
+        discountType:
+          $ref: '#/components/schemas/DiscountType'
+        discountValue:
+          type: number
+        startsAt:
+          type: string
+          format: date-time
+        endsAt:
+          type: string
+          format: date-time
+          nullable: true
+        status:
+          $ref: '#/components/schemas/DiscountStatus'
+
+    ExchangeRateResponse:
+      type: object
+      required: [id, fromCurrency, toCurrency, rate, effectiveAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        fromCurrency:
+          type: string
+        toCurrency:
+          type: string
+        rate:
+          type: number
+        effectiveAt:
+          type: string
+          format: date-time

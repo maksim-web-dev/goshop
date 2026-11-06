@@ -27,7 +27,7 @@ class ComponentDataSeed(
 
         val groupsByName = componentGroupRepository.findAll().associateBy { it.name }
 
-        val json = readClassPathResourceAsString("static/data/${seedProps.mode}/component.json")
+        val json = readClassPathResourceAsString("static/data/${seedProps.mode}/product_component.json")
         val dtos: Array<ComponentDto> = jacksonObjectMapper().readValue(json)
 
         val items = dtos.map { dto ->

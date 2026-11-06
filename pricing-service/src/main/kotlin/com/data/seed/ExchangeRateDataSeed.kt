@@ -24,7 +24,7 @@ class ExchangeRateDataSeed(
         if (!seedProps.enable) return
         if (exchangeRateRepository.count() > seedProps.stopCount) return
 
-        val json = readClassPathResourceAsString("static/data/${seedProps.mode}/exchange_rate.json")
+        val json = readClassPathResourceAsString("static/data/${seedProps.mode}/pricing_exchange_rate.json")
         val dtos: Array<ExchangeRateDto> = jacksonObjectMapper().readValue(json)
         exchangeRateRepository.saveAll(dtos.map {
             ExchangeRate(

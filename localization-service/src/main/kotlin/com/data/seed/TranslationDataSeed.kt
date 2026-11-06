@@ -30,7 +30,7 @@ class TranslationDataSeed(
 
         val languagesByCode = languageRepository.findAll().associateBy { it.code }
 
-        val json = readClassPathResourceAsString("static/data/${seedProps.mode}/translation.json")
+        val json = readClassPathResourceAsString("static/data/${seedProps.mode}/localization_translation.json")
         val dtos: Array<TranslationDto> = jacksonObjectMapper().readValue(json)
         translationRepository.saveAll(dtos.map {
             val language = languagesByCode[it.languageCode]

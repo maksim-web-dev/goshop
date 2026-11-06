@@ -31,7 +31,7 @@ class CategoryParameterDataSeed(
         val categoriesBySlug   = categoryRepository.findAll().associateBy { it.slug }
         val groupsByName       = parameterGroupRepository.findAll().associateBy { it.name }
 
-        val json = readClassPathResourceAsString("static/data/${seedProps.mode}/category_parameter.json")
+        val json = readClassPathResourceAsString("static/data/${seedProps.mode}/product_category_parameter.json")
         val dtos: Array<CategoryParameterDto> = jacksonObjectMapper().readValue(json)
 
         val items = dtos.map { dto ->

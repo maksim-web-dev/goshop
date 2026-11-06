@@ -24,7 +24,7 @@ class RecommendationRuleDataSeed(
         if (!seedProps.enable) return
         if (ruleRepository.count() > seedProps.stopCount) return
 
-        val json = readClassPathResourceAsString("static/data/${seedProps.mode}/recommendation_rule.json")
+        val json = readClassPathResourceAsString("static/data/${seedProps.mode}/recommendations_recommendation_rule.json")
         val dtos: Array<RuleDto> = jacksonObjectMapper().readValue(json)
         ruleRepository.saveAll(dtos.map {
             RecommendationRule(

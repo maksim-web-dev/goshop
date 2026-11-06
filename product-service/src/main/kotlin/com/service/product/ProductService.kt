@@ -34,6 +34,8 @@ class ProductService(
 
     @Transactional
     fun create(dto: CreateProductDto): Product {
+        if (productRepository.existsBySku(dto.sku))
+            throw ResponseStatusException(HttpStatus.CONFLICT, "Product with SKU '${dto.sku}' already exists")
         val brand = brandRepository.findById(dto.brandId)
             .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Brand ${dto.brandId} not found") }
         val category = categoryRepository.findById(dto.categoryId)

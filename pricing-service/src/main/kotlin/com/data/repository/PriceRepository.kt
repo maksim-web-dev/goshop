@@ -16,4 +16,12 @@ interface PriceRepository : JpaRepository<Price, UUID> {
     fun findCurrentByProductId(productId: UUID, now: Instant): List<Price>
 
     fun findByProductIdIn(productIds: List<UUID>): List<Price>
+
+    @Query("""
+        SELECT p FROM Price p
+        WHERE p.productId IN :productIds
+          AND (p.validTo IS NULL OR p.validTo > :now)
+        ORDER BY p.storeId NULLS LAST, p.validFrom DESC
+    """)
+    fun findCurrentByProductIdIn(productIds: List<UUID>, now: Instant): List<Price>
 }

@@ -19,8 +19,10 @@ class ProductAttributeController(private val productAttributeService: ProductAtt
     fun setAttributes(
         @PathVariable productId: Long,
         @RequestBody payload: ProductAttributeSetRequest
-    ) {
+    ): List<ProductAttributeResponse> {
         val dto = with(ProductAttributeSetDtoAdapter) { payload.toServiceModel() }
-        productAttributeService.setProductAttributes(productId, dto)
+        return with(ProductAttributeResponseAdapter) {
+            productAttributeService.setProductAttributes(productId, dto).toApiModel()
+        }
     }
 }

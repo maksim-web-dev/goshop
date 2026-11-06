@@ -27,7 +27,7 @@ class ParameterGroupItemDataSeed(
 
         val groupsByName = parameterGroupRepository.findAll().associateBy { it.name }
 
-        val json = readClassPathResourceAsString("static/data/${seedProps.mode}/parameter_group_item.json")
+        val json = readClassPathResourceAsString("static/data/${seedProps.mode}/product_parameter_group_item.json")
         val dtos: Array<ParameterGroupItemDto> = jacksonObjectMapper().readValue(json)
 
         val items = dtos.map { dto ->

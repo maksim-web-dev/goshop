@@ -23,7 +23,7 @@ class StoreDataSeed(
         if (!seedProps.enable) return
         if (storeRepository.count() > seedProps.stopCount) return
 
-        val json = readClassPathResourceAsString("static/data/${seedProps.mode}/store.json")
+        val json = readClassPathResourceAsString("static/data/${seedProps.mode}/store_store.json")
         val dtos: Array<StoreDto> = jacksonObjectMapper().readValue(json)
         storeRepository.saveAll(dtos.map {
             Store(

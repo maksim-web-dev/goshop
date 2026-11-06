@@ -25,7 +25,7 @@ class PriceDataSeed(
         if (!seedProps.enable) return
         if (priceRepository.count() > seedProps.stopCount) return
 
-        val json = readClassPathResourceAsString("static/data/${seedProps.mode}/price.json")
+        val json = readClassPathResourceAsString("static/data/${seedProps.mode}/pricing_price.json")
         val dtos: Array<PriceDto> = jacksonObjectMapper().readValue(json)
         priceRepository.saveAll(dtos.map {
             Price(

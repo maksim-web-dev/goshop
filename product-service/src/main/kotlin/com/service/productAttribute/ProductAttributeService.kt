@@ -21,7 +21,7 @@ class ProductAttributeService(
         productAttributeRepository.findByProductId(productId)
 
     @Transactional
-    fun setProductAttributes(productId: Long, dto: SetAttributesDto) {
+    fun setProductAttributes(productId: Long, dto: SetAttributesDto): List<ProductAttribute> {
         val product = productRepository.findById(productId)
             .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Product $productId not found") }
 
@@ -36,7 +36,7 @@ class ProductAttributeService(
                 value = av.value
             )
         }
-        productAttributeRepository.saveAll(newAttributes)
+        return productAttributeRepository.saveAll(newAttributes)
     }
 
     @Transactional

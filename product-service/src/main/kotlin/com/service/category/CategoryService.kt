@@ -2,6 +2,7 @@ package com.service.category
 
 import com.data.entity.Category
 import com.data.repository.CategoryRepository
+import com.data.repository.ProductRepository
 import com.service.category.dto.CreateCategoryDto
 import com.service.category.dto.UpdateCategoryDto
 import org.springframework.http.HttpStatus
@@ -10,7 +11,10 @@ import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.server.ResponseStatusException
 
 @Service
-class CategoryService(private val categoryRepository: CategoryRepository) {
+class CategoryService(
+    private val categoryRepository: CategoryRepository,
+    private val productRepository: ProductRepository
+) {
 
     fun findAll(): List<Category> = categoryRepository.findAll()
 
@@ -42,6 +46,10 @@ class CategoryService(private val categoryRepository: CategoryRepository) {
     fun delete(id: Long) {
         if (!categoryRepository.existsById(id))
             throw ResponseStatusException(HttpStatus.NOT_FOUND, "Category $id not found")
+        if (categoryRepository.existsByParentId(id))
+            throw ResponseStatusException(HttpStatus.CONFLICT, "Category $id has child categories")
+        if (productRepository.existsByCategoryId(id))
+            throw ResponseStatusException(HttpStatus.CONFLICT, "Category $id has associated products")
         categoryRepository.deleteById(id)
     }
 }

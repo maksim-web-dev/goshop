@@ -24,7 +24,7 @@ class CategoryDataSeed(
         if (!seedProps.enable) return
         if (categoryRepository.count() > seedProps.stopCount) return
 
-        val json = readClassPathResourceAsString("static/data/${seedProps.mode}/category.json")
+        val json = readClassPathResourceAsString("static/data/${seedProps.mode}/product_category.json")
         val dtos: Array<CategoryDto> = jacksonObjectMapper().readValue(json)
 
         val savedBySlug = mutableMapOf<String, Category>()

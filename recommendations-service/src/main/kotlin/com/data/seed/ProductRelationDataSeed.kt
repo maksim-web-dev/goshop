@@ -25,7 +25,7 @@ class ProductRelationDataSeed(
         if (!seedProps.enable) return
         if (productRelationRepository.count() > seedProps.stopCount) return
 
-        val json = readClassPathResourceAsString("static/data/${seedProps.mode}/product_relation.json")
+        val json = readClassPathResourceAsString("static/data/${seedProps.mode}/recommendations_product_relation.json")
         val dtos: Array<RelationDto> = jacksonObjectMapper().readValue(json)
         productRelationRepository.saveAll(dtos.map {
             ProductRelation(

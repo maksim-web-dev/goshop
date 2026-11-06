@@ -22,7 +22,7 @@ import javax.sql.DataSource
 
 @Configuration
 @EnableJpaRepositories(
-    basePackages = ["com.data.entity"],
+    basePackages = ["com.data.repository"],
     entityManagerFactoryRef = "pgEntityManagerFactory",
     transactionManagerRef = "pgTransactionManager"
 )
@@ -65,7 +65,7 @@ class PostgresConfig @Autowired constructor(
             "hibernate.dialect" to "org.hibernate.dialect.PostgreSQLDialect",
         )
         return LocalContainerEntityManagerFactoryBean().apply {
-            setPackagesToScan("zero44.crm.core.data.postgres")
+            setPackagesToScan("com.data.entity")
             setJpaPropertyMap(props)
             setDataSource(dataSource)
             jpaVendorAdapter = vendor

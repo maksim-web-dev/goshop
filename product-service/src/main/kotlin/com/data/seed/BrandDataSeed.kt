@@ -23,7 +23,7 @@ class BrandDataSeed(
         if (!seedProps.enable) return
         if (brandRepository.count() > seedProps.stopCount) return
 
-        val json = readClassPathResourceAsString("static/data/${seedProps.mode}/brand.json")
+        val json = readClassPathResourceAsString("static/data/${seedProps.mode}/product_brand.json")
         val dtos: Array<BrandDto> = jacksonObjectMapper().readValue(json)
         brandRepository.saveAll(dtos.map { Brand(name = it.name, websiteUrl = it.websiteUrl) })
     }
