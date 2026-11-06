@@ -7,7 +7,6 @@ import com.rest.controller.searchIndex.data.SearchIndexJobResponse
 import com.service.searchIndex.SearchIndexJobService
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.*
-import java.util.UUID
 
 @RestController
 @RequestMapping("/internal/search")
@@ -19,6 +18,6 @@ class SearchIndexController(private val searchIndexJobService: SearchIndexJobSer
         with(SearchIndexJobResponseAdapter) { searchIndexJobService.reindexAll(request.productIds).toApiModel() }
 
     @GetMapping("/index-jobs/{id}")
-    fun getJob(@PathVariable id: UUID): SearchIndexJobResponse =
+    fun getJob(@PathVariable id: Long): SearchIndexJobResponse =
         with(SearchIndexJobResponseAdapter) { searchIndexJobService.findById(id).toApiModel() }
 }

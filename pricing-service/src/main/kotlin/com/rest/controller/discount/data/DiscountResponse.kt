@@ -4,12 +4,11 @@ import com.data.entity.DiscountStatus
 import com.data.entity.DiscountType
 import java.math.BigDecimal
 import java.time.Instant
-import java.util.UUID
 
 data class DiscountResponse(
-    val id: UUID,
-    val storeId: UUID,
-    val productId: UUID?,
+    val id: Long?,
+    val storeId: Long,
+    val productId: Long?,
     val discountType: DiscountType,
     val discountValue: BigDecimal,
     val startsAt: Instant,

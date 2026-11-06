@@ -9,7 +9,6 @@ import com.rest.controller.store.data.StoreUpdateRequest
 import com.service.store.StoreService
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.*
-import java.util.UUID
 
 @RestController
 @RequestMapping("/stores")
@@ -20,7 +19,7 @@ class StoreController(private val storeService: StoreService) {
         with(StoreResponseAdapter) { storeService.findAll().toApiModel() }
 
     @GetMapping("/{id}")
-    fun getById(@PathVariable id: UUID): StoreResponse =
+    fun getById(@PathVariable id: Long): StoreResponse =
         with(StoreResponseAdapter) { storeService.findById(id).toApiModel() }
 
     @PostMapping
@@ -31,12 +30,12 @@ class StoreController(private val storeService: StoreService) {
     }
 
     @PatchMapping("/{id}")
-    fun update(@PathVariable id: UUID, @RequestBody request: StoreUpdateRequest): StoreResponse {
+    fun update(@PathVariable id: Long, @RequestBody request: StoreUpdateRequest): StoreResponse {
         val dto = with(StoreUpdateDtoAdapter) { request.toServiceModel() }
         return with(StoreResponseAdapter) { storeService.update(id, dto).toApiModel() }
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    fun deactivate(@PathVariable id: UUID) = storeService.deactivate(id)
+    fun deactivate(@PathVariable id: Long) = storeService.deactivate(id)
 }

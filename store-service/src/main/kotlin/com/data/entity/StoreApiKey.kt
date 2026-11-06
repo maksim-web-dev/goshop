@@ -2,14 +2,13 @@ package com.data.entity
 
 import jakarta.persistence.*
 import java.time.Instant
-import java.util.UUID
 
 @Entity
 @Table(name = "store_api_keys")
 class StoreApiKey(
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    val id: UUID = UUID.randomUUID(),
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    val id: Long? = null,
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "store_id", nullable = false)

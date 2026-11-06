@@ -1,0 +1,17 @@
+[
+  {
+    "id": 511,
+    "name": "AMD Ryzen 9 7950X",
+    "component_group_name": "CPU"
+  },
+  {
+    "id": 512,
+    "name": "NVIDIA RTX 4090",
+    "component_group_name": "GPU"
+  },
+  {
+    "id": 513,
+    "name": "G.Skill DDR5 32GB",
+    "component_group_name": "Memory"
+  }
+]

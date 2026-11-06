@@ -3,14 +3,13 @@ package com.data.entity
 import jakarta.persistence.*
 import java.math.BigDecimal
 import java.time.Instant
-import java.util.UUID
 
 @Entity
 @Table(name = "exchange_rates")
 class ExchangeRate(
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    val id: UUID = UUID.randomUUID(),
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    val id: Long? = null,
 
     @Column(name = "from_currency", nullable = false, length = 3)
     val fromCurrency: String,

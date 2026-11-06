@@ -12,7 +12,6 @@ import com.service.translation.TranslationService
 import com.service.translation.dto.ResolveTranslationDto
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.*
-import java.util.UUID
 
 @RestController
 @RequestMapping("/translations")
@@ -21,7 +20,7 @@ class TranslationController(private val translationService: TranslationService) 
     @GetMapping
     fun getAll(
         @RequestParam entityType: EntityType?,
-        @RequestParam entityId: UUID?
+        @RequestParam entityId: Long?
     ): List<TranslationResponse> =
         with(TranslationResponseAdapter) { translationService.findAll(entityType, entityId).toApiModel() }
 
@@ -33,14 +32,14 @@ class TranslationController(private val translationService: TranslationService) 
     }
 
     @PutMapping("/{id}")
-    fun update(@PathVariable id: UUID, @RequestBody request: TranslationUpdateRequest): TranslationResponse {
+    fun update(@PathVariable id: Long, @RequestBody request: TranslationUpdateRequest): TranslationResponse {
         val dto = with(TranslationUpdateDtoAdapter) { request.toServiceModel() }
         return with(TranslationResponseAdapter) { translationService.update(id, dto).toApiModel() }
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    fun delete(@PathVariable id: UUID) = translationService.delete(id)
+    fun delete(@PathVariable id: Long) = translationService.delete(id)
 
     @PostMapping("/resolve")
     fun resolve(@RequestBody request: ResolveTranslationRequest): TranslationResponse {

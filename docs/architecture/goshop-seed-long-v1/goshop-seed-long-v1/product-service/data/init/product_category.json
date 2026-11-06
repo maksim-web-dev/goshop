@@ -1,0 +1,56 @@
+[
+  {
+    "id": 100,
+    "name": "Computer components",
+    "slug": "components",
+    "parent_id": null
+  },
+  {
+    "id": 101,
+    "name": "Processors",
+    "slug": "processors",
+    "parent_id": 100
+  },
+  {
+    "id": 102,
+    "name": "Motherboards",
+    "slug": "motherboards",
+    "parent_id": 100
+  },
+  {
+    "id": 103,
+    "name": "Memory",
+    "slug": "memory",
+    "parent_id": 100
+  },
+  {
+    "id": 104,
+    "name": "Graphics cards",
+    "slug": "graphics-cards",
+    "parent_id": 100
+  },
+  {
+    "id": 105,
+    "name": "Power supplies",
+    "slug": "power-supplies",
+    "parent_id": 100
+  },
+  {
+    "id": 106,
+    "name": "Cases",
+    "slug": "cases",
+    "parent_id": 100
+  },
+  {
+    "id": 107,
+    "name": "CPU coolers",
+    "slug": "cpu-coolers",
+    "parent_id": 100
+  },
+  {
+    "id": 108,
+    "name": "Solid-state drives",
+    "slug": "ssds",
+    "parent_id": 100
+  }
+]

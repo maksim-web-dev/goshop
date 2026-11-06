@@ -1,7 +1,14 @@
 [
-  {"name": "Processor"},
-  {"name": "Memory"},
-  {"name": "Display"},
-  {"name": "Battery"},
-  {"name": "Camera"}
+  {
+    "id": 501,
+    "name": "CPU"
+  },
+  {
+    "id": 502,
+    "name": "GPU"
+  },
+  {
+    "id": 503,
+    "name": "Memory"
+  }
 ]

@@ -1,14 +1,13 @@
 package com.data.entity
 
 import jakarta.persistence.*
-import java.util.UUID
 
 @Entity
 @Table(name = "store_settings")
 class StoreSettings(
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    val id: UUID = UUID.randomUUID(),
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    val id: Long? = null,
 
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "store_id", nullable = false, unique = true)

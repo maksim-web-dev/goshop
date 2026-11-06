@@ -13,7 +13,6 @@ import org.springframework.boot.CommandLineRunner
 import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
-import java.util.UUID
 
 @Component
 @Transactional
@@ -37,7 +36,7 @@ class TranslationDataSeed(
                 ?: throw IllegalArgumentException("Language '${it.languageCode}' not found")
             Translation(
                 entityType = EntityType.valueOf(it.entityType),
-                entityId = UUID.fromString(it.entityId),
+                entityId = it.entityId,
                 fieldName = it.fieldName,
                 language = language,
                 translatedValue = it.translatedValue,
@@ -48,7 +47,7 @@ class TranslationDataSeed(
 
     private data class TranslationDto(
         @param:JsonProperty("entity_type")       val entityType: String,
-        @param:JsonProperty("entity_id")         val entityId: String,
+        @param:JsonProperty("entity_id")         val entityId: Long,
         @param:JsonProperty("field_name")        val fieldName: String,
         @param:JsonProperty("language_code")     val languageCode: String,
         @param:JsonProperty("translated_value")  val translatedValue: String

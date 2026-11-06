@@ -1,7 +1,6 @@
 package com.data.entity
 
 import jakarta.persistence.*
-import java.util.UUID
 
 @Entity
 @Table(
@@ -10,14 +9,14 @@ import java.util.UUID
 )
 class ProductRelation(
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    val id: UUID = UUID.randomUUID(),
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    val id: Long? = null,
 
     @Column(name = "source_product_id", nullable = false)
-    val sourceProductId: UUID,
+    val sourceProductId: Long,
 
     @Column(name = "target_product_id", nullable = false)
-    val targetProductId: UUID,
+    val targetProductId: Long,
 
     @Enumerated(EnumType.STRING)
     @Column(name = "relation_type", nullable = false)

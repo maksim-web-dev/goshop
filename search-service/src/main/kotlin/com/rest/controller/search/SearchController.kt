@@ -6,7 +6,6 @@ import com.rest.controller.search.data.SearchResultResponse
 import com.service.search.SearchService
 import com.service.search.dto.SearchQueryDto
 import org.springframework.web.bind.annotation.*
-import java.util.UUID
 
 @RestController
 @RequestMapping("/search")
@@ -16,7 +15,7 @@ class SearchController(private val searchService: SearchService) {
     fun search(
         @RequestParam q: String?,
         @RequestParam brand: String?,
-        @RequestParam categoryId: UUID? = null,
+        @RequestParam categoryId: Long? = null,
         @RequestParam page: Int = 0,
         @RequestParam size: Int = 20
     ): List<SearchResultResponse> {

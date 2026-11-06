@@ -5,9 +5,8 @@ import com.data.entity.DiscountStatus
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import java.time.Instant
-import java.util.UUID
 
-interface DiscountRepository : JpaRepository<Discount, UUID> {
+interface DiscountRepository : JpaRepository<Discount, Long> {
     fun findByStatus(status: DiscountStatus): List<Discount>
 
     @Query("""
@@ -19,5 +18,5 @@ interface DiscountRepository : JpaRepository<Discount, UUID> {
           AND (d.endsAt IS NULL OR d.endsAt > :now)
         ORDER BY d.discountValue DESC
     """)
-    fun findActiveForProduct(storeId: UUID, productId: UUID, now: Instant): List<Discount>
+    fun findActiveForProduct(storeId: Long, productId: Long, now: Instant): List<Discount>
 }

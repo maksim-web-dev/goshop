@@ -1,0 +1,32 @@
+[
+  {
+    "id": 411,
+    "name": "AM5",
+    "parameter_group_name": "Socket"
+  },
+  {
+    "id": 412,
+    "name": "LGA1700",
+    "parameter_group_name": "Socket"
+  },
+  {
+    "id": 413,
+    "name": "DDR4",
+    "parameter_group_name": "Memory generation"
+  },
+  {
+    "id": 414,
+    "name": "DDR5",
+    "parameter_group_name": "Memory generation"
+  },
+  {
+    "id": 415,
+    "name": "ATX",
+    "parameter_group_name": "Form factor"
+  },
+  {
+    "id": 416,
+    "name": "mATX",
+    "parameter_group_name": "Form factor"
+  }
+]

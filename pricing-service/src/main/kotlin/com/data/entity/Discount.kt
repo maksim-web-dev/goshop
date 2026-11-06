@@ -3,21 +3,20 @@ package com.data.entity
 import jakarta.persistence.*
 import java.math.BigDecimal
 import java.time.Instant
-import java.util.UUID
 
 @Entity
 @Table(name = "discounts")
 class Discount(
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    val id: UUID = UUID.randomUUID(),
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    val id: Long? = null,
 
     @Column(name = "store_id", nullable = false)
-    val storeId: UUID,
+    val storeId: Long,
 
     // null = знижка на весь асортимент магазину
     @Column(name = "product_id")
-    val productId: UUID? = null,
+    val productId: Long? = null,
 
     @Enumerated(EnumType.STRING)
     @Column(name = "discount_type", nullable = false)

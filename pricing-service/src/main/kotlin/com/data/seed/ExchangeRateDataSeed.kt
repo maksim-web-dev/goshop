@@ -11,6 +11,7 @@ import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
+import java.time.Instant
 
 @Component
 @Transactional
@@ -30,7 +31,8 @@ class ExchangeRateDataSeed(
             ExchangeRate(
                 fromCurrency = it.fromCurrency,
                 toCurrency = it.toCurrency,
-                rate = BigDecimal(it.rate)
+                rate = BigDecimal(it.rate),
+                effectiveAt = Instant.parse(it.effectiveAt)
             )
         })
     }
@@ -38,6 +40,7 @@ class ExchangeRateDataSeed(
     private data class ExchangeRateDto(
         @param:JsonProperty("from_currency") val fromCurrency: String,
         @param:JsonProperty("to_currency")   val toCurrency: String,
-        @param:JsonProperty("rate")          val rate: String
+        @param:JsonProperty("rate")          val rate: String,
+        @param:JsonProperty("effective_at")  val effectiveAt: String
     )
 }

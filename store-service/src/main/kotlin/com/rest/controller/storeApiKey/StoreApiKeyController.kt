@@ -6,7 +6,6 @@ import com.service.storeApiKey.StoreApiKeyService
 import com.service.storeApiKey.dto.CreateStoreApiKeyDto
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.*
-import java.util.UUID
 
 @RestController
 @RequestMapping("/stores/{storeId}/api-keys")
@@ -15,7 +14,7 @@ class StoreApiKeyController(private val storeApiKeyService: StoreApiKeyService) 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     fun create(
-        @PathVariable storeId: UUID,
+        @PathVariable storeId: Long,
         @RequestBody request: StoreApiKeyCreateRequest
     ): StoreApiKeyCreateResponse {
         val result = storeApiKeyService.create(storeId, CreateStoreApiKeyDto(expiresAt = request.expiresAt))
@@ -31,6 +30,6 @@ class StoreApiKeyController(private val storeApiKeyService: StoreApiKeyService) 
 
     @PostMapping("/{keyId}/revoke")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    fun revoke(@PathVariable storeId: UUID, @PathVariable keyId: UUID) =
+    fun revoke(@PathVariable storeId: Long, @PathVariable keyId: Long) =
         storeApiKeyService.revoke(storeId, keyId)
 }

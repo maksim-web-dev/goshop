@@ -1,0 +1,187 @@
+[
+  {
+    "product_id": 1001,
+    "category_parameter_id": 302,
+    "value": "AM5"
+  },
+  {
+    "product_id": 1001,
+    "category_parameter_id": 303,
+    "value": "170"
+  },
+  {
+    "product_id": 1001,
+    "category_parameter_id": 301,
+    "value": "16"
+  },
+  {
+    "product_id": 1002,
+    "category_parameter_id": 305,
+    "value": "AM5"
+  },
+  {
+    "product_id": 1002,
+    "category_parameter_id": 306,
+    "value": "DDR5"
+  },
+  {
+    "product_id": 1002,
+    "category_parameter_id": 304,
+    "value": "ATX"
+  },
+  {
+    "product_id": 1003,
+    "category_parameter_id": 307,
+    "value": "DDR5"
+  },
+  {
+    "product_id": 1003,
+    "category_parameter_id": 308,
+    "value": "32"
+  },
+  {
+    "product_id": 1004,
+    "category_parameter_id": 310,
+    "value": "24"
+  },
+  {
+    "product_id": 1004,
+    "category_parameter_id": 311,
+    "value": "GDDR6X"
+  },
+  {
+    "product_id": 1004,
+    "category_parameter_id": 312,
+    "value": "450"
+  },
+  {
+    "product_id": 1004,
+    "category_parameter_id": 309,
+    "value": "304"
+  },
+  {
+    "product_id": 1005,
+    "category_parameter_id": 313,
+    "value": "1000"
+  },
+  {
+    "product_id": 1006,
+    "category_parameter_id": 314,
+    "value": "360"
+  },
+  {
+    "product_id": 1006,
+    "category_parameter_id": 315,
+    "value": "ATX"
+  },
+  {
+    "product_id": 1007,
+    "category_parameter_id": 310,
+    "value": "16"
+  },
+  {
+    "product_id": 1007,
+    "category_parameter_id": 311,
+    "value": "GDDR6X"
+  },
+  {
+    "product_id": 1007,
+    "category_parameter_id": 312,
+    "value": "320"
+  },
+  {
+    "product_id": 1007,
+    "category_parameter_id": 309,
+    "value": "322"
+  },
+  {
+    "product_id": 1008,
+    "category_parameter_id": 316,
+    "value": "220"
+  },
+  {
+    "product_id": 1008,
+    "category_parameter_id": 317,
+    "value": "AM5"
+  },
+  {
+    "product_id": 1009,
+    "category_parameter_id": 302,
+    "value": "AM5"
+  },
+  {
+    "product_id": 1009,
+    "category_parameter_id": 303,
+    "value": "170"
+  },
+  {
+    "product_id": 1009,
+    "category_parameter_id": 301,
+    "value": "12"
+  },
+  {
+    "product_id": 1010,
+    "category_parameter_id": 302,
+    "value": "AM5"
+  },
+  {
+    "product_id": 1010,
+    "category_parameter_id": 303,
+    "value": "170"
+  },
+  {
+    "product_id": 1010,
+    "category_parameter_id": 301,
+    "value": "16"
+  },
+  {
+    "product_id": 1011,
+    "category_parameter_id": 318,
+    "value": "2000"
+  },
+  {
+    "product_id": 1011,
+    "category_parameter_id": 319,
+    "value": "PCIe 4.0"
+  },
+  {
+    "product_id": 1012,
+    "category_parameter_id": 305,
+    "value": "LGA1700"
+  },
+  {
+    "product_id": 1012,
+    "category_parameter_id": 306,
+    "value": "DDR5"
+  },
+  {
+    "product_id": 1012,
+    "category_parameter_id": 304,
+    "value": "ATX"
+  },
+  {
+    "product_id": 1013,
+    "category_parameter_id": 307,
+    "value": "DDR4"
+  },
+  {
+    "product_id": 1013,
+    "category_parameter_id": 308,
+    "value": "32"
+  },
+  {
+    "product_id": 1014,
+    "category_parameter_id": 314,
+    "value": "280"
+  },
+  {
+    "product_id": 1014,
+    "category_parameter_id": 315,
+    "value": "mATX"
+  },
+  {
+    "product_id": 1015,
+    "category_parameter_id": 313,
+    "value": "550"
+  }
+]

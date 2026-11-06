@@ -13,7 +13,6 @@ import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
 import java.time.Instant
-import java.util.UUID
 
 @Component
 @Transactional
@@ -31,8 +30,8 @@ class DiscountDataSeed(
         val dtos: Array<DiscountDto> = jacksonObjectMapper().readValue(json)
         discountRepository.saveAll(dtos.map {
             Discount(
-                storeId = UUID.fromString(it.storeId),
-                productId = it.productId?.let { id -> UUID.fromString(id) },
+                storeId = it.storeId,
+                productId = it.productId,
                 discountType = DiscountType.valueOf(it.discountType),
                 discountValue = BigDecimal(it.discountValue),
                 startsAt = Instant.parse(it.startsAt),
@@ -42,8 +41,8 @@ class DiscountDataSeed(
     }
 
     private data class DiscountDto(
-        @param:JsonProperty("store_id")       val storeId: String,
-        @param:JsonProperty("product_id")     val productId: String? = null,
+        @param:JsonProperty("store_id")       val storeId: Long,
+        @param:JsonProperty("product_id")     val productId: Long? = null,
         @param:JsonProperty("discount_type")  val discountType: String,
         @param:JsonProperty("discount_value") val discountValue: String,
         @param:JsonProperty("starts_at")      val startsAt: String,

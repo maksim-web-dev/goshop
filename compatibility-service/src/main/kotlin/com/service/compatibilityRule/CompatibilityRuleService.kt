@@ -8,7 +8,6 @@ import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.server.ResponseStatusException
-import java.util.UUID
 
 @Service
 class CompatibilityRuleService(
@@ -17,7 +16,7 @@ class CompatibilityRuleService(
 
     fun findAll(): List<CompatibilityRule> = compatibilityRuleRepository.findAll()
 
-    fun findById(id: UUID): CompatibilityRule =
+    fun findById(id: Long): CompatibilityRule =
         compatibilityRuleRepository.findById(id)
             .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Rule $id not found") }
 
@@ -39,7 +38,7 @@ class CompatibilityRuleService(
     }
 
     @Transactional
-    fun update(id: UUID, dto: UpdateCompatibilityRuleDto): CompatibilityRule {
+    fun update(id: Long, dto: UpdateCompatibilityRuleDto): CompatibilityRule {
         val existing = findById(id)
         return compatibilityRuleRepository.save(
             CompatibilityRule(
@@ -57,7 +56,7 @@ class CompatibilityRuleService(
     }
 
     @Transactional
-    fun disable(id: UUID) {
+    fun disable(id: Long) {
         val existing = findById(id)
         compatibilityRuleRepository.save(
             CompatibilityRule(

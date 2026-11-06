@@ -3,14 +3,13 @@ package com.data.entity
 import jakarta.persistence.*
 import java.math.BigDecimal
 import java.time.Instant
-import java.util.UUID
 
 @Entity
 @Table(name = "price_history")
 class PriceHistory(
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    val id: UUID = UUID.randomUUID(),
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    val id: Long? = null,
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "price_id", nullable = false)

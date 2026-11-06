@@ -15,7 +15,6 @@ import org.springframework.web.server.ResponseStatusException
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.Instant
-import java.util.UUID
 
 data class CalculatedPrice(
     val originalAmount: BigDecimal,
@@ -31,17 +30,17 @@ class PriceService(
     private val discountRepository: DiscountRepository
 ) {
 
-    fun findCurrentByProductId(productId: UUID): List<Price> =
+    fun findCurrentByProductId(productId: Long): List<Price> =
         priceRepository.findCurrentByProductId(productId, Instant.now())
 
-    fun findById(id: UUID): Price =
+    fun findById(id: Long): Price =
         priceRepository.findById(id)
             .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Price $id not found") }
 
-    fun findHistoryByPriceId(id: UUID): List<PriceHistory> =
+    fun findHistoryByPriceId(id: Long): List<PriceHistory> =
         priceHistoryRepository.findByPriceIdOrderByChangedAtDesc(id)
 
-    fun findBatchByProductIds(productIds: List<UUID>): List<Price> =
+    fun findBatchByProductIds(productIds: List<Long>): List<Price> =
         priceRepository.findCurrentByProductIdIn(productIds, Instant.now())
 
     @Transactional
@@ -58,7 +57,7 @@ class PriceService(
         )
 
     @Transactional
-    fun update(id: UUID, dto: UpdatePriceDto): Price {
+    fun update(id: Long, dto: UpdatePriceDto): Price {
         val existing = findById(id)
         val newAmount = dto.amount ?: existing.amount
         if (dto.amount != null && dto.amount != existing.amount) {

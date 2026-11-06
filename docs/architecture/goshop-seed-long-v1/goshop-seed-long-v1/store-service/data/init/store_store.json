@@ -1,0 +1,26 @@
+[
+  {
+    "id": 2001,
+    "name": "GoShop Demo US",
+    "domain": "demo-us.goshop.test",
+    "country_code": "US",
+    "default_language": "en",
+    "default_currency": "USD"
+  },
+  {
+    "id": 2002,
+    "name": "GoShop Demo Ukraine",
+    "domain": "demo-ua.goshop.test",
+    "country_code": "UA",
+    "default_language": "uk",
+    "default_currency": "UAH"
+  },
+  {
+    "id": 2003,
+    "name": "GoShop Demo EU",
+    "domain": "demo-eu.goshop.test",
+    "country_code": "DE",
+    "default_language": "de",
+    "default_currency": "EUR"
+  }
+]

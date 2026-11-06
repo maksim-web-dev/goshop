@@ -1,38 +1,130 @@
 [
   {
-    "product_id": "11111111-1111-1111-1111-111111111001",
+    "product_id": 1001,
     "store_id": null,
-    "amount": "1799.9900",
-    "currency_code": "USD"
+    "amount": "699.99",
+    "currency_code": "USD",
+    "valid_from": "2026-01-01T00:00:00Z",
+    "valid_to": null
   },
   {
-    "product_id": "11111111-1111-1111-1111-111111111001",
-    "store_id": "33333333-3333-3333-3333-333333333001",
-    "amount": "1749.9900",
-    "currency_code": "USD"
+    "product_id": 1002,
+    "store_id": null,
+    "amount": "299.99",
+    "currency_code": "USD",
+    "valid_from": "2026-01-01T00:00:00Z",
+    "valid_to": null
   },
   {
-    "product_id": "11111111-1111-1111-1111-111111111002",
+    "product_id": 1003,
     "store_id": null,
-    "amount": "699.9900",
-    "currency_code": "USD"
+    "amount": "129.99",
+    "currency_code": "USD",
+    "valid_from": "2026-01-01T00:00:00Z",
+    "valid_to": null
   },
   {
-    "product_id": "11111111-1111-1111-1111-111111111003",
+    "product_id": 1004,
     "store_id": null,
-    "amount": "349.9900",
-    "currency_code": "USD"
+    "amount": "1799.99",
+    "currency_code": "USD",
+    "valid_from": "2026-01-01T00:00:00Z",
+    "valid_to": null
   },
   {
-    "product_id": "11111111-1111-1111-1111-111111111004",
+    "product_id": 1005,
     "store_id": null,
-    "amount": "189.9900",
-    "currency_code": "USD"
+    "amount": "189.99",
+    "currency_code": "USD",
+    "valid_from": "2026-01-01T00:00:00Z",
+    "valid_to": null
   },
   {
-    "product_id": "11111111-1111-1111-1111-111111111005",
+    "product_id": 1006,
     "store_id": null,
-    "amount": "129.9900",
-    "currency_code": "USD"
+    "amount": "109.99",
+    "currency_code": "USD",
+    "valid_from": "2026-01-01T00:00:00Z",
+    "valid_to": null
+  },
+  {
+    "product_id": 1007,
+    "store_id": null,
+    "amount": "1099.99",
+    "currency_code": "USD",
+    "valid_from": "2026-01-01T00:00:00Z",
+    "valid_to": null
+  },
+  {
+    "product_id": 1008,
+    "store_id": null,
+    "amount": "119.99",
+    "currency_code": "USD",
+    "valid_from": "2026-01-01T00:00:00Z",
+    "valid_to": null
+  },
+  {
+    "product_id": 1009,
+    "store_id": null,
+    "amount": "429.99",
+    "currency_code": "USD",
+    "valid_from": "2026-01-01T00:00:00Z",
+    "valid_to": null
+  },
+  {
+    "product_id": 1010,
+    "store_id": null,
+    "amount": "649.99",
+    "currency_code": "USD",
+    "valid_from": "2026-01-01T00:00:00Z",
+    "valid_to": null
+  },
+  {
+    "product_id": 1011,
+    "store_id": null,
+    "amount": "179.99",
+    "currency_code": "USD",
+    "valid_from": "2026-01-01T00:00:00Z",
+    "valid_to": null
+  },
+  {
+    "product_id": 1012,
+    "store_id": null,
+    "amount": "279.99",
+    "currency_code": "USD",
+    "valid_from": "2026-01-01T00:00:00Z",
+    "valid_to": null
+  },
+  {
+    "product_id": 1013,
+    "store_id": null,
+    "amount": "89.99",
+    "currency_code": "USD",
+    "valid_from": "2026-01-01T00:00:00Z",
+    "valid_to": null
+  },
+  {
+    "product_id": 1014,
+    "store_id": null,
+    "amount": "69.99",
+    "currency_code": "USD",
+    "valid_from": "2026-01-01T00:00:00Z",
+    "valid_to": null
+  },
+  {
+    "product_id": 1015,
+    "store_id": null,
+    "amount": "64.99",
+    "currency_code": "USD",
+    "valid_from": "2026-01-01T00:00:00Z",
+    "valid_to": null
+  },
+  {
+    "product_id": 1004,
+    "store_id": 2001,
+    "amount": "1749.99",
+    "currency_code": "USD",
+    "valid_from": "2026-01-01T00:00:00Z",
+    "valid_to": null
   }
 ]

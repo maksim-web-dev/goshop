@@ -9,7 +9,6 @@ import com.rest.controller.compatibilityRule.data.CompatibilityRuleUpdateRequest
 import com.service.compatibilityRule.CompatibilityRuleService
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.*
-import java.util.UUID
 
 @RestController
 @RequestMapping("/compatibility/rules")
@@ -27,12 +26,12 @@ class CompatibilityRuleController(private val compatibilityRuleService: Compatib
     }
 
     @PutMapping("/{id}")
-    fun update(@PathVariable id: UUID, @RequestBody request: CompatibilityRuleUpdateRequest): CompatibilityRuleResponse {
+    fun update(@PathVariable id: Long, @RequestBody request: CompatibilityRuleUpdateRequest): CompatibilityRuleResponse {
         val dto = with(CompatibilityRuleUpdateDtoAdapter) { request.toServiceModel() }
         return with(CompatibilityRuleResponseAdapter) { compatibilityRuleService.update(id, dto).toApiModel() }
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    fun disable(@PathVariable id: UUID) = compatibilityRuleService.disable(id)
+    fun disable(@PathVariable id: Long) = compatibilityRuleService.disable(id)
 }

@@ -8,7 +8,6 @@ import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.server.ResponseStatusException
-import java.util.UUID
 
 @Service
 class StoreWebhookService(
@@ -16,11 +15,11 @@ class StoreWebhookService(
     private val storeRepository: StoreRepository
 ) {
 
-    fun findByStore(storeId: UUID): List<StoreWebhook> =
+    fun findByStore(storeId: Long): List<StoreWebhook> =
         webhookRepository.findByStoreId(storeId)
 
     @Transactional
-    fun create(storeId: UUID, dto: CreateStoreWebhookDto): StoreWebhook {
+    fun create(storeId: Long, dto: CreateStoreWebhookDto): StoreWebhook {
         val store = storeRepository.findById(storeId)
             .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Store $storeId not found") }
         return webhookRepository.save(

@@ -8,11 +8,8 @@ import com.data.repository.CompatibilityIssueRepository
 import com.data.repository.CompatibilityRuleRepository
 import com.service.compatibilityCheck.dto.CheckCompatibilityDto
 import com.service.compatibilityCheck.dto.PairCheckDto
-import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import org.springframework.web.server.ResponseStatusException
-import java.util.UUID
 
 data class CompatibilityResult(
     val compatible: Boolean,
@@ -58,13 +55,13 @@ class CompatibilityCheckService(
     fun checkPair(dto: PairCheckDto): CompatibilityResult =
         check(CheckCompatibilityDto(productIds = listOf(dto.sourceProductId, dto.targetProductId)))
 
-    fun findCompatibleProducts(productId: UUID): List<UUID> {
+    fun findCompatibleProducts(productId: Long): List<Long> {
         // Returns product IDs that passed compatibility checks with the given product.
         // Currently returns empty list — full implementation requires product catalog integration.
         return emptyList()
     }
 
-    private fun evaluateRule(ruleId: UUID, productIds: List<UUID>): String? {
+    private fun evaluateRule(ruleId: Long?, productIds: List<Long>): String? {
         // Stub: each concrete RuleType handler returns a messageCode on violation, null on pass.
         return null
     }

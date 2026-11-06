@@ -11,7 +11,6 @@ import org.springframework.boot.CommandLineRunner
 import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
-import java.util.UUID
 
 @Component
 @Transactional
@@ -29,8 +28,8 @@ class ProductRelationDataSeed(
         val dtos: Array<RelationDto> = jacksonObjectMapper().readValue(json)
         productRelationRepository.saveAll(dtos.map {
             ProductRelation(
-                sourceProductId = UUID.fromString(it.sourceProductId),
-                targetProductId = UUID.fromString(it.targetProductId),
+                sourceProductId = it.sourceProductId,
+                targetProductId = it.targetProductId,
                 relationType = RelationType.valueOf(it.relationType),
                 score = it.score
             )
@@ -38,8 +37,8 @@ class ProductRelationDataSeed(
     }
 
     private data class RelationDto(
-        @param:JsonProperty("source_product_id") val sourceProductId: String,
-        @param:JsonProperty("target_product_id") val targetProductId: String,
+        @param:JsonProperty("source_product_id") val sourceProductId: Long,
+        @param:JsonProperty("target_product_id") val targetProductId: Long,
         @param:JsonProperty("relation_type")     val relationType: String,
         @param:JsonProperty("score")             val score: Double = 0.0
     )

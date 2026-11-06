@@ -1,47 +1,62 @@
 [
   {
     "code": "CPU_MOTHERBOARD_SOCKET",
-    "source_product_type_id": "22222222-2222-2222-2222-222222222001",
-    "target_product_type_id": "22222222-2222-2222-2222-222222222002",
+    "source_product_type_id": 201,
+    "target_product_type_id": 202,
     "rule_type": "SOCKET_MATCH",
     "parameters": "{\"cpu_field\": \"socket\", \"motherboard_field\": \"socket\"}",
     "severity": "ERROR",
-    "enabled": true
+    "enabled": true,
+    "version": 1
   },
   {
     "code": "RAM_MOTHERBOARD_DDR",
-    "source_product_type_id": "22222222-2222-2222-2222-222222222003",
-    "target_product_type_id": "22222222-2222-2222-2222-222222222002",
+    "source_product_type_id": 203,
+    "target_product_type_id": 202,
     "rule_type": "RAM_COMPATIBILITY",
     "parameters": "{\"ram_field\": \"ddr_type\", \"motherboard_field\": \"supported_ddr\"}",
     "severity": "ERROR",
-    "enabled": true
+    "enabled": true,
+    "version": 1
   },
   {
-    "code": "PSU_SYSTEM_POWER",
-    "source_product_type_id": "22222222-2222-2222-2222-222222222005",
-    "target_product_type_id": "22222222-2222-2222-2222-222222222004",
+    "code": "PSU_GPU_POWER",
+    "source_product_type_id": 205,
+    "target_product_type_id": 204,
     "rule_type": "POWER_CAPACITY",
-    "parameters": "{\"psu_field\": \"wattage\", \"safety_margin\": 1.2}",
+    "parameters": "{\"psu_field\": \"wattage\", \"gpu_field\": \"tdp_w\", \"safety_margin\": 1.2}",
     "severity": "WARNING",
-    "enabled": true
+    "enabled": true,
+    "version": 1
   },
   {
     "code": "GPU_CASE_CLEARANCE",
-    "source_product_type_id": "22222222-2222-2222-2222-222222222004",
-    "target_product_type_id": "22222222-2222-2222-2222-222222222006",
+    "source_product_type_id": 204,
+    "target_product_type_id": 206,
     "rule_type": "GPU_CLEARANCE",
     "parameters": "{\"gpu_field\": \"length_mm\", \"case_field\": \"max_gpu_length_mm\"}",
     "severity": "ERROR",
-    "enabled": true
+    "enabled": true,
+    "version": 1
   },
   {
     "code": "CPU_COOLER_TDP",
-    "source_product_type_id": "22222222-2222-2222-2222-222222222001",
-    "target_product_type_id": "22222222-2222-2222-2222-222222222002",
+    "source_product_type_id": 201,
+    "target_product_type_id": 207,
     "rule_type": "COOLING_TDP",
     "parameters": "{\"cpu_field\": \"tdp_w\", \"cooler_field\": \"max_tdp_w\"}",
     "severity": "WARNING",
-    "enabled": true
+    "enabled": true,
+    "version": 1
+  },
+  {
+    "code": "MB_CASE_FORM_FACTOR",
+    "source_product_type_id": 202,
+    "target_product_type_id": 206,
+    "rule_type": "FORM_FACTOR",
+    "parameters": "{\"motherboard_field\": \"form_factor\", \"case_field\": \"supported_form_factor\"}",
+    "severity": "ERROR",
+    "enabled": true,
+    "version": 1
   }
 ]

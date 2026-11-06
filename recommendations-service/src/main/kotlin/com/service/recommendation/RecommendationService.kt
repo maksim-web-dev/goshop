@@ -7,7 +7,6 @@ import com.data.repository.ProductRelationRepository
 import com.data.repository.RecommendationSnapshotRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.util.UUID
 
 @Service
 class RecommendationService(
@@ -15,24 +14,24 @@ class RecommendationService(
     private val snapshotRepository: RecommendationSnapshotRepository
 ) {
 
-    fun findAll(productId: UUID): List<UUID> =
+    fun findAll(productId: Long): List<Long> =
         productRelationRepository.findBySourceProductIdOrderByScoreDesc(productId)
             .map { it.targetProductId }
 
-    fun findSimilar(productId: UUID): List<UUID> =
+    fun findSimilar(productId: Long): List<Long> =
         findByType(productId, RelationType.SIMILAR)
 
-    fun findAlternatives(productId: UUID): List<UUID> =
+    fun findAlternatives(productId: Long): List<Long> =
         findByType(productId, RelationType.ALTERNATIVE)
 
-    fun findAccessories(productId: UUID): List<UUID> =
+    fun findAccessories(productId: Long): List<Long> =
         findByType(productId, RelationType.ACCESSORY)
 
-    fun buildForPc(productIds: List<UUID>): Map<UUID, List<UUID>> =
+    fun buildForPc(productIds: List<Long>): Map<Long, List<Long>> =
         productIds.associateWith { findAll(it) }
 
     @Transactional
-    fun generateSnapshot(productId: UUID, strategy: RecommendationStrategy): RecommendationSnapshot {
+    fun generateSnapshot(productId: Long, strategy: RecommendationStrategy): RecommendationSnapshot {
         val recommended = when (strategy) {
             RecommendationStrategy.SIMILAR_ATTRIBUTES -> findByType(productId, RelationType.SIMILAR)
             RecommendationStrategy.SAME_CATEGORY -> findAll(productId)
@@ -41,7 +40,7 @@ class RecommendationService(
         val existing = snapshotRepository.findByProductIdAndStrategy(productId, strategy)
         return snapshotRepository.save(
             RecommendationSnapshot(
-                id = existing?.id ?: java.util.UUID.randomUUID(),
+                id = existing?.id,
                 productId = productId,
                 strategy = strategy,
                 recommendedProductIds = recommended.toMutableList()
@@ -49,7 +48,7 @@ class RecommendationService(
         )
     }
 
-    private fun findByType(productId: UUID, type: RelationType): List<UUID> =
+    private fun findByType(productId: Long, type: RelationType): List<Long> =
         productRelationRepository.findBySourceProductIdAndRelationTypeOrderByScoreDesc(productId, type)
             .map { it.targetProductId }
 }

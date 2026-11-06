@@ -8,7 +8,6 @@ import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.server.ResponseStatusException
-import java.util.UUID
 
 @Service
 class TranslationJobService(
@@ -16,7 +15,7 @@ class TranslationJobService(
     private val languageRepository: LanguageRepository
 ) {
 
-    fun findById(id: UUID): TranslationJob =
+    fun findById(id: Long): TranslationJob =
         translationJobRepository.findById(id)
             .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Job $id not found") }
 

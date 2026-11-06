@@ -1,0 +1,30 @@
+[
+  {
+    "name": "Similar GPUs by attributes",
+    "strategy": "SIMILAR_ATTRIBUTES",
+    "parameters": "{\"fields\": [\"memory_gb\", \"memory_type\", \"tdp_w\"], \"tolerance\": 0.2}",
+    "priority": 10,
+    "enabled": true
+  },
+  {
+    "name": "Same category products",
+    "strategy": "SAME_CATEGORY",
+    "parameters": null,
+    "priority": 5,
+    "enabled": true
+  },
+  {
+    "name": "Similar price range",
+    "strategy": "PRICE_RANGE",
+    "parameters": "{\"range_pct\": 15}",
+    "priority": 3,
+    "enabled": true
+  },
+  {
+    "name": "Compatible accessories",
+    "strategy": "COMPATIBILITY_BASED",
+    "parameters": "{\"relation_types\": [\"ACCESSORY\"]}",
+    "priority": 8,
+    "enabled": true
+  }
+]

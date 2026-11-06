@@ -8,7 +8,6 @@ import com.service.compatibilityCheck.CompatibilityCheckService
 import com.service.compatibilityCheck.dto.CheckCompatibilityDto
 import com.service.compatibilityCheck.dto.PairCheckDto
 import org.springframework.web.bind.annotation.*
-import java.util.UUID
 
 @RestController
 @RequestMapping("/compatibility")
@@ -27,6 +26,6 @@ class CompatibilityController(private val compatibilityCheckService: Compatibili
     }
 
     @GetMapping("/products/{id}")
-    fun findCompatible(@PathVariable id: UUID): List<UUID> =
+    fun findCompatible(@PathVariable id: Long): List<Long> =
         compatibilityCheckService.findCompatibleProducts(id)
 }

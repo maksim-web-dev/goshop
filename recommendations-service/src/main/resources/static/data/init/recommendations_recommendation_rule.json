@@ -1,6 +1,6 @@
 [
   {
-    "name": "Similar GPU by attributes",
+    "name": "Similar GPUs by attributes",
     "strategy": "SIMILAR_ATTRIBUTES",
     "parameters": "{\"fields\": [\"memory_gb\", \"memory_type\", \"tdp_w\"], \"tolerance\": 0.2}",
     "priority": 10,
@@ -25,13 +25,6 @@
     "strategy": "COMPATIBILITY_BASED",
     "parameters": "{\"relation_types\": [\"ACCESSORY\"]}",
     "priority": 8,
-    "enabled": true
-  },
-  {
-    "name": "Popular in category",
-    "strategy": "POPULAR_IN_CATEGORY",
-    "parameters": "{\"top_n\": 10}",
-    "priority": 2,
     "enabled": true
   }
 ]

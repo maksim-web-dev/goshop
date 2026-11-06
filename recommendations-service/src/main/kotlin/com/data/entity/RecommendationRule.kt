@@ -1,14 +1,13 @@
 package com.data.entity
 
 import jakarta.persistence.*
-import java.util.UUID
 
 @Entity
 @Table(name = "recommendation_rules")
 class RecommendationRule(
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    val id: UUID = UUID.randomUUID(),
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    val id: Long? = null,
 
     @Column(nullable = false)
     val name: String,

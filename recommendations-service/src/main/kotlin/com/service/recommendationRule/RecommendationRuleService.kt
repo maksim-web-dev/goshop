@@ -8,14 +8,13 @@ import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.server.ResponseStatusException
-import java.util.UUID
 
 @Service
 class RecommendationRuleService(private val ruleRepository: RecommendationRuleRepository) {
 
     fun findAll(): List<RecommendationRule> = ruleRepository.findAll()
 
-    fun findById(id: UUID): RecommendationRule =
+    fun findById(id: Long): RecommendationRule =
         ruleRepository.findById(id)
             .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Rule $id not found") }
 
@@ -32,7 +31,7 @@ class RecommendationRuleService(private val ruleRepository: RecommendationRuleRe
         )
 
     @Transactional
-    fun update(id: UUID, dto: UpdateRecommendationRuleDto): RecommendationRule {
+    fun update(id: Long, dto: UpdateRecommendationRuleDto): RecommendationRule {
         val existing = findById(id)
         return ruleRepository.save(
             RecommendationRule(

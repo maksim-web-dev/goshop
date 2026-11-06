@@ -2,17 +2,16 @@ package com.data.entity
 
 import jakarta.persistence.*
 import java.time.Instant
-import java.util.UUID
 
 @Entity
 @Table(name = "search_index_jobs")
 class SearchIndexJob(
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    val id: UUID = UUID.randomUUID(),
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    val id: Long? = null,
 
     @Column(name = "product_id", nullable = false)
-    val productId: UUID,
+    val productId: Long,
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

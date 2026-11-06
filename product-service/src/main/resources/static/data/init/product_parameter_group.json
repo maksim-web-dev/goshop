@@ -1,7 +1,14 @@
 [
-  {"name": "Color"},
-  {"name": "Size"},
-  {"name": "Material"},
-  {"name": "Resolution"},
-  {"name": "Storage Capacity"}
+  {
+    "id": 401,
+    "name": "Socket"
+  },
+  {
+    "id": 402,
+    "name": "Memory generation"
+  },
+  {
+    "id": 403,
+    "name": "Form factor"
+  }
 ]

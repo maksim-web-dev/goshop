@@ -1,16 +1,13 @@
 package com.data.seed
 
 import com.config.props.SeedProps
-import com.data.entity.CategoryParameter
-import com.data.entity.ParameterType
-import com.data.repository.CategoryParameterRepository
-import com.data.repository.CategoryRepository
-import com.data.repository.ParameterGroupRepository
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.CommandLineRunner
 import org.springframework.core.annotation.Order
+import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 
@@ -18,44 +15,35 @@ import org.springframework.transaction.annotation.Transactional
 @Transactional
 @Order(7)
 class CategoryParameterDataSeed(
-    private val categoryParameterRepository: CategoryParameterRepository,
-    private val categoryRepository: CategoryRepository,
-    private val parameterGroupRepository: ParameterGroupRepository,
+    @Qualifier("pgJdbc") private val jdbc: JdbcTemplate,
     private val seedProps: SeedProps
 ) : CommandLineRunner {
 
     override fun run(vararg args: String?) {
         if (!seedProps.enable) return
-        if (categoryParameterRepository.count() > seedProps.stopCount) return
-
-        val categoriesBySlug   = categoryRepository.findAll().associateBy { it.slug }
-        val groupsByName       = parameterGroupRepository.findAll().associateBy { it.name }
+        val count = jdbc.queryForObject("SELECT COUNT(*) FROM category_parameters", Long::class.java) ?: 0L
+        if (count > seedProps.stopCount) return
 
         val json = readClassPathResourceAsString("static/data/${seedProps.mode}/product_category_parameter.json")
         val dtos: Array<CategoryParameterDto> = jacksonObjectMapper().readValue(json)
-
-        val items = dtos.map { dto ->
-            val category = categoriesBySlug[dto.categorySlug]
-                ?: throw IllegalArgumentException("Category slug '${dto.categorySlug}' not found")
-            val parameterGroup = dto.parameterGroupName?.let {
-                groupsByName[it] ?: throw IllegalArgumentException("ParameterGroup '$it' not found")
-            }
-            CategoryParameter(
-                name = dto.name,
-                order = dto.sortOrder,
-                category = category,
-                parameterType = ParameterType.valueOf(dto.parameterType),
-                parameterGroup = parameterGroup
+        dtos.forEach { dto ->
+            jdbc.update(
+                "INSERT INTO category_parameters (id, name, code, sort_order, category_id, parameter_type) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT (id) DO NOTHING",
+                dto.id, dto.name, dto.code, dto.sortOrder, dto.categoryId, dto.parameterType
             )
         }
-        categoryParameterRepository.saveAll(items)
+        jdbc.queryForObject(
+            "SELECT setval(pg_get_serial_sequence('category_parameters', 'id'), COALESCE((SELECT MAX(id) FROM category_parameters), 1))",
+            Long::class.java
+        )
     }
 
     private data class CategoryParameterDto(
-        @param:JsonProperty("name")                 val name: String,
-        @param:JsonProperty("sort_order")           val sortOrder: Int,
-        @param:JsonProperty("category_slug")        val categorySlug: String,
-        @param:JsonProperty("parameter_type")       val parameterType: String,
-        @param:JsonProperty("parameter_group_name") val parameterGroupName: String? = null
+        @param:JsonProperty("id")             val id: Long,
+        @param:JsonProperty("name")           val name: String,
+        @param:JsonProperty("code")           val code: String? = null,
+        @param:JsonProperty("sort_order")     val sortOrder: Int,
+        @param:JsonProperty("category_id")    val categoryId: Long,
+        @param:JsonProperty("parameter_type") val parameterType: String
     )
 }

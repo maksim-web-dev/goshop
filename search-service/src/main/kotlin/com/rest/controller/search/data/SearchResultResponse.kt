@@ -1,14 +1,13 @@
 package com.rest.controller.search.data
 
 import java.time.Instant
-import java.util.UUID
 
 data class SearchResultResponse(
-    val productId: UUID,
+    val productId: Long,
     val sku: String,
     val name: String,
     val brand: String,
-    val categoryId: UUID,
+    val categoryId: Long,
     val status: String,
     val indexedAt: Instant
 )

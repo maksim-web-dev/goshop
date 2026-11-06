@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.server.ResponseStatusException
 import java.time.Instant
-import java.util.UUID
 
 @Service
 class TranslationService(
@@ -21,13 +20,13 @@ class TranslationService(
     private val languageRepository: LanguageRepository
 ) {
 
-    fun findAll(entityType: EntityType?, entityId: UUID?): List<Translation> {
+    fun findAll(entityType: EntityType?, entityId: Long?): List<Translation> {
         if (entityType != null && entityId != null)
             return translationRepository.findByEntityTypeAndEntityId(entityType, entityId)
         return translationRepository.findAll()
     }
 
-    fun findById(id: UUID): Translation =
+    fun findById(id: Long): Translation =
         translationRepository.findById(id)
             .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Translation $id not found") }
 
@@ -47,7 +46,7 @@ class TranslationService(
     }
 
     @Transactional
-    fun update(id: UUID, dto: UpdateTranslationDto): Translation {
+    fun update(id: Long, dto: UpdateTranslationDto): Translation {
         val existing = findById(id)
         return translationRepository.save(
             Translation(
@@ -64,7 +63,7 @@ class TranslationService(
     }
 
     @Transactional
-    fun delete(id: UUID) {
+    fun delete(id: Long) {
         if (!translationRepository.existsById(id))
             throw ResponseStatusException(HttpStatus.NOT_FOUND, "Translation $id not found")
         translationRepository.deleteById(id)

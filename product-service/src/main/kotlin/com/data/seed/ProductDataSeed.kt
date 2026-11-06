@@ -1,71 +1,58 @@
 package com.data.seed
 
 import com.config.props.SeedProps
-import com.data.entity.Product
-import com.data.entity.ProductStatus
-import com.data.repository.BrandRepository
-import com.data.repository.CategoryRepository
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import com.data.repository.ProductRepository
-import com.data.repository.ProductTypeRepository
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.CommandLineRunner
 import org.springframework.core.annotation.Order
+import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
+import java.time.Instant
 
 @Component
 @Transactional
 @Order(9)
 class ProductDataSeed(
-    private val productRepository: ProductRepository,
-    private val brandRepository: BrandRepository,
-    private val categoryRepository: CategoryRepository,
-    private val productTypeRepository: ProductTypeRepository,
+    @Qualifier("pgJdbc") private val jdbc: JdbcTemplate,
     private val seedProps: SeedProps
 ) : CommandLineRunner {
 
     override fun run(vararg args: String?) {
         if (!seedProps.enable) return
-        if (productRepository.count() > seedProps.stopCount) return
-
-        val brandsByName      = brandRepository.findAll().associateBy { it.name }
-        val categoriesBySlug  = categoryRepository.findAll().associateBy { it.slug }
-        val productTypes      = productTypeRepository.findAll()
+        val count = jdbc.queryForObject("SELECT COUNT(*) FROM products", Long::class.java) ?: 0L
+        if (count > seedProps.stopCount) return
 
         val json = readClassPathResourceAsString("static/data/${seedProps.mode}/product_product.json")
         val dtos: Array<ProductDto> = jacksonObjectMapper().readValue(json)
-
-        val items = dtos.map { dto ->
-            val brand = brandsByName[dto.brandName]
-                ?: throw IllegalArgumentException("Brand '${dto.brandName}' not found")
-            val category = categoriesBySlug[dto.categorySlug]
-                ?: throw IllegalArgumentException("Category slug '${dto.categorySlug}' not found")
-            val productType = productTypes.firstOrNull {
-                it.name == dto.productTypeName && it.category.slug == dto.categorySlug
-            } ?: throw IllegalArgumentException("ProductType '${dto.productTypeName}' in '${dto.categorySlug}' not found")
-
-            Product(
-                sku = dto.sku,
-                name = dto.name,
-                brand = brand,
-                category = category,
-                productType = productType,
-                description = dto.description,
-                status = ProductStatus.valueOf(dto.status)
+        val now = Instant.now()
+        dtos.forEach { dto ->
+            jdbc.update(
+                """
+                INSERT INTO products (id, sku, name, brand_id, category_id, product_type_id, description, status, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT (id) DO NOTHING
+                """.trimIndent(),
+                dto.id, dto.sku, dto.name, dto.brandId, dto.categoryId, dto.productTypeId,
+                dto.description, dto.status, now, now
             )
         }
-        productRepository.saveAll(items)
+        jdbc.queryForObject(
+            "SELECT setval(pg_get_serial_sequence('products', 'id'), COALESCE((SELECT MAX(id) FROM products), 1))",
+            Long::class.java
+        )
     }
 
     private data class ProductDto(
-        @param:JsonProperty("sku")               val sku: String,
-        @param:JsonProperty("name")              val name: String,
-        @param:JsonProperty("brand_name")        val brandName: String,
-        @param:JsonProperty("category_slug")     val categorySlug: String,
-        @param:JsonProperty("product_type_name") val productTypeName: String,
-        @param:JsonProperty("description")       val description: String? = null,
-        @param:JsonProperty("status")            val status: String = "DRAFT"
+        @param:JsonProperty("id")              val id: Long,
+        @param:JsonProperty("sku")             val sku: String,
+        @param:JsonProperty("name")            val name: String,
+        @param:JsonProperty("brand_id")        val brandId: Long,
+        @param:JsonProperty("category_id")     val categoryId: Long,
+        @param:JsonProperty("product_type_id") val productTypeId: Long,
+        @param:JsonProperty("description")     val description: String? = null,
+        @param:JsonProperty("status")          val status: String = "DRAFT"
     )
 }

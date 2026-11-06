@@ -1,0 +1,38 @@
+[
+  {
+    "store_id": 2001,
+    "store_domain": "demo-us.goshop.test",
+    "requests_per_second": 200,
+    "burst_limit": 400,
+    "allowed_languages": [
+      "en",
+      "uk",
+      "de",
+      "pl"
+    ]
+  },
+  {
+    "store_id": 2002,
+    "store_domain": "demo-ua.goshop.test",
+    "requests_per_second": 100,
+    "burst_limit": 200,
+    "allowed_languages": [
+      "en",
+      "uk",
+      "de",
+      "pl"
+    ]
+  },
+  {
+    "store_id": 2003,
+    "store_domain": "demo-eu.goshop.test",
+    "requests_per_second": 100,
+    "burst_limit": 200,
+    "allowed_languages": [
+      "en",
+      "uk",
+      "de",
+      "pl"
+    ]
+  }
+]

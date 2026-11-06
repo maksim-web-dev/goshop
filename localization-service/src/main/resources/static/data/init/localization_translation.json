@@ -1,58 +1,226 @@
 [
   {
     "entity_type": "PRODUCT",
-    "entity_id": "11111111-1111-1111-1111-111111111001",
-    "field_name": "name",
-    "language_code": "uk",
-    "translated_value": "Відеокарта NVIDIA GeForce RTX 4090"
-  },
-  {
-    "entity_type": "PRODUCT",
-    "entity_id": "11111111-1111-1111-1111-111111111001",
+    "entity_id": 1001,
     "field_name": "name",
     "language_code": "en",
-    "translated_value": "GPU NVIDIA GeForce RTX 4090"
+    "translated_value": "AMD Ryzen 9 7950X"
   },
   {
     "entity_type": "PRODUCT",
-    "entity_id": "11111111-1111-1111-1111-111111111001",
-    "field_name": "description",
-    "language_code": "uk",
-    "translated_value": "Флагманська відеокарта NVIDIA архітектури Ada Lovelace з 24 ГБ GDDR6X памʼяті."
-  },
-  {
-    "entity_type": "PRODUCT",
-    "entity_id": "11111111-1111-1111-1111-111111111002",
+    "entity_id": 1001,
     "field_name": "name",
     "language_code": "uk",
     "translated_value": "Процесор AMD Ryzen 9 7950X"
   },
   {
     "entity_type": "PRODUCT",
-    "entity_id": "11111111-1111-1111-1111-111111111002",
+    "entity_id": 1002,
     "field_name": "name",
     "language_code": "en",
-    "translated_value": "CPU AMD Ryzen 9 7950X"
+    "translated_value": "ASUS B650E ATX AM5 Motherboard"
   },
   {
-    "entity_type": "BRAND",
-    "entity_id": "11111111-1111-1111-1111-111111111101",
+    "entity_type": "PRODUCT",
+    "entity_id": 1002,
     "field_name": "name",
     "language_code": "uk",
-    "translated_value": "НВІДІА"
+    "translated_value": "Материнська плата ASUS B650E ATX AM5"
+  },
+  {
+    "entity_type": "PRODUCT",
+    "entity_id": 1003,
+    "field_name": "name",
+    "language_code": "en",
+    "translated_value": "G.Skill Trident Z5 32GB DDR5-6000"
+  },
+  {
+    "entity_type": "PRODUCT",
+    "entity_id": 1003,
+    "field_name": "name",
+    "language_code": "uk",
+    "translated_value": "Оперативна пам’ять G.Skill Trident Z5 32GB DDR5"
+  },
+  {
+    "entity_type": "PRODUCT",
+    "entity_id": 1004,
+    "field_name": "name",
+    "language_code": "en",
+    "translated_value": "NVIDIA GeForce RTX 4090 24GB"
+  },
+  {
+    "entity_type": "PRODUCT",
+    "entity_id": 1004,
+    "field_name": "name",
+    "language_code": "uk",
+    "translated_value": "Відеокарта NVIDIA GeForce RTX 4090 24GB"
+  },
+  {
+    "entity_type": "PRODUCT",
+    "entity_id": 1005,
+    "field_name": "name",
+    "language_code": "en",
+    "translated_value": "Corsair RM1000x 1000W"
+  },
+  {
+    "entity_type": "PRODUCT",
+    "entity_id": 1005,
+    "field_name": "name",
+    "language_code": "uk",
+    "translated_value": "Блок живлення Corsair RM1000x 1000W"
+  },
+  {
+    "entity_type": "PRODUCT",
+    "entity_id": 1006,
+    "field_name": "name",
+    "language_code": "en",
+    "translated_value": "Corsair 4000D Airflow"
+  },
+  {
+    "entity_type": "PRODUCT",
+    "entity_id": 1006,
+    "field_name": "name",
+    "language_code": "uk",
+    "translated_value": "Корпус Corsair 4000D Airflow"
+  },
+  {
+    "entity_type": "PRODUCT",
+    "entity_id": 1007,
+    "field_name": "name",
+    "language_code": "en",
+    "translated_value": "MSI GeForce RTX 4080 SUPER 16GB"
+  },
+  {
+    "entity_type": "PRODUCT",
+    "entity_id": 1007,
+    "field_name": "name",
+    "language_code": "uk",
+    "translated_value": "Відеокарта MSI GeForce RTX 4080 SUPER 16GB"
+  },
+  {
+    "entity_type": "PRODUCT",
+    "entity_id": 1008,
+    "field_name": "name",
+    "language_code": "en",
+    "translated_value": "Noctua NH-D15 CPU Cooler"
+  },
+  {
+    "entity_type": "PRODUCT",
+    "entity_id": 1008,
+    "field_name": "name",
+    "language_code": "uk",
+    "translated_value": "Кулер Noctua NH-D15"
+  },
+  {
+    "entity_type": "PRODUCT",
+    "entity_id": 1009,
+    "field_name": "name",
+    "language_code": "en",
+    "translated_value": "AMD Ryzen 9 7900X"
+  },
+  {
+    "entity_type": "PRODUCT",
+    "entity_id": 1009,
+    "field_name": "name",
+    "language_code": "uk",
+    "translated_value": "Процесор AMD Ryzen 9 7900X"
+  },
+  {
+    "entity_type": "PRODUCT",
+    "entity_id": 1010,
+    "field_name": "name",
+    "language_code": "en",
+    "translated_value": "AMD Ryzen 9 9950X"
+  },
+  {
+    "entity_type": "PRODUCT",
+    "entity_id": 1010,
+    "field_name": "name",
+    "language_code": "uk",
+    "translated_value": "Процесор AMD Ryzen 9 9950X"
+  },
+  {
+    "entity_type": "PRODUCT",
+    "entity_id": 1011,
+    "field_name": "name",
+    "language_code": "en",
+    "translated_value": "Samsung 990 PRO 2TB NVMe SSD"
+  },
+  {
+    "entity_type": "PRODUCT",
+    "entity_id": 1011,
+    "field_name": "name",
+    "language_code": "uk",
+    "translated_value": "Накопичувач Samsung 990 PRO 2TB"
+  },
+  {
+    "entity_type": "PRODUCT",
+    "entity_id": 1012,
+    "field_name": "name",
+    "language_code": "en",
+    "translated_value": "MSI Z790 ATX LGA1700 Motherboard"
+  },
+  {
+    "entity_type": "PRODUCT",
+    "entity_id": 1012,
+    "field_name": "name",
+    "language_code": "uk",
+    "translated_value": "Материнська плата MSI Z790"
+  },
+  {
+    "entity_type": "PRODUCT",
+    "entity_id": 1013,
+    "field_name": "name",
+    "language_code": "en",
+    "translated_value": "Corsair Vengeance 32GB DDR4"
+  },
+  {
+    "entity_type": "PRODUCT",
+    "entity_id": 1013,
+    "field_name": "name",
+    "language_code": "uk",
+    "translated_value": "Оперативна пам’ять Corsair Vengeance 32GB DDR4"
+  },
+  {
+    "entity_type": "PRODUCT",
+    "entity_id": 1014,
+    "field_name": "name",
+    "language_code": "en",
+    "translated_value": "MSI Compact Micro ATX Case"
+  },
+  {
+    "entity_type": "PRODUCT",
+    "entity_id": 1014,
+    "field_name": "name",
+    "language_code": "uk",
+    "translated_value": "Корпус MSI Compact Micro ATX"
+  },
+  {
+    "entity_type": "PRODUCT",
+    "entity_id": 1015,
+    "field_name": "name",
+    "language_code": "en",
+    "translated_value": "Corsair CX550 550W"
+  },
+  {
+    "entity_type": "PRODUCT",
+    "entity_id": 1015,
+    "field_name": "name",
+    "language_code": "uk",
+    "translated_value": "Блок живлення Corsair CX550 550W"
   },
   {
     "entity_type": "CATEGORY",
-    "entity_id": "11111111-1111-1111-1111-111111111201",
+    "entity_id": 104,
     "field_name": "name",
     "language_code": "uk",
     "translated_value": "Відеокарти"
   },
   {
     "entity_type": "CATEGORY",
-    "entity_id": "11111111-1111-1111-1111-111111111201",
+    "entity_id": 101,
     "field_name": "name",
-    "language_code": "en",
-    "translated_value": "Graphics Cards"
+    "language_code": "uk",
+    "translated_value": "Процесори"
   }
 ]

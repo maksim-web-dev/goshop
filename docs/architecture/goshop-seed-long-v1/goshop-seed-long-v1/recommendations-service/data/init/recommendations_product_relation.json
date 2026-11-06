@@ -1,0 +1,44 @@
+[
+  {
+    "source_product_id": 1004,
+    "target_product_id": 1007,
+    "relation_type": "ALTERNATIVE",
+    "score": 0.86
+  },
+  {
+    "source_product_id": 1004,
+    "target_product_id": 1006,
+    "relation_type": "ACCESSORY",
+    "score": 0.8
+  },
+  {
+    "source_product_id": 1004,
+    "target_product_id": 1005,
+    "relation_type": "ACCESSORY",
+    "score": 0.95
+  },
+  {
+    "source_product_id": 1001,
+    "target_product_id": 1009,
+    "relation_type": "SIMILAR",
+    "score": 0.91
+  },
+  {
+    "source_product_id": 1001,
+    "target_product_id": 1010,
+    "relation_type": "UPGRADE",
+    "score": 0.88
+  },
+  {
+    "source_product_id": 1001,
+    "target_product_id": 1002,
+    "relation_type": "ACCESSORY",
+    "score": 0.97
+  },
+  {
+    "source_product_id": 1002,
+    "target_product_id": 1003,
+    "relation_type": "ACCESSORY",
+    "score": 0.95
+  }
+]

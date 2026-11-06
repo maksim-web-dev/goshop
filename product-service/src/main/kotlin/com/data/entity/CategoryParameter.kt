@@ -12,6 +12,9 @@ class CategoryParameter(
     @Column(nullable = false)
     val name: String,
 
+    @Column(name = "code")
+    val code: String? = null,
+
     @Column(name = "sort_order", nullable = false)
     val order: Int = 0,
 

@@ -3,22 +3,21 @@ package com.data.entity
 import jakarta.persistence.*
 import java.math.BigDecimal
 import java.time.Instant
-import java.util.UUID
 
 @Entity
 @Table(name = "prices")
 class Price(
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    val id: UUID = UUID.randomUUID(),
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    val id: Long? = null,
 
-    // UUID товару з product-service
+    // ID товару з product-service
     @Column(name = "product_id", nullable = false)
-    val productId: UUID,
+    val productId: Long,
 
     // null = базова ціна платформи; не null = ціна конкретного магазину
     @Column(name = "store_id")
-    val storeId: UUID? = null,
+    val storeId: Long? = null,
 
     @Column(nullable = false, precision = 19, scale = 4)
     val amount: BigDecimal,

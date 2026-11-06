@@ -10,14 +10,13 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.server.ResponseStatusException
 import java.time.Instant
-import java.util.UUID
 
 @Service
 class DiscountService(private val discountRepository: DiscountRepository) {
 
     fun findAll(): List<Discount> = discountRepository.findAll()
 
-    fun findById(id: UUID): Discount =
+    fun findById(id: Long): Discount =
         discountRepository.findById(id)
             .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Discount $id not found") }
 
@@ -35,7 +34,7 @@ class DiscountService(private val discountRepository: DiscountRepository) {
         )
 
     @Transactional
-    fun update(id: UUID, dto: UpdateDiscountDto): Discount {
+    fun update(id: Long, dto: UpdateDiscountDto): Discount {
         val existing = findById(id)
         return discountRepository.save(
             Discount(
@@ -52,7 +51,7 @@ class DiscountService(private val discountRepository: DiscountRepository) {
     }
 
     @Transactional
-    fun disable(id: UUID) {
+    fun disable(id: Long) {
         val existing = findById(id)
         discountRepository.save(
             Discount(

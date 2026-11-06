@@ -9,7 +9,6 @@ import com.rest.controller.recommendationRule.data.RecommendationRuleUpdateReque
 import com.service.recommendationRule.RecommendationRuleService
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.*
-import java.util.UUID
 
 @RestController
 @RequestMapping("/recommendations/rules")
@@ -27,7 +26,7 @@ class RecommendationRuleController(private val ruleService: RecommendationRuleSe
     }
 
     @PutMapping("/{id}")
-    fun update(@PathVariable id: UUID, @RequestBody request: RecommendationRuleUpdateRequest): RecommendationRuleResponse {
+    fun update(@PathVariable id: Long, @RequestBody request: RecommendationRuleUpdateRequest): RecommendationRuleResponse {
         val dto = with(RecommendationRuleUpdateDtoAdapter) { request.toServiceModel() }
         return with(RecommendationRuleResponseAdapter) { ruleService.update(id, dto).toApiModel() }
     }

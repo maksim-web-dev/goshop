@@ -1,0 +1,52 @@
+[
+  {
+    "id": 1,
+    "name": "AMD",
+    "website_url": "https://amd.com"
+  },
+  {
+    "id": 2,
+    "name": "Intel",
+    "website_url": "https://intel.com"
+  },
+  {
+    "id": 3,
+    "name": "NVIDIA",
+    "website_url": "https://nvidia.com"
+  },
+  {
+    "id": 4,
+    "name": "ASUS",
+    "website_url": "https://asus.com"
+  },
+  {
+    "id": 5,
+    "name": "MSI",
+    "website_url": "https://msi.com"
+  },
+  {
+    "id": 6,
+    "name": "G.Skill",
+    "website_url": "https://gskill.com"
+  },
+  {
+    "id": 7,
+    "name": "Corsair",
+    "website_url": "https://corsair.com"
+  },
+  {
+    "id": 8,
+    "name": "Samsung",
+    "website_url": "https://samsung.com"
+  },
+  {
+    "id": 9,
+    "name": "Noctua",
+    "website_url": "https://noctua.at"
+  },
+  {
+    "id": 10,
+    "name": "Gigabyte",
+    "website_url": "https://gigabyte.com"
+  }
+]

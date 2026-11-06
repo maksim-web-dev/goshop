@@ -1,0 +1,173 @@
+[
+  {
+    "id": 301,
+    "name": "cores",
+    "code": "cores",
+    "sort_order": 301,
+    "category_slug": "processors",
+    "category_id": 101,
+    "parameter_type": "INT"
+  },
+  {
+    "id": 302,
+    "name": "socket",
+    "code": "socket",
+    "sort_order": 302,
+    "category_slug": "processors",
+    "category_id": 101,
+    "parameter_type": "STRING"
+  },
+  {
+    "id": 303,
+    "name": "tdp_w",
+    "code": "tdp_w",
+    "sort_order": 303,
+    "category_slug": "processors",
+    "category_id": 101,
+    "parameter_type": "INT"
+  },
+  {
+    "id": 304,
+    "name": "form_factor",
+    "code": "form_factor",
+    "sort_order": 304,
+    "category_slug": "motherboards",
+    "category_id": 102,
+    "parameter_type": "STRING"
+  },
+  {
+    "id": 305,
+    "name": "socket",
+    "code": "socket",
+    "sort_order": 305,
+    "category_slug": "motherboards",
+    "category_id": 102,
+    "parameter_type": "STRING"
+  },
+  {
+    "id": 306,
+    "name": "supported_ddr",
+    "code": "supported_ddr",
+    "sort_order": 306,
+    "category_slug": "motherboards",
+    "category_id": 102,
+    "parameter_type": "STRING"
+  },
+  {
+    "id": 307,
+    "name": "ddr_type",
+    "code": "ddr_type",
+    "sort_order": 307,
+    "category_slug": "memory",
+    "category_id": 103,
+    "parameter_type": "STRING"
+  },
+  {
+    "id": 308,
+    "name": "memory_gb",
+    "code": "memory_gb",
+    "sort_order": 308,
+    "category_slug": "memory",
+    "category_id": 103,
+    "parameter_type": "INT"
+  },
+  {
+    "id": 309,
+    "name": "length_mm",
+    "code": "length_mm",
+    "sort_order": 309,
+    "category_slug": "graphics-cards",
+    "category_id": 104,
+    "parameter_type": "INT"
+  },
+  {
+    "id": 310,
+    "name": "memory_gb",
+    "code": "memory_gb",
+    "sort_order": 310,
+    "category_slug": "graphics-cards",
+    "category_id": 104,
+    "parameter_type": "INT"
+  },
+  {
+    "id": 311,
+    "name": "memory_type",
+    "code": "memory_type",
+    "sort_order": 311,
+    "category_slug": "graphics-cards",
+    "category_id": 104,
+    "parameter_type": "STRING"
+  },
+  {
+    "id": 312,
+    "name": "tdp_w",
+    "code": "tdp_w",
+    "sort_order": 312,
+    "category_slug": "graphics-cards",
+    "category_id": 104,
+    "parameter_type": "INT"
+  },
+  {
+    "id": 313,
+    "name": "wattage",
+    "code": "wattage",
+    "sort_order": 313,
+    "category_slug": "power-supplies",
+    "category_id": 105,
+    "parameter_type": "INT"
+  },
+  {
+    "id": 314,
+    "name": "max_gpu_length_mm",
+    "code": "max_gpu_length_mm",
+    "sort_order": 314,
+    "category_slug": "cases",
+    "category_id": 106,
+    "parameter_type": "INT"
+  },
+  {
+    "id": 315,
+    "name": "supported_form_factor",
+    "code": "supported_form_factor",
+    "sort_order": 315,
+    "category_slug": "cases",
+    "category_id": 106,
+    "parameter_type": "STRING"
+  },
+  {
+    "id": 316,
+    "name": "max_tdp_w",
+    "code": "max_tdp_w",
+    "sort_order": 316,
+    "category_slug": "cpu-coolers",
+    "category_id": 107,
+    "parameter_type": "INT"
+  },
+  {
+    "id": 317,
+    "name": "socket",
+    "code": "socket",
+    "sort_order": 317,
+    "category_slug": "cpu-coolers",
+    "category_id": 107,
+    "parameter_type": "STRING"
+  },
+  {
+    "id": 318,
+    "name": "capacity_gb",
+    "code": "capacity_gb",
+    "sort_order": 318,
+    "category_slug": "ssds",
+    "category_id": 108,
+    "parameter_type": "INT"
+  },
+  {
+    "id": 319,
+    "name": "interface",
+    "code": "interface",
+    "sort_order": 319,
+    "category_slug": "ssds",
+    "category_id": 108,
+    "parameter_type": "STRING"
+  }
+]

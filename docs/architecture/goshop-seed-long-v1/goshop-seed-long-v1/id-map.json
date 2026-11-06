@@ -1,0 +1,196 @@
+{
+  "id_policy": "All business entity IDs and cross-service IDs use Long (JSON number); language codes and natural keys remain strings",
+  "products": [
+    {
+      "id": 1001,
+      "sku": "CPU-AMD-7950X",
+      "category_id": 101,
+      "product_type_id": 201,
+      "brand_id": 1
+    },
+    {
+      "id": 1002,
+      "sku": "MB-ASUS-B650E",
+      "category_id": 102,
+      "product_type_id": 202,
+      "brand_id": 4
+    },
+    {
+      "id": 1003,
+      "sku": "RAM-GSK-32-DDR5",
+      "category_id": 103,
+      "product_type_id": 203,
+      "brand_id": 6
+    },
+    {
+      "id": 1004,
+      "sku": "GPU-NV-RTX4090",
+      "category_id": 104,
+      "product_type_id": 204,
+      "brand_id": 3
+    },
+    {
+      "id": 1005,
+      "sku": "PSU-COR-1000",
+      "category_id": 105,
+      "product_type_id": 205,
+      "brand_id": 7
+    },
+    {
+      "id": 1006,
+      "sku": "CASE-COR-4000D",
+      "category_id": 106,
+      "product_type_id": 206,
+      "brand_id": 7
+    },
+    {
+      "id": 1007,
+      "sku": "GPU-MSI-RTX4080",
+      "category_id": 104,
+      "product_type_id": 204,
+      "brand_id": 5
+    },
+    {
+      "id": 1008,
+      "sku": "COOL-NOC-D15",
+      "category_id": 107,
+      "product_type_id": 207,
+      "brand_id": 9
+    },
+    {
+      "id": 1009,
+      "sku": "CPU-AMD-7900X",
+      "category_id": 101,
+      "product_type_id": 201,
+      "brand_id": 1
+    },
+    {
+      "id": 1010,
+      "sku": "CPU-AMD-9950X",
+      "category_id": 101,
+      "product_type_id": 201,
+      "brand_id": 1
+    },
+    {
+      "id": 1011,
+      "sku": "SSD-SAM-990-2TB",
+      "category_id": 108,
+      "product_type_id": 208,
+      "brand_id": 8
+    },
+    {
+      "id": 1012,
+      "sku": "MB-MSI-Z790",
+      "category_id": 102,
+      "product_type_id": 202,
+      "brand_id": 5
+    },
+    {
+      "id": 1013,
+      "sku": "RAM-COR-32-DDR4",
+      "category_id": 103,
+      "product_type_id": 203,
+      "brand_id": 7
+    },
+    {
+      "id": 1014,
+      "sku": "CASE-MSI-SMALL",
+      "category_id": 106,
+      "product_type_id": 206,
+      "brand_id": 5
+    },
+    {
+      "id": 1015,
+      "sku": "PSU-COR-550",
+      "category_id": 105,
+      "product_type_id": 205,
+      "brand_id": 7
+    }
+  ],
+  "stores": [
+    {
+      "id": 2001,
+      "domain": "demo-us.goshop.test"
+    },
+    {
+      "id": 2002,
+      "domain": "demo-ua.goshop.test"
+    },
+    {
+      "id": 2003,
+      "domain": "demo-eu.goshop.test"
+    }
+  ],
+  "product_types": [
+    {
+      "id": 201,
+      "name": "CPU"
+    },
+    {
+      "id": 202,
+      "name": "Motherboard"
+    },
+    {
+      "id": 203,
+      "name": "RAM"
+    },
+    {
+      "id": 204,
+      "name": "GPU"
+    },
+    {
+      "id": 205,
+      "name": "PSU"
+    },
+    {
+      "id": 206,
+      "name": "Case"
+    },
+    {
+      "id": 207,
+      "name": "CPU Cooler"
+    },
+    {
+      "id": 208,
+      "name": "SSD"
+    }
+  ],
+  "categories": [
+    {
+      "id": 100,
+      "slug": "components"
+    },
+    {
+      "id": 101,
+      "slug": "processors"
+    },
+    {
+      "id": 102,
+      "slug": "motherboards"
+    },
+    {
+      "id": 103,
+      "slug": "memory"
+    },
+    {
+      "id": 104,
+      "slug": "graphics-cards"
+    },
+    {
+      "id": 105,
+      "slug": "power-supplies"
+    },
+    {
+      "id": 106,
+      "slug": "cases"
+    },
+    {
+      "id": 107,
+      "slug": "cpu-coolers"
+    },
+    {
+      "id": 108,
+      "slug": "ssds"
+    }
+  ]
+}

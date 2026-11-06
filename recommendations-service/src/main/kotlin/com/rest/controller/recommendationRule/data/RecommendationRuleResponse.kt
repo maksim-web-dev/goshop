@@ -1,10 +1,9 @@
 package com.rest.controller.recommendationRule.data
 
 import com.data.entity.RecommendationStrategy
-import java.util.UUID
 
 data class RecommendationRuleResponse(
-    val id: UUID,
+    val id: Long?,
     val name: String,
     val strategy: RecommendationStrategy,
     val parameters: String?,

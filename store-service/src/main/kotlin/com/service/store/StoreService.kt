@@ -9,14 +9,13 @@ import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.server.ResponseStatusException
-import java.util.UUID
 
 @Service
 class StoreService(private val storeRepository: StoreRepository) {
 
     fun findAll(): List<Store> = storeRepository.findAll()
 
-    fun findById(id: UUID): Store =
+    fun findById(id: Long): Store =
         storeRepository.findById(id)
             .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Store $id not found") }
 
@@ -36,7 +35,7 @@ class StoreService(private val storeRepository: StoreRepository) {
     }
 
     @Transactional
-    fun update(id: UUID, dto: UpdateStoreDto): Store {
+    fun update(id: Long, dto: UpdateStoreDto): Store {
         val existing = findById(id)
         return storeRepository.save(
             Store(
@@ -53,7 +52,7 @@ class StoreService(private val storeRepository: StoreRepository) {
     }
 
     @Transactional
-    fun deactivate(id: UUID) {
+    fun deactivate(id: Long) {
         val existing = findById(id)
         storeRepository.save(
             Store(

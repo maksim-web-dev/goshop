@@ -2,13 +2,12 @@ package com.rest.controller.compatibilityRule.data
 
 import com.data.entity.RuleType
 import com.data.entity.Severity
-import java.util.UUID
 
 data class CompatibilityRuleResponse(
-    val id: UUID,
+    val id: Long?,
     val code: String,
-    val sourceProductTypeId: UUID,
-    val targetProductTypeId: UUID,
+    val sourceProductTypeId: Long,
+    val targetProductTypeId: Long,
     val ruleType: RuleType,
     val parameters: String?,
     val severity: Severity,

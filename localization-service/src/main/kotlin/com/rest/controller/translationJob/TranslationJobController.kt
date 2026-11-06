@@ -7,7 +7,6 @@ import com.rest.controller.translationJob.data.TranslationJobResponse
 import com.service.translationJob.TranslationJobService
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.*
-import java.util.UUID
 
 @RestController
 @RequestMapping("/translation-jobs")
@@ -21,6 +20,6 @@ class TranslationJobController(private val translationJobService: TranslationJob
     }
 
     @GetMapping("/{id}")
-    fun getById(@PathVariable id: UUID): TranslationJobResponse =
+    fun getById(@PathVariable id: Long): TranslationJobResponse =
         with(TranslationJobResponseAdapter) { translationJobService.findById(id).toApiModel() }
 }

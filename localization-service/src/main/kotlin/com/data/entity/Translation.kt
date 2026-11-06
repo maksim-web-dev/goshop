@@ -2,7 +2,6 @@ package com.data.entity
 
 import jakarta.persistence.*
 import java.time.Instant
-import java.util.UUID
 
 @Entity
 @Table(
@@ -11,16 +10,16 @@ import java.util.UUID
 )
 class Translation(
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    val id: UUID = UUID.randomUUID(),
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    val id: Long? = null,
 
     @Enumerated(EnumType.STRING)
     @Column(name = "entity_type", nullable = false)
     val entityType: EntityType,
 
-    // UUID сутності з відповідного сервісу (крос-сервісне посилання)
+    // ID сутності з відповідного сервісу (крос-сервісне посилання)
     @Column(name = "entity_id", nullable = false)
-    val entityId: UUID,
+    val entityId: Long,
 
     // Назва поля, наприклад: name, description
     @Column(name = "field_name", nullable = false)

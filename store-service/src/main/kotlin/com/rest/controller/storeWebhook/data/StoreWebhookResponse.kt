@@ -1,10 +1,8 @@
 package com.rest.controller.storeWebhook.data
 
-import java.util.UUID
-
 data class StoreWebhookResponse(
-    val id: UUID,
-    val storeId: UUID,
+    val id: Long?,
+    val storeId: Long?,
     val url: String,
     val eventTypes: List<String>,
     val secretRef: String,

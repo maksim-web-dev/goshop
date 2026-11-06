@@ -12,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.server.ResponseStatusException
 import java.security.SecureRandom
 import java.util.HexFormat
-import java.util.UUID
 
 data class CreatedApiKey(val entity: StoreApiKey, val plainKey: String)
 
@@ -24,11 +23,11 @@ class StoreApiKeyService(
     private val encoder = BCryptPasswordEncoder()
     private val rng = SecureRandom()
 
-    fun findByStore(storeId: UUID): List<StoreApiKey> =
+    fun findByStore(storeId: Long): List<StoreApiKey> =
         storeApiKeyRepository.findByStoreId(storeId)
 
     @Transactional
-    fun create(storeId: UUID, dto: CreateStoreApiKeyDto): CreatedApiKey {
+    fun create(storeId: Long, dto: CreateStoreApiKeyDto): CreatedApiKey {
         val store = storeRepository.findById(storeId)
             .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Store $storeId not found") }
         val rawBytes = ByteArray(32).also { rng.nextBytes(it) }
@@ -48,7 +47,7 @@ class StoreApiKeyService(
     }
 
     @Transactional
-    fun revoke(storeId: UUID, keyId: UUID) {
+    fun revoke(storeId: Long, keyId: Long) {
         val key = storeApiKeyRepository.findById(keyId)
             .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Key $keyId not found") }
         if (key.store.id != storeId)

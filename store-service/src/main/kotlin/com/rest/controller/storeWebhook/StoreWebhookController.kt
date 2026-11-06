@@ -7,7 +7,6 @@ import com.service.storeWebhook.StoreWebhookService
 import com.service.storeWebhook.dto.CreateStoreWebhookDto
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.*
-import java.util.UUID
 
 @RestController
 @RequestMapping("/stores/{storeId}/webhooks")
@@ -16,7 +15,7 @@ class StoreWebhookController(private val storeWebhookService: StoreWebhookServic
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     fun create(
-        @PathVariable storeId: UUID,
+        @PathVariable storeId: Long,
         @RequestBody request: StoreWebhookCreateRequest
     ): StoreWebhookResponse {
         val dto = CreateStoreWebhookDto(

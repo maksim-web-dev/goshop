@@ -1,14 +1,13 @@
 package com.data.entity
 
 import jakarta.persistence.*
-import java.util.UUID
 
 @Entity
 @Table(name = "compatibility_issues")
 class CompatibilityIssue(
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    var id: UUID = UUID.randomUUID(),
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    var id: Long? = null,
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "check_id", nullable = false)

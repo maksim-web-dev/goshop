@@ -12,7 +12,6 @@ import org.springframework.boot.CommandLineRunner
 import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
-import java.util.UUID
 
 @Component
 @Transactional
@@ -31,23 +30,25 @@ class CompatibilityRuleDataSeed(
         compatibilityRuleRepository.saveAll(dtos.map {
             CompatibilityRule(
                 code = it.code,
-                sourceProductTypeId = UUID.fromString(it.sourceProductTypeId),
-                targetProductTypeId = UUID.fromString(it.targetProductTypeId),
+                sourceProductTypeId = it.sourceProductTypeId,
+                targetProductTypeId = it.targetProductTypeId,
                 ruleType = RuleType.valueOf(it.ruleType),
                 parameters = it.parameters,
                 severity = Severity.valueOf(it.severity),
-                enabled = it.enabled
+                enabled = it.enabled,
+                version = it.version
             )
         })
     }
 
     private data class CompatibilityRuleDto(
-        @param:JsonProperty("code")                    val code: String,
-        @param:JsonProperty("source_product_type_id")  val sourceProductTypeId: String,
-        @param:JsonProperty("target_product_type_id")  val targetProductTypeId: String,
-        @param:JsonProperty("rule_type")               val ruleType: String,
-        @param:JsonProperty("parameters")              val parameters: String? = null,
-        @param:JsonProperty("severity")                val severity: String = "ERROR",
-        @param:JsonProperty("enabled")                 val enabled: Boolean = true
+        @param:JsonProperty("code")                   val code: String,
+        @param:JsonProperty("source_product_type_id") val sourceProductTypeId: Long,
+        @param:JsonProperty("target_product_type_id") val targetProductTypeId: Long,
+        @param:JsonProperty("rule_type")              val ruleType: String,
+        @param:JsonProperty("parameters")             val parameters: String? = null,
+        @param:JsonProperty("severity")               val severity: String = "ERROR",
+        @param:JsonProperty("enabled")                val enabled: Boolean = true,
+        @param:JsonProperty("version")                val version: Int = 1
     )
 }

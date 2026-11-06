@@ -1,25 +1,24 @@
 package com.data.entity
 
 import jakarta.persistence.*
-import java.util.UUID
 
 @Entity
 @Table(name = "compatibility_rules")
 class CompatibilityRule(
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    var id: UUID = UUID.randomUUID(),
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    var id: Long? = null,
 
     // Унікальний код правила, наприклад CPU_MOTHERBOARD_SOCKET
     @Column(nullable = false, unique = true)
     var code: String,
 
-    // UUID типу товару з product-service (крос-сервісне посилання, без @ManyToOne)
+    // ID типу товару з product-service (крос-сервісне посилання, без @ManyToOne)
     @Column(name = "source_product_type_id", nullable = false)
-    var sourceProductTypeId: UUID,
+    var sourceProductTypeId: Long,
 
     @Column(name = "target_product_type_id", nullable = false)
-    var targetProductTypeId: UUID,
+    var targetProductTypeId: Long,
 
     @Enumerated(EnumType.STRING)
     @Column(name = "rule_type", nullable = false)

@@ -4,9 +4,8 @@ import com.data.entity.ExchangeRate
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import java.time.Instant
-import java.util.UUID
 
-interface ExchangeRateRepository : JpaRepository<ExchangeRate, UUID> {
+interface ExchangeRateRepository : JpaRepository<ExchangeRate, Long> {
     @Query("""
         SELECT e FROM ExchangeRate e
         WHERE e.fromCurrency = :from AND e.toCurrency = :to

@@ -1,0 +1,14 @@
+[
+  {
+    "store_id": 2001,
+    "store_domain": "demo-us.goshop.test",
+    "url": "https://example.invalid/hooks/products",
+    "event_types": [
+      "PRODUCT_CREATED",
+      "PRODUCT_UPDATED",
+      "PRODUCT_DELETED"
+    ],
+    "secret_ref": "demo-only-placeholder-not-a-secret",
+    "enabled": false
+  }
+]

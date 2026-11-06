@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Service
 import java.time.Instant
-import java.util.UUID
 
 @Service
 class SearchService(
@@ -27,8 +26,8 @@ class SearchService(
             params.add(dto.brand)
         }
         if (dto.categoryId != null) {
-            conditions.add("category_id = ?::uuid")
-            params.add(dto.categoryId.toString())
+            conditions.add("category_id = ?")
+            params.add(dto.categoryId)
         }
 
         val offset = dto.page * dto.size
@@ -43,11 +42,11 @@ class SearchService(
 
         return jdbc.query(sql, params.toTypedArray()) { rs, _ ->
             SearchDocument(
-                productId = UUID.fromString(rs.getString("product_id")),
+                productId = rs.getLong("product_id"),
                 sku = rs.getString("sku"),
                 name = rs.getString("name"),
                 brand = rs.getString("brand"),
-                categoryId = UUID.fromString(rs.getString("category_id")),
+                categoryId = rs.getLong("category_id"),
                 searchableText = "",
                 status = rs.getString("status"),
                 indexedAt = rs.getTimestamp("indexed_at").toInstant()
@@ -65,18 +64,18 @@ class SearchService(
         jdbc.update(
             """
             INSERT INTO search_documents (product_id, sku, name, brand, category_id, searchable_text, status, indexed_at)
-            VALUES (?::uuid, ?, ?, ?, ?::uuid, to_tsvector('simple', ?), ?, ?)
+            VALUES (?, ?, ?, ?, ?, to_tsvector('simple', ?), ?, ?)
             ON CONFLICT (product_id) DO UPDATE
             SET sku = EXCLUDED.sku, name = EXCLUDED.name, brand = EXCLUDED.brand,
                 category_id = EXCLUDED.category_id, searchable_text = EXCLUDED.searchable_text,
                 status = EXCLUDED.status, indexed_at = EXCLUDED.indexed_at
             """.trimIndent(),
-            dto.productId.toString(), dto.sku, dto.name, dto.brand, dto.categoryId.toString(),
+            dto.productId, dto.sku, dto.name, dto.brand, dto.categoryId,
             searchableText, dto.status, Instant.now()
         )
     }
 
-    fun removeProduct(productId: UUID) {
-        jdbc.update("DELETE FROM search_documents WHERE product_id = ?::uuid", productId.toString())
+    fun removeProduct(productId: Long) {
+        jdbc.update("DELETE FROM search_documents WHERE product_id = ?", productId)
     }
 }

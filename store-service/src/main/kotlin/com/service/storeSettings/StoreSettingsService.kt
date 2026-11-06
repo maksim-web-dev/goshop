@@ -8,7 +8,6 @@ import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.server.ResponseStatusException
-import java.util.UUID
 
 @Service
 class StoreSettingsService(
@@ -16,7 +15,7 @@ class StoreSettingsService(
     private val storeRepository: StoreRepository
 ) {
 
-    fun findByStore(storeId: UUID): StoreSettings =
+    fun findByStore(storeId: Long): StoreSettings =
         settingsRepository.findByStoreId(storeId)
             ?: run {
                 val store = storeRepository.findById(storeId)
@@ -25,7 +24,7 @@ class StoreSettingsService(
             }
 
     @Transactional
-    fun update(storeId: UUID, dto: UpdateStoreSettingsDto): StoreSettings {
+    fun update(storeId: Long, dto: UpdateStoreSettingsDto): StoreSettings {
         val existing = findByStore(storeId)
         return settingsRepository.save(
             StoreSettings(

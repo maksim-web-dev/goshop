@@ -11,7 +11,7 @@ import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
-import java.util.UUID
+import java.time.Instant
 
 @Component
 @Transactional
@@ -29,18 +29,22 @@ class PriceDataSeed(
         val dtos: Array<PriceDto> = jacksonObjectMapper().readValue(json)
         priceRepository.saveAll(dtos.map {
             Price(
-                productId = UUID.fromString(it.productId),
-                storeId = it.storeId?.let { id -> UUID.fromString(id) },
+                productId = it.productId,
+                storeId = it.storeId,
                 amount = BigDecimal(it.amount),
-                currencyCode = it.currencyCode
+                currencyCode = it.currencyCode,
+                validFrom = Instant.parse(it.validFrom),
+                validTo = it.validTo?.let { v -> Instant.parse(v) }
             )
         })
     }
 
     private data class PriceDto(
-        @param:JsonProperty("product_id")    val productId: String,
-        @param:JsonProperty("store_id")      val storeId: String? = null,
+        @param:JsonProperty("product_id")    val productId: Long,
+        @param:JsonProperty("store_id")      val storeId: Long? = null,
         @param:JsonProperty("amount")        val amount: String,
-        @param:JsonProperty("currency_code") val currencyCode: String
+        @param:JsonProperty("currency_code") val currencyCode: String,
+        @param:JsonProperty("valid_from")    val validFrom: String,
+        @param:JsonProperty("valid_to")      val validTo: String? = null
     )
 }

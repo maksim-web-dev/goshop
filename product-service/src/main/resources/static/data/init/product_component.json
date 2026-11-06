@@ -1,17 +1,17 @@
 [
-  {"name": "Apple A17 Pro",              "component_group_name": "Processor"},
-  {"name": "Snapdragon 8 Gen 3",         "component_group_name": "Processor"},
-  {"name": "Intel Core i7-13700H",       "component_group_name": "Processor"},
-  {"name": "Intel Core i5-1335U",        "component_group_name": "Processor"},
-  {"name": "8 GB LPDDR5",               "component_group_name": "Memory"},
-  {"name": "16 GB LPDDR5",              "component_group_name": "Memory"},
-  {"name": "32 GB LPDDR5",              "component_group_name": "Memory"},
-  {"name": "OLED 6.1\"",               "component_group_name": "Display"},
-  {"name": "AMOLED 6.7\"",             "component_group_name": "Display"},
-  {"name": "IPS 15.6\" FHD",           "component_group_name": "Display"},
-  {"name": "OLED 55\"",                "component_group_name": "Display"},
-  {"name": "3274 mAh",                  "component_group_name": "Battery"},
-  {"name": "5000 mAh",                  "component_group_name": "Battery"},
-  {"name": "48 MP + 12 MP Ultra Wide",  "component_group_name": "Camera"},
-  {"name": "200 MP + 12 MP Ultra Wide", "component_group_name": "Camera"}
+  {
+    "id": 511,
+    "name": "AMD Ryzen 9 7950X",
+    "component_group_name": "CPU"
+  },
+  {
+    "id": 512,
+    "name": "NVIDIA RTX 4090",
+    "component_group_name": "GPU"
+  },
+  {
+    "id": 513,
+    "name": "G.Skill DDR5 32GB",
+    "component_group_name": "Memory"
+  }
 ]
