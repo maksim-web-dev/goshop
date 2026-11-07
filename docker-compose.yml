@@ -153,6 +153,16 @@ services:
       PRODUCT_POSTGRES_DDL_AUTO: update
       PRODUCT_POSTGRES_SHOW_SQL: "false"
       PRODUCT_SEED_ENABLE: "false"
+    healthcheck:
+      test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost:8080/actuator/health/readiness
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
     depends_on:
       postgres-product:
         condition: service_healthy
@@ -165,7 +175,7 @@ services:
       dockerfile: compatibility-service/Dockerfile
     container_name: compatibility-service
     ports:
-      - "8082:8082"
+      - "8082:8080"
     environment:
       COMPATIBILITY_POSTGRES_HOST: postgres-compatibility
       COMPATIBILITY_POSTGRES_PORT: 5432
@@ -175,6 +185,16 @@ services:
       COMPATIBILITY_POSTGRES_DDL_AUTO: update
       COMPATIBILITY_POSTGRES_SHOW_SQL: "false"
       COMPATIBILITY_SEED_ENABLE: "false"
+    healthcheck:
+      test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost:8080/actuator/health/readiness
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
     depends_on:
       postgres-compatibility:
         condition: service_healthy
@@ -187,7 +207,7 @@ services:
       dockerfile: localization-service/Dockerfile
     container_name: localization-service
     ports:
-      - "8083:8083"
+      - "8083:8080"
     environment:
       LOCALIZATION_POSTGRES_HOST: postgres-localization
       LOCALIZATION_POSTGRES_PORT: 5432
@@ -197,6 +217,16 @@ services:
       LOCALIZATION_POSTGRES_DDL_AUTO: update
       LOCALIZATION_POSTGRES_SHOW_SQL: "false"
       LOCALIZATION_SEED_ENABLE: "false"
+    healthcheck:
+      test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost:8080/actuator/health/readiness
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
     depends_on:
       postgres-localization:
         condition: service_healthy
@@ -209,7 +239,7 @@ services:
       dockerfile: pricing-service/Dockerfile
     container_name: pricing-service
     ports:
-      - "8084:8084"
+      - "8084:8080"
     environment:
       PRICING_POSTGRES_HOST: postgres-pricing
       PRICING_POSTGRES_PORT: 5432
@@ -219,6 +249,16 @@ services:
       PRICING_POSTGRES_DDL_AUTO: update
       PRICING_POSTGRES_SHOW_SQL: "false"
       PRICING_SEED_ENABLE: "false"
+    healthcheck:
+      test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost:8080/actuator/health/readiness
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
     depends_on:
       postgres-pricing:
         condition: service_healthy
@@ -231,7 +271,7 @@ services:
       dockerfile: recommendations-service/Dockerfile
     container_name: recommendations-service
     ports:
-      - "8085:8085"
+      - "8085:8080"
     environment:
       RECOMMENDATIONS_POSTGRES_HOST: postgres-recommendations
       RECOMMENDATIONS_POSTGRES_PORT: 5432
@@ -241,6 +281,16 @@ services:
       RECOMMENDATIONS_POSTGRES_DDL_AUTO: update
       RECOMMENDATIONS_POSTGRES_SHOW_SQL: "false"
       RECOMMENDATIONS_SEED_ENABLE: "false"
+    healthcheck:
+      test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost:8080/actuator/health/readiness
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
     depends_on:
       postgres-recommendations:
         condition: service_healthy
@@ -253,7 +303,7 @@ services:
       dockerfile: search-service/Dockerfile
     container_name: search-service
     ports:
-      - "8086:8086"
+      - "8086:8080"
     environment:
       SEARCH_POSTGRES_HOST: postgres-search
       SEARCH_POSTGRES_PORT: 5432
@@ -263,6 +313,16 @@ services:
       SEARCH_POSTGRES_DDL_AUTO: update
       SEARCH_POSTGRES_SHOW_SQL: "false"
       SEARCH_SEED_ENABLE: "false"
+    healthcheck:
+      test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost:8080/actuator/health/readiness
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
     depends_on:
       postgres-search:
         condition: service_healthy
@@ -275,7 +335,7 @@ services:
       dockerfile: store-service/Dockerfile
     container_name: store-service
     ports:
-      - "8087:8087"
+      - "8087:8080"
     environment:
       STORE_POSTGRES_HOST: postgres-store
       STORE_POSTGRES_PORT: 5432
@@ -285,6 +345,16 @@ services:
       STORE_POSTGRES_DDL_AUTO: update
       STORE_POSTGRES_SHOW_SQL: "false"
       STORE_SEED_ENABLE: "false"
+    healthcheck:
+      test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost:8080/actuator/health/readiness
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
     depends_on:
       postgres-store:
         condition: service_healthy
@@ -300,20 +370,37 @@ services:
       - "8080:8080"
     environment:
       PRODUCT_SERVICE_URL: http://product-service:8080
-      LOCALIZATION_SERVICE_URL: http://localization-service:8083
-      PRICING_SERVICE_URL: http://pricing-service:8084
-      COMPATIBILITY_SERVICE_URL: http://compatibility-service:8082
-      SEARCH_SERVICE_URL: http://search-service:8086
-      RECOMMENDATIONS_SERVICE_URL: http://recommendations-service:8085
-      STORE_SERVICE_URL: http://store-service:8087
+      LOCALIZATION_SERVICE_URL: http://localization-service:8080
+      PRICING_SERVICE_URL: http://pricing-service:8080
+      COMPATIBILITY_SERVICE_URL: http://compatibility-service:8080
+      SEARCH_SERVICE_URL: http://search-service:8080
+      RECOMMENDATIONS_SERVICE_URL: http://recommendations-service:8080
+      STORE_SERVICE_URL: http://store-service:8080
+    healthcheck:
+      test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost:8080/actuator/health/readiness
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
     depends_on:
-      - product-service
-      - localization-service
-      - pricing-service
-      - compatibility-service
-      - search-service
-      - recommendations-service
-      - store-service
+      product-service:
+        condition: service_healthy
+      localization-service:
+        condition: service_healthy
+      pricing-service:
+        condition: service_healthy
+      compatibility-service:
+        condition: service_healthy
+      search-service:
+        condition: service_healthy
+      recommendations-service:
+        condition: service_healthy
+      store-service:
+        condition: service_healthy
     networks:
       - goshop-network
 

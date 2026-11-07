@@ -6,5 +6,5 @@ RUN ./gradlew :store-service:bootJar --no-daemon -x test
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 COPY --from=builder /app/store-service/build/libs/*.jar app.jar
-EXPOSE 8087
+EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]

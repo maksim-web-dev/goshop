@@ -1,5 +1,5 @@
 server:
-  port: ${COMPATIBILITY_SERVER_PORT:8082}
+  port: 8080
   servlet:
     context-path: ${COMPATIBILITY_API_PREFIX:/api}
   shutdown: graceful
@@ -27,7 +27,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health
+        include: health,info
   endpoint:
     health:
       probes:
