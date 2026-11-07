@@ -68,9 +68,9 @@ Microservice responsible for managing product prices, store-specific discounts, 
 
 | Column | Java type | DB constraints | Notes |
 |---|---|---|---|
-| `id` | `UUID` | PK, NOT NULL | Auto-generated (`GenerationType.UUID`) |
-| `product_id` | `UUID` | NOT NULL | Reference to product-service (no DB FK) |
-| `store_id` | `UUID` | nullable | `null` = platform base price; non-null = store-specific price |
+| `id` | `Long` | PK, NOT NULL | Auto-generated (`GenerationType.IDENTITY`) |
+| `product_id` | `Long` | NOT NULL | Reference to product-service (no DB FK) |
+| `store_id` | `Long` | nullable | `null` = platform base price; non-null = store-specific price |
 | `amount` | `BigDecimal` | NOT NULL, precision=19, scale=4 | Stored price value |
 | `currency_code` | `String` | NOT NULL, length=3 | ISO 4217 code, e.g. `USD` |
 | `valid_from` | `Instant` | NOT NULL | Defaults to `Instant.now()` on creation |
@@ -81,9 +81,9 @@ Microservice responsible for managing product prices, store-specific discounts, 
 
 | Column | Java type | DB constraints | Notes |
 |---|---|---|---|
-| `id` | `UUID` | PK, NOT NULL | Auto-generated |
-| `store_id` | `UUID` | NOT NULL | Store this discount belongs to |
-| `product_id` | `UUID` | nullable | `null` = applies to entire store catalogue |
+| `id` | `Long` | PK, NOT NULL | Auto-generated (`GenerationType.IDENTITY`) |
+| `store_id` | `Long` | NOT NULL | Store this discount belongs to |
+| `product_id` | `Long` | nullable | `null` = applies to entire store catalogue |
 | `discount_type` | `DiscountType` (enum) | NOT NULL | Stored as `STRING`; values: `PERCENTAGE`, `FIXED` |
 | `discount_value` | `BigDecimal` | NOT NULL, precision=19, scale=4 | For `PERCENTAGE`: 0–100; for `FIXED`: monetary amount in store currency |
 | `starts_at` | `Instant` | NOT NULL | Discount activation time |
@@ -94,7 +94,7 @@ Microservice responsible for managing product prices, store-specific discounts, 
 
 | Column | Java type | DB constraints | Notes |
 |---|---|---|---|
-| `id` | `UUID` | PK, NOT NULL | Auto-generated |
+| `id` | `Long` | PK, NOT NULL | Auto-generated (`GenerationType.IDENTITY`) |
 | `from_currency` | `String` | NOT NULL, length=3 | ISO 4217 source currency |
 | `to_currency` | `String` | NOT NULL, length=3 | ISO 4217 target currency |
 | `rate` | `BigDecimal` | NOT NULL, precision=19, scale=8 | Conversion multiplier |
@@ -104,8 +104,8 @@ Microservice responsible for managing product prices, store-specific discounts, 
 
 | Column | Java type | DB constraints | Notes |
 |---|---|---|---|
-| `id` | `UUID` | PK, NOT NULL | Auto-generated |
-| `price_id` | `UUID` (FK) | NOT NULL | `@ManyToOne(LAZY)` → `prices.id` |
+| `id` | `Long` | PK, NOT NULL | Auto-generated (`GenerationType.IDENTITY`) |
+| `price_id` | `Long` (FK) | NOT NULL | `@ManyToOne(LAZY)` → `prices.id` |
 | `old_amount` | `BigDecimal` | NOT NULL, precision=19, scale=4 | Value before the update |
 | `new_amount` | `BigDecimal` | NOT NULL, precision=19, scale=4 | Value after the update |
 | `changed_at` | `Instant` | NOT NULL, `updatable=false` | Defaults to `Instant.now()` on insert |
@@ -146,9 +146,9 @@ Dates are serialized as ISO-8601 strings (e.g. `"2024-01-15T10:00:00Z"`) because
 
 | Field | Type | Nullable |
 |---|---|---|
-| `id` | `UUID` | no |
-| `productId` | `UUID` | no |
-| `storeId` | `UUID` | yes (`null` = base price) |
+| `id` | `Long` | no |
+| `productId` | `Long` | no |
+| `storeId` | `Long` | yes (`null` = base price) |
 | `amount` | `BigDecimal` | no |
 | `currencyCode` | `String` | no |
 | `validFrom` | `Instant` (ISO-8601 string) | no |
@@ -162,8 +162,8 @@ Only prices where `validTo IS NULL OR validTo > now()` are returned, ordered by 
 ```json
 [
   {
-    "id": "a1b2c3d4-0000-0000-0000-000000000001",
-    "productId": "prod-uuid-0000-0000-0000-000000000001",
+    "id": 1,
+    "productId": 1001,
     "storeId": null,
     "amount": 199.9900,
     "currencyCode": "USD",
@@ -172,9 +172,9 @@ Only prices where `validTo IS NULL OR validTo > now()` are returned, ordered by 
     "updatedAt": "2024-06-01T12:00:00Z"
   },
   {
-    "id": "a1b2c3d4-0000-0000-0000-000000000002",
-    "productId": "prod-uuid-0000-0000-0000-000000000001",
-    "storeId": "store-uuid-000-0000-0000-000000000001",
+    "id": 2,
+    "productId": 1001,
+    "storeId": 501,
     "amount": 189.9900,
     "currencyCode": "USD",
     "validFrom": "2024-03-01T00:00:00Z",
@@ -199,8 +199,8 @@ Only prices where `validTo IS NULL OR validTo > now()` are returned, ordered by 
 
 | Field | Type | Required | Notes |
 |---|---|---|---|
-| `productId` | `UUID` | yes | |
-| `storeId` | `UUID` | no | Omit or `null` for a base platform price |
+| `productId` | `Long` | yes | |
+| `storeId` | `Long` | no | Omit or `null` for a base platform price |
 | `amount` | `BigDecimal` | yes | |
 | `currencyCode` | `String` | yes | ISO 4217, 3 chars |
 | `validFrom` | `Instant` (ISO-8601) | no | Defaults to current server time |
@@ -209,8 +209,8 @@ Only prices where `validTo IS NULL OR validTo > now()` are returned, ordered by 
 **Example request:**
 ```json
 {
-  "productId": "prod-uuid-0000-0000-0000-000000000001",
-  "storeId": "store-uuid-000-0000-0000-000000000001",
+  "productId": 1001,
+  "storeId": 501,
   "amount": 189.99,
   "currencyCode": "USD",
   "validFrom": "2024-03-01T00:00:00Z"
@@ -227,7 +227,7 @@ Only prices where `validTo IS NULL OR validTo > now()` are returned, ordered by 
 
 - **Handler:** `PriceController.update`
 - **Purpose:** Partially updates an existing price. If `amount` changes, a `PriceHistory` record is automatically persisted.
-- **Path variables:** `id` — `UUID`
+- **Path variables:** `id` — `Long`
 - **Request body:** `PriceUpdateRequest` — all fields are optional
 
 **`PriceUpdateRequest` fields:**
@@ -258,7 +258,7 @@ Only prices where `validTo IS NULL OR validTo > now()` are returned, ordered by 
 
 - **Handler:** `PriceController.getHistory`
 - **Purpose:** Returns the price change history for a price record, most recent first.
-- **Path variables:** `id` — `UUID`
+- **Path variables:** `id` — `Long`
 - **Query parameters:** none
 - **Request body:** none
 - **Response body:** `List<PriceHistoryResponse>` — `200 OK`
@@ -267,8 +267,8 @@ Only prices where `validTo IS NULL OR validTo > now()` are returned, ordered by 
 
 | Field | Type | Nullable |
 |---|---|---|
-| `id` | `UUID` | no |
-| `priceId` | `UUID` | no |
+| `id` | `Long` | no |
+| `priceId` | `Long` | no |
 | `oldAmount` | `BigDecimal` | no |
 | `newAmount` | `BigDecimal` | no |
 | `changedAt` | `Instant` (ISO-8601 string) | no |
@@ -277,8 +277,8 @@ Only prices where `validTo IS NULL OR validTo > now()` are returned, ordered by 
 ```json
 [
   {
-    "id": "hist-uuid-0000-0000-0000-000000000001",
-    "priceId": "a1b2c3d4-0000-0000-0000-000000000002",
+    "id": 1,
+    "priceId": 2,
     "oldAmount": 189.9900,
     "newAmount": 175.0000,
     "changedAt": "2024-07-10T09:30:00Z"
@@ -300,17 +300,14 @@ Only prices where `validTo IS NULL OR validTo > now()` are returned, ordered by 
 
 | Field | Type | Required |
 |---|---|---|
-| `productIds` | `List<UUID>` | yes |
+| `productIds` | `List<Long>` | yes |
 
 - **Response body:** `List<PriceResponse>` — `200 OK`
 
 **Example request:**
 ```json
 {
-  "productIds": [
-    "prod-uuid-0000-0000-0000-000000000001",
-    "prod-uuid-0000-0000-0000-000000000002"
-  ]
+  "productIds": [1001, 1002]
 }
 ```
 
@@ -328,8 +325,8 @@ Only prices where `validTo IS NULL OR validTo > now()` are returned, ordered by 
 
 | Field | Type | Required | Notes |
 |---|---|---|---|
-| `productId` | `UUID` | yes | |
-| `storeId` | `UUID` | no | If `null`, discounts are not looked up |
+| `productId` | `Long` | yes | |
+| `storeId` | `Long` | no | If `null`, discounts are not looked up |
 | `currencyCode` | `String` | yes | ISO 4217 code |
 
 - **Response body:** `CalculatePriceResponse` — `200 OK`
@@ -346,8 +343,8 @@ Only prices where `validTo IS NULL OR validTo > now()` are returned, ordered by 
 **Example request:**
 ```json
 {
-  "productId": "prod-uuid-0000-0000-0000-000000000001",
-  "storeId": "store-uuid-000-0000-0000-000000000001",
+  "productId": 1001,
+  "storeId": 501,
   "currencyCode": "USD"
 }
 ```
@@ -382,9 +379,9 @@ Only prices where `validTo IS NULL OR validTo > now()` are returned, ordered by 
 
 | Field | Type | Nullable |
 |---|---|---|
-| `id` | `UUID` | no |
-| `storeId` | `UUID` | no |
-| `productId` | `UUID` | yes (`null` = whole-store discount) |
+| `id` | `Long` | no |
+| `storeId` | `Long` | no |
+| `productId` | `Long` | yes (`null` = whole-store discount) |
 | `discountType` | `String` (enum) | no — `PERCENTAGE` or `FIXED` |
 | `discountValue` | `BigDecimal` | no |
 | `startsAt` | `Instant` (ISO-8601 string) | no |
@@ -395,8 +392,8 @@ Only prices where `validTo IS NULL OR validTo > now()` are returned, ordered by 
 ```json
 [
   {
-    "id": "disc-uuid-0000-0000-0000-000000000001",
-    "storeId": "store-uuid-000-0000-0000-000000000001",
+    "id": 1,
+    "storeId": 501,
     "productId": null,
     "discountType": "PERCENTAGE",
     "discountValue": 15.0000,
@@ -420,8 +417,8 @@ Only prices where `validTo IS NULL OR validTo > now()` are returned, ordered by 
 
 | Field | Type | Required | Notes |
 |---|---|---|---|
-| `storeId` | `UUID` | yes | |
-| `productId` | `UUID` | no | `null` = applies to entire store |
+| `storeId` | `Long` | yes | |
+| `productId` | `Long` | no | `null` = applies to entire store |
 | `discountType` | `String` (enum) | yes | `PERCENTAGE` or `FIXED` |
 | `discountValue` | `BigDecimal` | yes | 0–100 for `PERCENTAGE`; monetary for `FIXED` |
 | `startsAt` | `Instant` (ISO-8601) | yes | |
@@ -430,7 +427,7 @@ Only prices where `validTo IS NULL OR validTo > now()` are returned, ordered by 
 **Example request:**
 ```json
 {
-  "storeId": "store-uuid-000-0000-0000-000000000001",
+  "storeId": 501,
   "discountType": "PERCENTAGE",
   "discountValue": 15.00,
   "startsAt": "2024-06-01T00:00:00Z",
@@ -444,7 +441,7 @@ Only prices where `validTo IS NULL OR validTo > now()` are returned, ordered by 
 
 - **Handler:** `DiscountController.update`
 - **Purpose:** Partially updates an existing discount. `storeId`, `productId`, and `discountType` are immutable after creation.
-- **Path variables:** `id` — `UUID`
+- **Path variables:** `id` — `Long`
 - **Request body:** `DiscountUpdateRequest` — all fields optional
 
 **`DiscountUpdateRequest` fields:**
@@ -467,7 +464,7 @@ Only prices where `validTo IS NULL OR validTo > now()` are returned, ordered by 
 
 - **Handler:** `DiscountController.disable`
 - **Purpose:** Sets the discount status to `INACTIVE`. The record is not deleted from the database.
-- **Path variables:** `id` — `UUID`
+- **Path variables:** `id` — `Long`
 - **Request body:** none
 - **Response body:** none — `204 No Content`
 
@@ -491,7 +488,7 @@ Only prices where `validTo IS NULL OR validTo > now()` are returned, ordered by 
 
 | Field | Type | Nullable |
 |---|---|---|
-| `id` | `UUID` | no |
+| `id` | `Long` | no |
 | `fromCurrency` | `String` | no |
 | `toCurrency` | `String` | no |
 | `rate` | `BigDecimal` | no |
@@ -501,7 +498,7 @@ Only prices where `validTo IS NULL OR validTo > now()` are returned, ordered by 
 ```json
 [
   {
-    "id": "rate-uuid-0000-0000-0000-000000000001",
+    "id": 1,
     "fromCurrency": "USD",
     "toCurrency": "EUR",
     "rate": 0.92000000,
@@ -518,7 +515,7 @@ Only prices where `validTo IS NULL OR validTo > now()` are returned, ordered by 
 
 **Location:** `com.service.price.PriceService`
 
-**Input:** `CalculatePriceDto(productId: UUID, storeId: UUID?, currencyCode: String)`
+**Input:** `CalculatePriceDto(productId: Long, storeId: Long?, currencyCode: String)`
 
 **Return type:** `CalculatedPrice` data class
 
@@ -570,7 +567,7 @@ Sets `status = DiscountStatus.INACTIVE` on the target discount. Does not set `en
 
 ## 6. Inter-Service Communication
 
-No inter-service communication is currently implemented. The service does not make any HTTP calls to other services. `productId` and `storeId` values stored in the database are externally-provided UUIDs with no runtime validation against `product-service` or `store-service`.
+No inter-service communication is currently implemented. The service does not make any HTTP calls to other services. `productId` and `storeId` values stored in the database are externally-provided `Long` IDs with no runtime validation against `product-service` or `store-service`.
 
 ---
 
@@ -605,8 +602,8 @@ No `@ControllerAdvice` or `@ExceptionHandler` class is implemented in this servi
   "timestamp": "2024-07-10T09:30:00.000+00:00",
   "status": 404,
   "error": "Not Found",
-  "message": "Price a1b2c3d4-... not found",
-  "path": "/api/prices/a1b2c3d4-..."
+  "message": "Price 999 not found",
+  "path": "/api/prices/999"
 }
 ```
 
@@ -656,6 +653,8 @@ Three `CommandLineRunner` beans seed initial data from JSON files in `src/main/r
 | 1 | `ExchangeRateDataSeed` | `exchange_rate.json` | `exchange_rates` |
 | 2 | `PriceDataSeed` | `price.json` | `prices` |
 | 3 | `DiscountDataSeed` | `discount.json` | `discounts` |
+
+The seed JSON for `prices` reads `validFrom` and `validTo` fields from each record. The seed JSON for `exchange_rates` reads the `effectiveAt` field from each record.
 
 Each seed runner skips if `PRICING_SEED_ENABLE=false` or if the table row count exceeds `PRICING_SEED_STOP_COUNT`.
 

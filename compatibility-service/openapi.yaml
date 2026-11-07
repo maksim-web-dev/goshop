@@ -48,8 +48,8 @@ paths:
           in: path
           required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
+            format: int64
       responses:
         '200':
           description: List of compatible product IDs
@@ -58,8 +58,8 @@ paths:
               schema:
                 type: array
                 items:
-                  type: string
-                  format: uuid
+                  type: integer
+                  format: int64
 
   /compatibility/rules:
     get:
@@ -97,8 +97,8 @@ paths:
           in: path
           required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
+            format: int64
       requestBody:
         required: true
         content:
@@ -119,8 +119,8 @@ paths:
           in: path
           required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
+            format: int64
       responses:
         '204':
           description: Compatibility rule disabled
@@ -142,27 +142,27 @@ components:
         productIds:
           type: array
           items:
-            type: string
-            format: uuid
+            type: integer
+            format: int64
 
     PairCheckRequest:
       type: object
       required: [sourceProductId, targetProductId]
       properties:
         sourceProductId:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         targetProductId:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
 
     CompatibilityIssueResponse:
       type: object
       required: [ruleId, severity, messageCode]
       properties:
         ruleId:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         severity:
           $ref: '#/components/schemas/Severity'
         messageCode:
@@ -186,11 +186,11 @@ components:
         code:
           type: string
         sourceProductTypeId:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         targetProductTypeId:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         ruleType:
           $ref: '#/components/schemas/RuleType'
         parameters:
@@ -219,16 +219,16 @@ components:
       required: [id, code, sourceProductTypeId, targetProductTypeId, ruleType, severity, enabled, version]
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         code:
           type: string
         sourceProductTypeId:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         targetProductTypeId:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         ruleType:
           $ref: '#/components/schemas/RuleType'
         parameters:

@@ -118,6 +118,7 @@ All primary keys use `GenerationType.IDENTITY` (PostgreSQL `BIGSERIAL` / auto-in
 |---|---|---|
 | `id` | `Long` | PK, auto-increment |
 | `name` | `String` | NOT NULL |
+| `code` | `String?` | nullable — optional machine-readable identifier (e.g. `"storage_gb"`) |
 | `sort_order` | `Int` | NOT NULL, default 0 |
 | `category_id` | `Long` | FK → `categories.id`, NOT NULL, LAZY |
 | `parameter_type` | `String` (enum) | NOT NULL — values: `INT`, `DOUBLE_2`, `DOUBLE_3`, `STRING`, `BOOLEAN`, `LIST` |
@@ -404,6 +405,7 @@ Returns the attribute schema (list of `CategoryParameter`) for a given product t
 |---|---|
 | `id` | `Long` |
 | `name` | `String` |
+| `code` | `String?` |
 | `order` | `Int` |
 | `categoryId` | `Long` |
 | `parameterType` | `ParameterType` (enum string) |
@@ -618,11 +620,11 @@ Returns all attribute values for a product.
 ---
 
 #### `PUT /api/products/{productId}/attributes`
-Atomically replaces **all** attribute values for a product. All existing attributes for the product are deleted, then the provided list is saved. Returns `200 OK` with no body.
+Atomically replaces **all** attribute values for a product. All existing attributes for the product are deleted, then the provided list is saved. Returns `200 OK` with the full list of saved attributes.
 
 - **Handler:** `ProductAttributeController.setAttributes(productId: Long, payload: ProductAttributeSetRequest)`
 - **Path variable:** `productId` — `Long`
-- **Response:** `200 OK` — no body
+- **Response:** `200 OK` — `List<ProductAttributeResponse>`
 - **Errors:** `404 Not Found` if product does not exist; `404 Not Found` if any `categoryParameterId` does not exist
 
 **Request body (`ProductAttributeSetRequest`):**
@@ -643,6 +645,14 @@ Atomically replaces **all** attribute values for a product. All existing attribu
     { "categoryParameterId": 8, "value": "Black" }
   ]
 }
+```
+
+**Response body:**
+```json
+[
+  { "id": 1, "productId": 42, "categoryParameterId": 7,  "value": "256" },
+  { "id": 2, "productId": 42, "categoryParameterId": 8,  "value": "Black" }
+]
 ```
 
 ---
@@ -681,6 +691,7 @@ Creates a new category parameter.
 | Field | Type | Required |
 |---|---|---|
 | `name` | `String` | required |
+| `code` | `String?` | optional — machine-readable key (e.g. `"storage_gb"`) |
 | `order` | `Int` | optional, default `0` |
 | `categoryId` | `Long` | required |
 | `parameterType` | `ParameterType` | required |
@@ -1062,7 +1073,7 @@ No test classes exist. The directory `src/test/` is absent entirely from the pro
 
 ### Business logic gaps
 
-- **`PUT /api/products/{productId}/attributes` returns no body**: The controller method returns `Unit` (void). Callers receive `200 OK` with an empty body; they must issue a subsequent `GET` to retrieve the saved attributes.
+- **`PUT /api/products/{productId}/attributes` returns the saved attributes**: The controller returns `200 OK` with the full `List<ProductAttributeResponse>` body after the atomic replace.
 - **`sku` is immutable but there is no explicit error**: Attempting to change the SKU is silently ignored — the update method copies `existing.sku` unconditionally. No `400` or error message is returned.
 - **Category delete does not cascade guard**: Deleting a category that has associated products, product types, or category parameters will produce a database foreign key violation, surfacing as an unhandled `500`.
 - **`parentId` on category update cannot be cleared**: Setting `parentId: null` in `CategoryUpdateRequest` will not remove an existing parent — the update logic falls back to `existing.parent`. There is no way to convert a child category to a root category via the API.

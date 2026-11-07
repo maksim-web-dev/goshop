@@ -55,14 +55,16 @@ class CompatibilityCheckService(
     fun checkPair(dto: PairCheckDto): CompatibilityResult =
         check(CheckCompatibilityDto(productIds = listOf(dto.sourceProductId, dto.targetProductId)))
 
-    fun findCompatibleProducts(productId: Long): List<Long> {
-        // Returns product IDs that passed compatibility checks with the given product.
-        // Currently returns empty list — full implementation requires product catalog integration.
-        return emptyList()
-    }
+    fun findCompatibleProducts(productId: Long): List<Long> =
+        compatibilityCheckRepository.findByCompatibleTrue()
+            .filter { productId in it.productIds }
+            .flatMap { it.productIds }
+            .filter { it != productId }
+            .distinct()
 
     private fun evaluateRule(ruleId: Long?, productIds: List<Long>): String? {
-        // Stub: each concrete RuleType handler returns a messageCode on violation, null on pass.
+        // Cannot evaluate without product attributes from product-service.
+        // Requires HTTP client integration or Kafka-based attribute cache.
         return null
     }
 }

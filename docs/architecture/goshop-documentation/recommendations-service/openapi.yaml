@@ -14,8 +14,8 @@ paths:
           in: path
           required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
+            format: int64
       responses:
         '200':
           description: List of recommended product IDs
@@ -24,8 +24,8 @@ paths:
               schema:
                 type: array
                 items:
-                  type: string
-                  format: uuid
+                  type: integer
+                  format: int64
 
   /recommendations/products/{id}/similar:
     get:
@@ -35,8 +35,8 @@ paths:
           in: path
           required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
+            format: int64
       responses:
         '200':
           description: List of similar product IDs
@@ -45,8 +45,8 @@ paths:
               schema:
                 type: array
                 items:
-                  type: string
-                  format: uuid
+                  type: integer
+                  format: int64
 
   /recommendations/products/{id}/alternatives:
     get:
@@ -56,8 +56,8 @@ paths:
           in: path
           required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
+            format: int64
       responses:
         '200':
           description: List of alternative product IDs
@@ -66,8 +66,8 @@ paths:
               schema:
                 type: array
                 items:
-                  type: string
-                  format: uuid
+                  type: integer
+                  format: int64
 
   /recommendations/products/{id}/accessories:
     get:
@@ -77,8 +77,8 @@ paths:
           in: path
           required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
+            format: int64
       responses:
         '200':
           description: List of accessory product IDs
@@ -87,8 +87,8 @@ paths:
               schema:
                 type: array
                 items:
-                  type: string
-                  format: uuid
+                  type: integer
+                  format: int64
 
   /recommendations/products/build:
     post:
@@ -109,8 +109,8 @@ paths:
                 additionalProperties:
                   type: array
                   items:
-                    type: string
-                    format: uuid
+                    type: integer
+                    format: int64
 
   /recommendations/rules:
     get:
@@ -148,8 +148,8 @@ paths:
           in: path
           required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
+            format: int64
       requestBody:
         required: true
         content:
@@ -177,8 +177,8 @@ components:
         productIds:
           type: array
           items:
-            type: string
-            format: uuid
+            type: integer
+            format: int64
 
     RecommendationRuleCreateRequest:
       type: object
@@ -219,8 +219,8 @@ components:
       required: [id, name, strategy, priority, enabled]
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         name:
           type: string
         strategy:

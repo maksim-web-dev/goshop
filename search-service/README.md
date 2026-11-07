@@ -71,12 +71,14 @@ Defined in `src/main/resources/schema.sql` and applied at startup by `spring.sql
 
 ```sql
 CREATE TABLE IF NOT EXISTS search_documents (
-    product_id      UUID         PRIMARY KEY,
+    product_id      BIGINT       PRIMARY KEY,
     sku             VARCHAR(64)  NOT NULL,
     name            VARCHAR(512) NOT NULL,
     brand           VARCHAR(128) NOT NULL,
-    category_id     UUID         NOT NULL,
+    category_id     BIGINT       NOT NULL,
     searchable_text TSVECTOR,
+    localized_names JSONB,
+    attributes      JSONB,
     status          VARCHAR(32)  NOT NULL,
     indexed_at      TIMESTAMPTZ  NOT NULL DEFAULT now()
 );
@@ -88,16 +90,16 @@ CREATE INDEX IF NOT EXISTS idx_search_documents_cat   ON search_documents (categ
 
 | Column | Type | Notes |
 |---|---|---|
-| `product_id` | `UUID` | Primary key — UUID from product-service |
+| `product_id` | `BIGINT` | Primary key — Long ID from product-service |
 | `sku` | `VARCHAR(64)` | Product article number |
 | `name` | `VARCHAR(512)` | Product display name |
 | `brand` | `VARCHAR(128)` | Brand name, indexed with B-tree |
-| `category_id` | `UUID` | Category reference, indexed with B-tree |
+| `category_id` | `BIGINT` | Category ID reference, indexed with B-tree |
 | `searchable_text` | `TSVECTOR` | FTS vector built from `name + brand + sku` via `to_tsvector('simple', ...)` |
+| `localized_names` | `JSONB` | Map of language code → localized name (e.g. `{"en": "GPU", "uk": "Відеокарта"}`) |
+| `attributes` | `JSONB` | Map of attribute code → value (e.g. `{"memory_gb": "24", "tdp_w": "450"}`) |
 | `status` | `VARCHAR(32)` | Product status string (e.g. `ACTIVE`) |
 | `indexed_at` | `TIMESTAMPTZ` | Timestamp of last indexing |
-
-> Note: the `search_documents` table does **not** store `localizedNames` or `attributes` JSONB columns, even though the `SearchDocument` data class and `IndexProductDto` define those fields. The INSERT statement in `SearchService.indexProduct()` does not include them.
 
 ### 3.2 `SearchIndexJob` JPA entity
 
@@ -105,8 +107,8 @@ Mapped to table `search_index_jobs` via JPA/Hibernate. Schema is managed by Hibe
 
 | Field | Type | JPA annotation | Notes |
 |---|---|---|---|
-| `id` | `UUID` | `@Id @GeneratedValue(UUID)` | Auto-generated UUID primary key |
-| `productId` | `UUID` | `@Column(name = "product_id", nullable = false)` | Product being indexed |
+| `id` | `Long` | `@Id @GeneratedValue(IDENTITY)` | Auto-generated Long primary key |
+| `productId` | `Long` | `@Column(name = "product_id", nullable = false)` | Product being indexed |
 | `operation` | `IndexOperation` | `@Enumerated(STRING)` | `INDEX`, `UPDATE`, or `DELETE` |
 | `status` | `IndexJobStatus` | `@Enumerated(STRING)` | `PENDING`, `IN_PROGRESS`, `DONE`, `FAILED` |
 | `attempts` | `Int` | `@Column(nullable = false)` | Number of execution attempts, starts at `0` |
@@ -125,13 +127,13 @@ IndexJobStatus : PENDING | IN_PROGRESS | DONE | FAILED
 
 | Field | Type | Notes |
 |---|---|---|
-| `productId` | `UUID` | Maps from `product_id` column |
+| `productId` | `Long` | Maps from `product_id` column |
 | `sku` | `String` | Maps from `sku` column |
 | `name` | `String` | Maps from `name` column |
-| `localizedNames` | `Map<String, String>` | Default `emptyMap()` — not stored in DB, always empty when read back |
+| `localizedNames` | `Map<String, String>` | Maps from `localized_names` JSONB column |
 | `brand` | `String` | Maps from `brand` column |
-| `categoryId` | `UUID` | Maps from `category_id` column |
-| `attributes` | `Map<String, String>` | Default `emptyMap()` — not stored in DB, always empty when read back |
+| `categoryId` | `Long` | Maps from `category_id` column |
+| `attributes` | `Map<String, String>` | Maps from `attributes` JSONB column; supports JSONB `@>` containment filtering |
 | `searchableText` | `String` | Set to `""` (empty string) when read back — the DB column is `TSVECTOR`, not returned by search queries |
 | `status` | `String` | Maps from `status` column |
 | `indexedAt` | `Instant` | Maps from `indexed_at` column |
@@ -162,10 +164,9 @@ Security: all endpoints are publicly accessible (`permitAll()`), CSRF disabled, 
 |---|---|---|---|---|
 | `q` | `String` | No | `null` | FTS query string; if omitted, all documents match |
 | `brand` | `String` | No | `null` | Exact brand filter |
+| `categoryId` | `Long` | No | `null` | Category ID filter |
 | `page` | `Int` | No | `0` | Zero-based page number |
 | `size` | `Int` | No | `20` | Page size |
-
-> Note: `categoryId` and `status` parameters are **not** accepted by this endpoint, despite `SearchQueryDto` defining them. Only `q`, `brand`, `page`, and `size` are bound.
 
 **Response:** `200 OK` — JSON array of `SearchResultResponse`
 
@@ -173,18 +174,20 @@ Security: all endpoints are publicly accessible (`permitAll()`), CSRF disabled, 
 
 | Field | Type | Notes |
 |---|---|---|
-| `productId` | `UUID` | |
+| `productId` | `Long` | |
 | `sku` | `String` | |
 | `name` | `String` | |
 | `brand` | `String` | |
-| `categoryId` | `UUID` | |
+| `categoryId` | `Long` | |
+| `localizedNames` | `Map<String, String>` | Language code → localized name |
+| `attributes` | `Map<String, String>` | Attribute code → value |
 | `status` | `String` | |
 | `indexedAt` | `String` (ISO-8601) | |
 
 **Example request:**
 
 ```
-GET /api/search/products?q=RTX+4090&brand=NVIDIA&page=0&size=10
+GET /api/search/products?q=RTX+4090&brand=NVIDIA&categoryId=201&page=0&size=10
 ```
 
 **Example response:**
@@ -192,11 +195,13 @@ GET /api/search/products?q=RTX+4090&brand=NVIDIA&page=0&size=10
 ```json
 [
   {
-    "productId": "11111111-1111-1111-1111-111111111001",
+    "productId": 1001,
     "sku": "GPU-RTX4090-24G",
     "name": "NVIDIA GeForce RTX 4090 24GB",
     "brand": "NVIDIA",
-    "categoryId": "11111111-1111-1111-1111-111111111201",
+    "categoryId": 201,
+    "localizedNames": {"en": "NVIDIA GeForce RTX 4090 24GB", "uk": "Відеокарта NVIDIA GeForce RTX 4090 24GB"},
+    "attributes": {"memory_gb": "24", "tdp_w": "450"},
     "status": "ACTIVE",
     "indexedAt": "2026-11-06T10:00:00Z"
   }
@@ -221,10 +226,10 @@ GET /api/search/products?q=RTX+4090&brand=NVIDIA&page=0&size=10
 |---|---|---|---|---|
 | `query` | `String?` | No | `null` | FTS query string |
 | `brand` | `String?` | No | `null` | Exact brand filter |
-| `categoryId` | `UUID?` | No | `null` | Category filter |
+| `categoryId` | `Long?` | No | `null` | Category ID filter |
 | `minPrice` | `BigDecimal?` | No | `null` | Minimum price — **accepted but not applied** (see Section 11) |
 | `maxPrice` | `BigDecimal?` | No | `null` | Maximum price — **accepted but not applied** (see Section 11) |
-| `attributes` | `Map<String, String>` | No | `{}` | Attribute filters — **accepted but not applied** (see Section 11) |
+| `attributes` | `Map<String, String>` | No | `{}` | Attribute filters — applied via JSONB `@>` containment on the `attributes` column |
 | `page` | `Int` | No | `0` | Zero-based page number |
 | `size` | `Int` | No | `20` | Page size |
 
@@ -238,7 +243,8 @@ POST /api/search/products/query
 {
   "query": "ryzen",
   "brand": "AMD",
-  "categoryId": "11111111-1111-1111-1111-111111111202",
+  "categoryId": 202,
+  "attributes": {"cores": "16"},
   "page": 0,
   "size": 20
 }
@@ -249,11 +255,13 @@ POST /api/search/products/query
 ```json
 [
   {
-    "productId": "11111111-1111-1111-1111-111111111002",
+    "productId": 1002,
     "sku": "CPU-R9-7950X",
     "name": "AMD Ryzen 9 7950X 16-Core",
     "brand": "AMD",
-    "categoryId": "11111111-1111-1111-1111-111111111202",
+    "categoryId": 202,
+    "localizedNames": {"en": "AMD Ryzen 9 7950X 16-Core"},
+    "attributes": {"cores": "16", "tdp_w": "170"},
     "status": "ACTIVE",
     "indexedAt": "2026-11-06T10:00:00Z"
   }
@@ -319,8 +327,8 @@ GET /api/search/suggestions?prefix=NVID
 
 | Field | Type | Notes |
 |---|---|---|
-| `id` | `UUID` | Job ID |
-| `productId` | `UUID` | Product being indexed |
+| `id` | `Long` | Job ID |
+| `productId` | `Long` | Product being indexed |
 | `operation` | `String` | `INDEX`, `UPDATE`, or `DELETE` |
 | `status` | `String` | `PENDING`, `IN_PROGRESS`, `DONE`, `FAILED` |
 | `attempts` | `Int` | Number of execution attempts |
@@ -332,10 +340,7 @@ GET /api/search/suggestions?prefix=NVID
 POST /api/internal/search/reindex
 
 {
-  "productIds": [
-    "11111111-1111-1111-1111-111111111001",
-    "11111111-1111-1111-1111-111111111002"
-  ]
+  "productIds": [1001, 1002]
 }
 ```
 
@@ -344,16 +349,16 @@ POST /api/internal/search/reindex
 ```json
 [
   {
-    "id": "aaaaaaaa-0000-0000-0000-000000000001",
-    "productId": "11111111-1111-1111-1111-111111111001",
+    "id": 1,
+    "productId": 1001,
     "operation": "INDEX",
     "status": "PENDING",
     "attempts": 0,
     "createdAt": "2026-11-06T10:00:00Z"
   },
   {
-    "id": "aaaaaaaa-0000-0000-0000-000000000002",
-    "productId": "11111111-1111-1111-1111-111111111002",
+    "id": 2,
+    "productId": 1002,
     "operation": "INDEX",
     "status": "PENDING",
     "attempts": 0,
@@ -379,22 +384,22 @@ POST /api/internal/search/reindex
 
 | Variable | Type | Required | Notes |
 |---|---|---|---|
-| `id` | `UUID` | Yes | Job ID |
+| `id` | `Long` | Yes | Job ID |
 
 **Response:** `200 OK` — single `SearchIndexJobResponse` object (same structure as Section 4.4)
 
 **Example request:**
 
 ```
-GET /api/internal/search/index-jobs/aaaaaaaa-0000-0000-0000-000000000001
+GET /api/internal/search/index-jobs/1
 ```
 
 **Example response:**
 
 ```json
 {
-  "id": "aaaaaaaa-0000-0000-0000-000000000001",
-  "productId": "11111111-1111-1111-1111-111111111001",
+  "id": 1,
+  "productId": 1001,
   "operation": "INDEX",
   "status": "PENDING",
   "attempts": 0,
@@ -421,11 +426,12 @@ Builds a dynamic SQL query against `search_documents` using a `mutableListOf("1=
 
 1. If `dto.query` is not null/blank: appends `searchable_text @@ plainto_tsquery('simple', ?)` with the query string as parameter.
 2. If `dto.brand` is not null: appends `brand = ?`.
-3. If `dto.categoryId` is not null: appends `category_id = ?::uuid`.
+3. If `dto.categoryId` is not null: appends `category_id = ?`.
+4. If `dto.attributes` is not empty: appends `attributes @> ?::jsonb` (JSONB containment operator) with the serialized attributes map.
 
 The final SQL is:
 ```sql
-SELECT product_id, sku, name, brand, category_id, status, indexed_at
+SELECT product_id, sku, name, brand, category_id, localized_names, attributes, status, indexed_at
 FROM search_documents
 WHERE <conditions>
 LIMIT ? OFFSET ?
@@ -433,9 +439,9 @@ LIMIT ? OFFSET ?
 
 Pagination: `offset = dto.page * dto.size`.
 
-**Fields NOT applied even though present in `SearchQueryDto`:** `minPrice`, `maxPrice`, `attributes`, `status`. They are silently ignored in the SQL construction.
+**Fields NOT applied even though present in `SearchQueryDto`:** `minPrice`, `maxPrice`, `status`. They are silently ignored in the SQL construction.
 
-The `RowMapper` reconstructs a `SearchDocument` with `searchableText = ""` and `localizedNames`/`attributes` as empty maps, since those columns are not fetched.
+The `RowMapper` reconstructs a `SearchDocument` reading `localizedNames` and `attributes` from the respective JSONB columns.
 
 #### `suggestions(prefix: String): List<String>`
 
@@ -458,7 +464,7 @@ SET sku = EXCLUDED.sku, name = EXCLUDED.name, brand = EXCLUDED.brand,
     status = EXCLUDED.status, indexed_at = EXCLUDED.indexed_at
 ```
 
-The `localizedNames` and `attributes` fields from `IndexProductDto` are not persisted.
+The `localizedNames` and `attributes` fields from `IndexProductDto` are persisted into the respective JSONB columns.
 
 #### `removeProduct(productId: UUID)`
 
@@ -513,8 +519,8 @@ There is no `@ControllerAdvice` or global exception handler implemented in this 
   "timestamp": "2026-11-06T10:00:00.000+00:00",
   "status": 404,
   "error": "Not Found",
-  "message": "Job <id> not found",
-  "path": "/api/internal/search/index-jobs/<id>"
+  "message": "Job 999 not found",
+  "path": "/api/internal/search/index-jobs/999"
 }
 ```
 
@@ -626,9 +632,9 @@ No test files exist under `src/test/`. The `spring-boot-starter-test` dependency
 | Issue | Label |
 |---|---|
 | `minPrice` / `maxPrice` fields are accepted in `SearchRequest` and `SearchQueryDto` but are **never applied** to the SQL query in `SearchService.search()` | ⚠️ PARTIALLY IMPLEMENTED |
-| `attributes` map filter is accepted in `SearchRequest` and `SearchQueryDto` but is **never applied** to the SQL query | ⚠️ PARTIALLY IMPLEMENTED |
+| `attributes` map filter is applied via JSONB `@>` containment on the `attributes` column | ✅ IMPLEMENTED |
 | `status` filter is defined in `SearchQueryDto` but is **not bound** in `SearchController.search()` and **not applied** in the SQL | ⚠️ PARTIALLY IMPLEMENTED |
-| `localizedNames` and `attributes` fields defined in `SearchDocument` and `IndexProductDto` are **not persisted** to `search_documents` (no columns exist for them in `schema.sql`) | ⚠️ PARTIALLY IMPLEMENTED |
+| `localizedNames` and `attributes` JSONB columns are stored in `search_documents` and populated by `SearchService.indexProduct()` | ✅ IMPLEMENTED |
 | `SearchIndexJob` records are created with status `PENDING` but **no worker, scheduler, or event listener** exists to process them and call `SearchService.indexProduct()` or `removeProduct()`. Index jobs are effectively a dead queue. | ❌ NOT IMPLEMENTED |
 | No faceted search endpoint (aggregations by brand, category, attribute values) | ❌ NOT IMPLEMENTED |
 | No pagination metadata returned (total count, total pages). Responses are plain arrays. | ❌ NOT IMPLEMENTED |

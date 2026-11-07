@@ -1,7 +1,22 @@
 [
-  { "code": "uk", "name": "Українська", "enabled": true },
-  { "code": "en", "name": "English",    "enabled": true },
-  { "code": "de", "name": "Deutsch",    "enabled": true },
-  { "code": "pl", "name": "Polski",     "enabled": true },
-  { "code": "fr", "name": "Français",   "enabled": false }
+  {
+    "code": "en",
+    "name": "English",
+    "enabled": true
+  },
+  {
+    "code": "uk",
+    "name": "Українська",
+    "enabled": true
+  },
+  {
+    "code": "de",
+    "name": "Deutsch",
+    "enabled": true
+  },
+  {
+    "code": "pl",
+    "name": "Polski",
+    "enabled": true
+  }
 ]

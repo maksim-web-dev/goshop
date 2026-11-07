@@ -20,6 +20,12 @@ paths:
           required: false
           schema:
             type: string
+        - name: categoryId
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int64
         - name: page
           in: query
           required: false
@@ -107,8 +113,8 @@ paths:
           in: path
           required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
+            format: int64
       responses:
         '200':
           description: Search index job found
@@ -137,8 +143,8 @@ components:
           type: string
           nullable: true
         categoryId:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
           nullable: true
         minPrice:
           type: number
@@ -162,8 +168,8 @@ components:
       required: [productId, sku, name, brand, categoryId, status, indexedAt]
       properties:
         productId:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         sku:
           type: string
         name:
@@ -171,8 +177,16 @@ components:
         brand:
           type: string
         categoryId:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
+        localizedNames:
+          type: object
+          additionalProperties:
+            type: string
+        attributes:
+          type: object
+          additionalProperties:
+            type: string
         status:
           type: string
         indexedAt:
@@ -186,19 +200,19 @@ components:
         productIds:
           type: array
           items:
-            type: string
-            format: uuid
+            type: integer
+            format: int64
 
     SearchIndexJobResponse:
       type: object
       required: [id, productId, operation, status, attempts, createdAt]
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         productId:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         operation:
           $ref: '#/components/schemas/IndexOperation'
         status:

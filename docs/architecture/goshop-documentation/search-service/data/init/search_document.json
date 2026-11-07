@@ -1,42 +1,264 @@
 [
   {
-    "product_id": "11111111-1111-1111-1111-111111111001",
-    "sku": "GPU-RTX4090-24G",
+    "product_id": 1001,
+    "sku": "CPU-AMD-7950X",
+    "name": "AMD Ryzen 9 7950X",
+    "brand": "AMD",
+    "category_id": 101,
+    "status": "ACTIVE",
+    "localized_names": {
+      "en": "AMD Ryzen 9 7950X",
+      "uk": "Процесор AMD Ryzen 9 7950X"
+    },
+    "attributes": {
+      "socket": "AM5",
+      "tdp_w": "170",
+      "cores": "16"
+    },
+    "searchable_text": "AMD Ryzen 9 7950X AMD CPU-AMD-7950X"
+  },
+  {
+    "product_id": 1002,
+    "sku": "MB-ASUS-B650E",
+    "name": "ASUS B650E ATX AM5 Motherboard",
+    "brand": "ASUS",
+    "category_id": 102,
+    "status": "ACTIVE",
+    "localized_names": {
+      "en": "ASUS B650E ATX AM5 Motherboard",
+      "uk": "Материнська плата ASUS B650E ATX AM5"
+    },
+    "attributes": {
+      "socket": "AM5",
+      "supported_ddr": "DDR5",
+      "form_factor": "ATX"
+    },
+    "searchable_text": "ASUS B650E ATX AM5 Motherboard ASUS MB-ASUS-B650E"
+  },
+  {
+    "product_id": 1003,
+    "sku": "RAM-GSK-32-DDR5",
+    "name": "G.Skill Trident Z5 32GB DDR5-6000",
+    "brand": "G.Skill",
+    "category_id": 103,
+    "status": "ACTIVE",
+    "localized_names": {
+      "en": "G.Skill Trident Z5 32GB DDR5-6000",
+      "uk": "Оперативна пам’ять G.Skill Trident Z5 32GB DDR5"
+    },
+    "attributes": {
+      "ddr_type": "DDR5",
+      "memory_gb": "32"
+    },
+    "searchable_text": "G.Skill Trident Z5 32GB DDR5-6000 G.Skill RAM-GSK-32-DDR5"
+  },
+  {
+    "product_id": 1004,
+    "sku": "GPU-NV-RTX4090",
     "name": "NVIDIA GeForce RTX 4090 24GB",
     "brand": "NVIDIA",
-    "category_id": "11111111-1111-1111-1111-111111111201",
-    "status": "ACTIVE"
+    "category_id": 104,
+    "status": "ACTIVE",
+    "localized_names": {
+      "en": "NVIDIA GeForce RTX 4090 24GB",
+      "uk": "Відеокарта NVIDIA GeForce RTX 4090 24GB"
+    },
+    "attributes": {
+      "memory_gb": "24",
+      "memory_type": "GDDR6X",
+      "tdp_w": "450",
+      "length_mm": "304"
+    },
+    "searchable_text": "NVIDIA GeForce RTX 4090 24GB NVIDIA GPU-NV-RTX4090"
   },
   {
-    "product_id": "11111111-1111-1111-1111-111111111002",
-    "sku": "CPU-R9-7950X",
-    "name": "AMD Ryzen 9 7950X 16-Core",
+    "product_id": 1005,
+    "sku": "PSU-COR-1000",
+    "name": "Corsair RM1000x 1000W",
+    "brand": "Corsair",
+    "category_id": 105,
+    "status": "ACTIVE",
+    "localized_names": {
+      "en": "Corsair RM1000x 1000W",
+      "uk": "Блок живлення Corsair RM1000x 1000W"
+    },
+    "attributes": {
+      "wattage": "1000"
+    },
+    "searchable_text": "Corsair RM1000x 1000W Corsair PSU-COR-1000"
+  },
+  {
+    "product_id": 1006,
+    "sku": "CASE-COR-4000D",
+    "name": "Corsair 4000D Airflow",
+    "brand": "Corsair",
+    "category_id": 106,
+    "status": "ACTIVE",
+    "localized_names": {
+      "en": "Corsair 4000D Airflow",
+      "uk": "Корпус Corsair 4000D Airflow"
+    },
+    "attributes": {
+      "max_gpu_length_mm": "360",
+      "supported_form_factor": "ATX"
+    },
+    "searchable_text": "Corsair 4000D Airflow Corsair CASE-COR-4000D"
+  },
+  {
+    "product_id": 1007,
+    "sku": "GPU-MSI-RTX4080",
+    "name": "MSI GeForce RTX 4080 SUPER 16GB",
+    "brand": "MSI",
+    "category_id": 104,
+    "status": "ACTIVE",
+    "localized_names": {
+      "en": "MSI GeForce RTX 4080 SUPER 16GB",
+      "uk": "Відеокарта MSI GeForce RTX 4080 SUPER 16GB"
+    },
+    "attributes": {
+      "memory_gb": "16",
+      "memory_type": "GDDR6X",
+      "tdp_w": "320",
+      "length_mm": "322"
+    },
+    "searchable_text": "MSI GeForce RTX 4080 SUPER 16GB MSI GPU-MSI-RTX4080"
+  },
+  {
+    "product_id": 1008,
+    "sku": "COOL-NOC-D15",
+    "name": "Noctua NH-D15 CPU Cooler",
+    "brand": "Noctua",
+    "category_id": 107,
+    "status": "ACTIVE",
+    "localized_names": {
+      "en": "Noctua NH-D15 CPU Cooler",
+      "uk": "Кулер Noctua NH-D15"
+    },
+    "attributes": {
+      "max_tdp_w": "220",
+      "socket": "AM5"
+    },
+    "searchable_text": "Noctua NH-D15 CPU Cooler Noctua COOL-NOC-D15"
+  },
+  {
+    "product_id": 1009,
+    "sku": "CPU-AMD-7900X",
+    "name": "AMD Ryzen 9 7900X",
     "brand": "AMD",
-    "category_id": "11111111-1111-1111-1111-111111111202",
-    "status": "ACTIVE"
+    "category_id": 101,
+    "status": "ACTIVE",
+    "localized_names": {
+      "en": "AMD Ryzen 9 7900X",
+      "uk": "Процесор AMD Ryzen 9 7900X"
+    },
+    "attributes": {
+      "socket": "AM5",
+      "tdp_w": "170",
+      "cores": "12"
+    },
+    "searchable_text": "AMD Ryzen 9 7900X AMD CPU-AMD-7900X"
   },
   {
-    "product_id": "11111111-1111-1111-1111-111111111003",
-    "sku": "MB-ASUS-B650E-E",
-    "name": "ASUS ProArt B650E-Creator WiFi ATX AM5",
-    "brand": "ASUS",
-    "category_id": "11111111-1111-1111-1111-111111111203",
-    "status": "ACTIVE"
+    "product_id": 1010,
+    "sku": "CPU-AMD-9950X",
+    "name": "AMD Ryzen 9 9950X",
+    "brand": "AMD",
+    "category_id": 101,
+    "status": "ACTIVE",
+    "localized_names": {
+      "en": "AMD Ryzen 9 9950X",
+      "uk": "Процесор AMD Ryzen 9 9950X"
+    },
+    "attributes": {
+      "socket": "AM5",
+      "tdp_w": "170",
+      "cores": "16"
+    },
+    "searchable_text": "AMD Ryzen 9 9950X AMD CPU-AMD-9950X"
   },
   {
-    "product_id": "11111111-1111-1111-1111-111111111004",
-    "sku": "RAM-GS-32G-DDR5",
-    "name": "G.Skill Trident Z5 RGB 32GB DDR5-6000",
-    "brand": "G.Skill",
-    "category_id": "11111111-1111-1111-1111-111111111204",
-    "status": "ACTIVE"
-  },
-  {
-    "product_id": "11111111-1111-1111-1111-111111111005",
-    "sku": "SSD-SAM-980PRO-2T",
-    "name": "Samsung 980 PRO 2TB NVMe PCIe 4.0",
+    "product_id": 1011,
+    "sku": "SSD-SAM-990-2TB",
+    "name": "Samsung 990 PRO 2TB NVMe SSD",
     "brand": "Samsung",
-    "category_id": "11111111-1111-1111-1111-111111111205",
-    "status": "ACTIVE"
+    "category_id": 108,
+    "status": "ACTIVE",
+    "localized_names": {
+      "en": "Samsung 990 PRO 2TB NVMe SSD",
+      "uk": "Накопичувач Samsung 990 PRO 2TB"
+    },
+    "attributes": {
+      "capacity_gb": "2000",
+      "interface": "PCIe 4.0"
+    },
+    "searchable_text": "Samsung 990 PRO 2TB NVMe SSD Samsung SSD-SAM-990-2TB"
+  },
+  {
+    "product_id": 1012,
+    "sku": "MB-MSI-Z790",
+    "name": "MSI Z790 ATX LGA1700 Motherboard",
+    "brand": "MSI",
+    "category_id": 102,
+    "status": "ACTIVE",
+    "localized_names": {
+      "en": "MSI Z790 ATX LGA1700 Motherboard",
+      "uk": "Материнська плата MSI Z790"
+    },
+    "attributes": {
+      "socket": "LGA1700",
+      "supported_ddr": "DDR5",
+      "form_factor": "ATX"
+    },
+    "searchable_text": "MSI Z790 ATX LGA1700 Motherboard MSI MB-MSI-Z790"
+  },
+  {
+    "product_id": 1013,
+    "sku": "RAM-COR-32-DDR4",
+    "name": "Corsair Vengeance 32GB DDR4",
+    "brand": "Corsair",
+    "category_id": 103,
+    "status": "ACTIVE",
+    "localized_names": {
+      "en": "Corsair Vengeance 32GB DDR4",
+      "uk": "Оперативна пам’ять Corsair Vengeance 32GB DDR4"
+    },
+    "attributes": {
+      "ddr_type": "DDR4",
+      "memory_gb": "32"
+    },
+    "searchable_text": "Corsair Vengeance 32GB DDR4 Corsair RAM-COR-32-DDR4"
+  },
+  {
+    "product_id": 1014,
+    "sku": "CASE-MSI-SMALL",
+    "name": "MSI Compact Micro ATX Case",
+    "brand": "MSI",
+    "category_id": 106,
+    "status": "ACTIVE",
+    "localized_names": {
+      "en": "MSI Compact Micro ATX Case",
+      "uk": "Корпус MSI Compact Micro ATX"
+    },
+    "attributes": {
+      "max_gpu_length_mm": "280",
+      "supported_form_factor": "mATX"
+    },
+    "searchable_text": "MSI Compact Micro ATX Case MSI CASE-MSI-SMALL"
+  },
+  {
+    "product_id": 1015,
+    "sku": "PSU-COR-550",
+    "name": "Corsair CX550 550W",
+    "brand": "Corsair",
+    "category_id": 105,
+    "status": "ACTIVE",
+    "localized_names": {
+      "en": "Corsair CX550 550W",
+      "uk": "Блок живлення Corsair CX550 550W"
+    },
+    "attributes": {
+      "wattage": "550"
+    },
+    "searchable_text": "Corsair CX550 550W Corsair PSU-COR-550"
   }
 ]

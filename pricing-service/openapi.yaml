@@ -14,8 +14,8 @@ paths:
           in: path
           required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
+            format: int64
       responses:
         '200':
           description: List of current prices for the product
@@ -51,8 +51,8 @@ paths:
           in: path
           required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
+            format: int64
       requestBody:
         required: true
         content:
@@ -75,8 +75,8 @@ paths:
           in: path
           required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
+            format: int64
       responses:
         '200':
           description: List of price history entries
@@ -159,8 +159,8 @@ paths:
           in: path
           required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
+            format: int64
       requestBody:
         required: true
         content:
@@ -181,8 +181,8 @@ paths:
           in: path
           required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
+            format: int64
       responses:
         '204':
           description: Discount disabled
@@ -215,11 +215,11 @@ components:
       required: [productId, amount, currencyCode]
       properties:
         productId:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         storeId:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
           nullable: true
         amount:
           type: number
@@ -256,14 +256,14 @@ components:
       required: [id, productId, amount, currencyCode, validFrom, updatedAt]
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         productId:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         storeId:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
           nullable: true
         amount:
           type: number
@@ -285,11 +285,11 @@ components:
       required: [id, priceId, oldAmount, newAmount, changedAt]
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         priceId:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         oldAmount:
           type: number
         newAmount:
@@ -305,19 +305,19 @@ components:
         productIds:
           type: array
           items:
-            type: string
-            format: uuid
+            type: integer
+            format: int64
 
     CalculatePriceRequest:
       type: object
       required: [productId, currencyCode]
       properties:
         productId:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         storeId:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
           nullable: true
         currencyCode:
           type: string
@@ -340,11 +340,11 @@ components:
       required: [storeId, discountType, discountValue, startsAt]
       properties:
         storeId:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         productId:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
           nullable: true
         discountType:
           $ref: '#/components/schemas/DiscountType'
@@ -380,14 +380,14 @@ components:
       required: [id, storeId, discountType, discountValue, startsAt, status]
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         storeId:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         productId:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
           nullable: true
         discountType:
           $ref: '#/components/schemas/DiscountType'
@@ -408,8 +408,8 @@ components:
       required: [id, fromCurrency, toCurrency, rate, effectiveAt]
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         fromCurrency:
           type: string
         toCurrency:

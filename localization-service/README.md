@@ -29,7 +29,7 @@ The `localization-service` is responsible for storing and serving translations o
 
 **Data ownership:**
 
-The service owns the `languages`, `translations`, and `translation_jobs` tables. It does not own entity records themselves — it references them by cross-service UUID (`entityId`) without foreign keys to other services' databases.
+The service owns the `languages`, `translations`, and `translation_jobs` tables. It does not own entity records themselves — it references them by cross-service Long ID (`entityId`) without foreign keys to other services' databases.
 
 ---
 
@@ -105,9 +105,9 @@ Table: `translations`
 
 | Column | Kotlin type | Constraints | Notes |
 |---|---|---|---|
-| `id` | `UUID` | `@Id`, auto `GenerationType.UUID` | Primary key. |
+| `id` | `Long` | `@Id`, auto `GenerationType.IDENTITY` | Primary key. |
 | `entity_type` | `EntityType` | NOT NULL, stored as `STRING` | References the type of the owning entity. |
-| `entity_id` | `UUID` | NOT NULL | UUID of the owning entity in its origin service (cross-service reference, no FK). |
+| `entity_id` | `Long` | NOT NULL | ID of the owning entity in its origin service (cross-service reference, no FK). |
 | `field_name` | `String` | NOT NULL | Name of the localizable field, e.g. `name` or `description`. |
 | `language_code` | `Language` (FK) | NOT NULL, `@ManyToOne LAZY` | Join column `language_code` referencing `languages.code`. |
 | `translated_value` | `String` | NOT NULL, `columnDefinition = "TEXT"` | The translated text content. |
@@ -124,9 +124,9 @@ Table: `translation_jobs`
 
 | Column | Kotlin type | Constraints | Notes |
 |---|---|---|---|
-| `id` | `UUID` | `@Id`, auto `GenerationType.UUID` | Primary key. |
+| `id` | `Long` | `@Id`, auto `GenerationType.IDENTITY` | Primary key. |
 | `entity_type` | `EntityType` | NOT NULL, stored as `STRING` | Type of the entity to be translated. |
-| `entity_id` | `UUID` | NOT NULL | UUID of the entity to be translated. |
+| `entity_id` | `Long` | NOT NULL | ID of the entity to be translated. |
 | `target_language_code` | `Language` (FK) | NOT NULL, `@ManyToOne LAZY` | Join column `target_language_code` referencing `languages.code`. |
 | `status` | `TranslationJobStatus` | NOT NULL, stored as `STRING`, default `PENDING` | Current execution status. |
 | `attempts` | `Int` | NOT NULL, default `0` | Number of execution attempts made. |
@@ -191,7 +191,7 @@ Security: all requests are permitted without authentication (Spring Security is 
 | Parameter | Type | Required | Notes |
 |---|---|---|---|
 | `entityType` | `EntityType` | No | One of `PRODUCT`, `BRAND`, `CATEGORY`, `PRODUCT_TYPE` |
-| `entityId` | `UUID` | No | UUID of the entity |
+| `entityId` | `Long` | No | ID of the entity |
 
 Note: filtering only activates when **both** parameters are present. If only one is supplied, all translations are returned.
 
@@ -201,9 +201,9 @@ Note: filtering only activates when **both** parameters are present. If only one
 
 | Field | Type |
 |---|---|
-| `id` | `UUID` |
+| `id` | `Long` |
 | `entityType` | `EntityType` |
-| `entityId` | `UUID` |
+| `entityId` | `Long` |
 | `fieldName` | `String` |
 | `languageCode` | `String` |
 | `translatedValue` | `String` |
@@ -219,7 +219,7 @@ Note: filtering only activates when **both** parameters are present. If only one
 **Example request:**
 
 ```
-GET /api/translations?entityType=PRODUCT&entityId=11111111-1111-1111-1111-111111111001
+GET /api/translations?entityType=PRODUCT&entityId=1001
 ```
 
 **Example response:**
@@ -227,9 +227,9 @@ GET /api/translations?entityType=PRODUCT&entityId=11111111-1111-1111-1111-111111
 ```json
 [
   {
-    "id": "a1b2c3d4-0000-0000-0000-000000000001",
+    "id": 1,
     "entityType": "PRODUCT",
-    "entityId": "11111111-1111-1111-1111-111111111001",
+    "entityId": 1001,
     "fieldName": "name",
     "languageCode": "en",
     "translatedValue": "GPU NVIDIA GeForce RTX 4090",
@@ -252,7 +252,7 @@ GET /api/translations?entityType=PRODUCT&entityId=11111111-1111-1111-1111-111111
 | Field | Type | Required | Notes |
 |---|---|---|---|
 | `entityType` | `EntityType` | Yes | One of the four enum values |
-| `entityId` | `UUID` | Yes | UUID of the entity in its origin service |
+| `entityId` | `Long` | Yes | ID of the entity in its origin service |
 | `fieldName` | `String` | Yes | Name of the localizable field |
 | `languageCode` | `String` | Yes | BCP 47 code; must exist in the `languages` table |
 | `translatedValue` | `String` | Yes | Translated text content |
@@ -274,7 +274,7 @@ Initial `status` is always set to `DRAFT` by the service layer.
 ```json
 {
   "entityType": "PRODUCT",
-  "entityId": "11111111-1111-1111-1111-111111111001",
+  "entityId": 1001,
   "fieldName": "name",
   "languageCode": "de",
   "translatedValue": "Grafikkarte NVIDIA GeForce RTX 4090"
@@ -285,9 +285,9 @@ Initial `status` is always set to `DRAFT` by the service layer.
 
 ```json
 {
-  "id": "a1b2c3d4-0000-0000-0000-000000000099",
+  "id": 99,
   "entityType": "PRODUCT",
-  "entityId": "11111111-1111-1111-1111-111111111001",
+  "entityId": 1001,
   "fieldName": "name",
   "languageCode": "de",
   "translatedValue": "Grafikkarte NVIDIA GeForce RTX 4090",
@@ -312,7 +312,7 @@ Initial `status` is always set to `DRAFT` by the service layer.
 
 | Variable | Type | Required |
 |---|---|---|
-| `id` | `UUID` | Yes |
+| `id` | `Long` | Yes |
 
 **Request body:** `TranslationUpdateRequest`
 
@@ -340,9 +340,9 @@ Initial `status` is always set to `DRAFT` by the service layer.
 
 ```json
 {
-  "id": "a1b2c3d4-0000-0000-0000-000000000099",
+  "id": 99,
   "entityType": "PRODUCT",
-  "entityId": "11111111-1111-1111-1111-111111111001",
+  "entityId": 1001,
   "fieldName": "name",
   "languageCode": "de",
   "translatedValue": "Grafikkarte NVIDIA GeForce RTX 4090",
@@ -367,7 +367,7 @@ Initial `status` is always set to `DRAFT` by the service layer.
 
 | Variable | Type | Required |
 |---|---|---|
-| `id` | `UUID` | Yes |
+| `id` | `Long` | Yes |
 
 **Request body:** none.
 
@@ -397,7 +397,7 @@ Initial `status` is always set to `DRAFT` by the service layer.
 | Field | Type | Required | Default | Notes |
 |---|---|---|---|---|
 | `entityType` | `EntityType` | Yes | — | One of the four enum values |
-| `entityId` | `UUID` | Yes | — | UUID of the entity |
+| `entityId` | `Long` | Yes | — | ID of the entity |
 | `fieldName` | `String` | Yes | — | Name of the field to resolve |
 | `preferredLanguage` | `String` | Yes | — | BCP 47 code of the preferred language |
 | `fallbackLanguage` | `String` | No | `"en"` | BCP 47 code used when preferred is unavailable |
@@ -416,7 +416,7 @@ Initial `status` is always set to `DRAFT` by the service layer.
 ```json
 {
   "entityType": "PRODUCT",
-  "entityId": "11111111-1111-1111-1111-111111111001",
+  "entityId": 1001,
   "fieldName": "name",
   "preferredLanguage": "de",
   "fallbackLanguage": "en"
@@ -427,9 +427,9 @@ Initial `status` is always set to `DRAFT` by the service layer.
 
 ```json
 {
-  "id": "a1b2c3d4-0000-0000-0000-000000000001",
+  "id": 1,
   "entityType": "PRODUCT",
-  "entityId": "11111111-1111-1111-1111-111111111001",
+  "entityId": 1001,
   "fieldName": "name",
   "languageCode": "en",
   "translatedValue": "GPU NVIDIA GeForce RTX 4090",
@@ -457,16 +457,16 @@ Initial `status` is always set to `DRAFT` by the service layer.
 | Field | Type | Required | Notes |
 |---|---|---|---|
 | `entityType` | `EntityType` | Yes | One of the four enum values |
-| `entityId` | `UUID` | Yes | UUID of the entity to translate |
+| `entityId` | `Long` | Yes | ID of the entity to translate |
 | `targetLanguageCode` | `String` | Yes | BCP 47 code; must exist in the `languages` table |
 
 **Response body:** `TranslationJobResponse`
 
 | Field | Type | Notes |
 |---|---|---|
-| `id` | `UUID` | Generated job ID |
+| `id` | `Long` | Generated job ID |
 | `entityType` | `EntityType` | |
-| `entityId` | `UUID` | |
+| `entityId` | `Long` | |
 | `targetLanguageCode` | `String` | Resolved from the `Language` entity |
 | `status` | `TranslationJobStatus` | Always `PENDING` on creation |
 | `attempts` | `Int` | Always `0` on creation |
@@ -485,7 +485,7 @@ Initial `status` is always set to `DRAFT` by the service layer.
 ```json
 {
   "entityType": "PRODUCT",
-  "entityId": "11111111-1111-1111-1111-111111111001",
+  "entityId": 1001,
   "targetLanguageCode": "de"
 }
 ```
@@ -494,9 +494,9 @@ Initial `status` is always set to `DRAFT` by the service layer.
 
 ```json
 {
-  "id": "b2c3d4e5-0000-0000-0000-000000000001",
+  "id": 1,
   "entityType": "PRODUCT",
-  "entityId": "11111111-1111-1111-1111-111111111001",
+  "entityId": 1001,
   "targetLanguageCode": "de",
   "status": "PENDING",
   "attempts": 0,
@@ -521,7 +521,7 @@ Initial `status` is always set to `DRAFT` by the service layer.
 
 | Variable | Type | Required |
 |---|---|---|
-| `id` | `UUID` | Yes |
+| `id` | `Long` | Yes |
 
 **Request body:** none.
 
@@ -592,7 +592,7 @@ Defined in the repository but not called from any service or controller. It is a
 
 ## 6. Inter-Service Communication
 
-No inter-service communication is currently implemented. The service does not make any HTTP calls to other microservices. Entity UUIDs in the `translations` and `translation_jobs` tables are cross-service references stored as plain UUIDs with no runtime validation against the owning service.
+No inter-service communication is currently implemented. The service does not make any HTTP calls to other microservices. Entity IDs in the `translations` and `translation_jobs` tables are cross-service references stored as plain `Long` values with no runtime validation against the owning service.
 
 ---
 

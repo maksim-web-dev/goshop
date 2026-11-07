@@ -1,8 +1,17 @@
 # GoShop Architecture Review
 
-**Date:** 2026-11-06
+**Date:** 2026-11-06 (updated 2026-11-06)
 **Reviewer:** Architect Agent (Claude Sonnet 4.6)
 **Scope:** Full source-code analysis of all 7 backend services + api-service stub in the monorepo at `/home/max/IdeaProjects/goshop`.
+
+---
+
+## Changelog
+
+| Date | Changes |
+|---|---|
+| 2026-11-06 | Initial review |
+| 2026-11-06 | UUID→Long migration completed in all 6 non-product services; `GlobalExceptionHandler` added to all 7 services; `PostgresConfig.setPackagesToScan` bug fixed in all 7 services; `ProductAttributeController` returns body; seed data infrastructure rewritten with JdbcTemplate + explicit IDs; `search_documents` schema updated (BIGINT, JSONB columns) |
 
 ---
 
@@ -11,17 +20,17 @@
 | Service | Port | DB name | Responsibilities | PK type | Spring Boot version |
 |---|---|---|---|---|---|
 | **product-service** | 8080 (host: 8081 in docker-compose) | `product_db` | Product catalog: brands, categories, product types, components, parameter groups, product attributes | `Long` (IDENTITY) | 3.3.5 |
-| **compatibility-service** | 8082 | `compatibility_db` | PC component compatibility rules, compatibility checks, issue tracking | `UUID` (GenerationType.UUID) | 3.3.5 |
-| **localization-service** | 8083 | `localization_db` | Translations of entity fields (product, brand, category, product_type) across BCP 47 languages; translation jobs | `UUID` (GenerationType.UUID) | 3.3.5 |
-| **pricing-service** | 8084 | `pricing_db` | Prices (platform-level and per-store), discounts (PERCENTAGE/FIXED), price history, exchange rates, price calculation | `UUID` (GenerationType.UUID) | 3.3.5 |
-| **recommendations-service** | 8085 | `recommendations_db` | Product relations (similar/alternative/accessory/upgrade), recommendation rules, pre-computed snapshots | `UUID` (GenerationType.UUID) | 3.3.5 |
-| **search-service** | 8086 | `search_db` | Full-text search over PostgreSQL FTS (`search_documents` table), autocomplete suggestions, re-index job queue | `UUID` (GenerationType.UUID for jobs; `product_id UUID` PK for documents) | 3.3.5 |
-| **store-service** | 8087 | `store_db` | Store management, per-store settings (rate limits, allowed languages), API key lifecycle (BCrypt hash, prefix), webhooks | `UUID` (GenerationType.UUID) | 3.3.5 |
+| **compatibility-service** | 8082 | `compatibility_db` | PC component compatibility rules, compatibility checks, issue tracking | `Long` (IDENTITY) | 3.3.5 |
+| **localization-service** | 8083 | `localization_db` | Translations of entity fields (product, brand, category, product_type) across BCP 47 languages; translation jobs | `Long` (IDENTITY) | 3.3.5 |
+| **pricing-service** | 8084 | `pricing_db` | Prices (platform-level and per-store), discounts (PERCENTAGE/FIXED), price history, exchange rates, price calculation | `Long` (IDENTITY) | 3.3.5 |
+| **recommendations-service** | 8085 | `recommendations_db` | Product relations (similar/alternative/accessory/upgrade), recommendation rules, pre-computed snapshots | `Long` (IDENTITY) | 3.3.5 |
+| **search-service** | 8086 | `search_db` | Full-text search over PostgreSQL FTS (`search_documents` table), autocomplete suggestions, re-index job queue | `Long` (IDENTITY; `product_id BIGINT` PK for documents) | 3.3.5 |
+| **store-service** | 8087 | `store_db` | Store management, per-store settings (rate limits, allowed languages), API key lifecycle (BCrypt hash, prefix), webhooks | `Long` (IDENTITY) | 3.3.5 |
 | **api-service** | 8080 | — | Stub only — single `Main.kt` with a "Hello, Kotlin!" print loop; no Spring context | — | — (plain Kotlin module) |
 
 **Notes:**
 - All 7 implemented services use Kotlin 2.0.0 (product-service uses 2.2.0 for the JVM plugin), Spring Boot 3.3.5, JDK 21.
-- product-service is the **only** service using `Long` (AUTO INCREMENT) as its primary key type.
+- All services now use `Long` (AUTO INCREMENT / IDENTITY) as their primary key type. The UUID→Long migration has been completed across all 6 non-product services.
 - The docker-compose maps product-service container port 8080 to **host port 8081**, not 8080 as specified in the assignment table. Port 8080 on the host is reserved for the api-service container.
 
 ---
@@ -42,7 +51,7 @@
 
 **All services are fully isolated — no synchronous or asynchronous inter-service calls are implemented.**
 
-Cross-service references exist only as bare UUID fields stored in the database (e.g., `productId: UUID` in pricing, compatibility, search, recommendations). These are not enforced at the code level.
+Cross-service references exist only as bare `Long` fields stored in the database (e.g., `productId: Long` in pricing, compatibility, search, recommendations). These are not enforced at the code level.
 
 ---
 
@@ -58,87 +67,92 @@ Cross-service references exist only as bare UUID fields stored in the database (
 | `Brand` | `brands` | `Long` | No audit timestamps |
 | `Category` | `categories` | `Long` | Self-referencing parent; no timestamps |
 | `ProductType` | `product_types` | `Long` | References `Category` |
-| `CategoryParameter` | `category_parameters` | `Long` | References `Category`, `ParameterGroup` |
+| `CategoryParameter` | `category_parameters` | `Long` | References `Category`, `ParameterGroup`; has `code: String?` field |
 | `ParameterGroup` | `parameter_groups` | `Long` | — |
 | `ParameterGroupItem` | `parameter_group_items` | `Long` | References `ParameterGroup` |
 | `ProductAttribute` | `product_attributes` | `Long` | References `Product`, `CategoryParameter`; value stored as `TEXT` |
 | `Component` | `components` | `Long` | References `ComponentGroup` |
 | `ComponentGroup` | `component_groups` | `Long` | — |
 
-#### compatibility-service (all PKs are `UUID`, `GenerationType.UUID`)
+#### compatibility-service (all PKs are `Long`, `GenerationType.IDENTITY`)
 
-| Entity | Table | PK | Cross-service UUID refs |
+| Entity | Table | PK | Cross-service Long refs |
 |---|---|---|---|
-| `CompatibilityRule` | `compatibility_rules` | `UUID` | `sourceProductTypeId: UUID`, `targetProductTypeId: UUID` → product-service `ProductType` |
-| `CompatibilityCheck` | `compatibility_checks` | `UUID` | `productIds: List<UUID>` (collection table) → product-service `Product` |
-| `CompatibilityIssue` | `compatibility_issues` | `UUID` | Refs `CompatibilityCheck`, `CompatibilityRule` (local) |
+| `CompatibilityRule` | `compatibility_rules` | `Long` | `sourceProductTypeId: Long`, `targetProductTypeId: Long` → product-service `ProductType` |
+| `CompatibilityCheck` | `compatibility_checks` | `Long` | `productIds: List<Long>` (collection table) → product-service `Product` |
+| `CompatibilityIssue` | `compatibility_issues` | `Long` | Refs `CompatibilityCheck`, `CompatibilityRule` (local) |
 
-#### localization-service (all PKs are `UUID` or String BCP-47 code)
+#### localization-service (PKs are `Long` or String BCP-47 code)
 
-| Entity | Table | PK | Cross-service UUID refs |
+| Entity | Table | PK | Cross-service Long refs |
 |---|---|---|---|
 | `Language` | `languages` | `String` (BCP-47 code, e.g. `uk`) | — |
-| `Translation` | `translations` | `UUID` | `entityId: UUID` — references PRODUCT, BRAND, CATEGORY, PRODUCT_TYPE in other services |
-| `TranslationJob` | `translation_jobs` | `UUID` | `entityId: UUID` — same cross-service reference |
+| `Translation` | `translations` | `Long` | `entityId: Long` — references PRODUCT, BRAND, CATEGORY, PRODUCT_TYPE in other services |
+| `TranslationJob` | `translation_jobs` | `Long` | `entityId: Long` — same cross-service reference |
 
-#### pricing-service (all PKs are `UUID`, `GenerationType.UUID`)
+#### pricing-service (all PKs are `Long`, `GenerationType.IDENTITY`)
 
-| Entity | Table | PK | Cross-service UUID refs |
+| Entity | Table | PK | Cross-service Long refs |
 |---|---|---|---|
-| `Price` | `prices` | `UUID` | `productId: UUID` → product-service `Product`; `storeId: UUID?` → store-service `Store` |
-| `Discount` | `discounts` | `UUID` | `storeId: UUID` → store-service `Store`; `productId: UUID?` → product-service `Product` |
-| `PriceHistory` | `price_history` | `UUID` | References `Price` (local) |
-| `ExchangeRate` | `exchange_rates` | `UUID` | — |
+| `Price` | `prices` | `Long` | `productId: Long` → product-service `Product`; `storeId: Long?` → store-service `Store` |
+| `Discount` | `discounts` | `Long` | `storeId: Long` → store-service `Store`; `productId: Long?` → product-service `Product` |
+| `PriceHistory` | `price_history` | `Long` | References `Price` (local) |
+| `ExchangeRate` | `exchange_rates` | `Long` | — |
 
-#### recommendations-service (all PKs are `UUID`, `GenerationType.UUID`)
+#### recommendations-service (all PKs are `Long`, `GenerationType.IDENTITY`)
 
-| Entity | Table | PK | Cross-service UUID refs |
+| Entity | Table | PK | Cross-service Long refs |
 |---|---|---|---|
-| `ProductRelation` | `product_relations` | `UUID` | `sourceProductId: UUID`, `targetProductId: UUID` → product-service `Product` |
-| `RecommendationRule` | `recommendation_rules` | `UUID` | — |
-| `RecommendationSnapshot` | `recommendation_snapshots` | `UUID` | `productId: UUID`, `recommendedProductIds: List<UUID>` → product-service `Product` |
+| `ProductRelation` | `product_relations` | `Long` | `sourceProductId: Long`, `targetProductId: Long` → product-service `Product` |
+| `RecommendationRule` | `recommendation_rules` | `Long` | — |
+| `RecommendationSnapshot` | `recommendation_snapshots` | `Long` | `productId: Long`, `recommendedProductIds: List<Long>` → product-service `Product` |
 
 #### search-service
 
-| Entity | Table | PK | Cross-service UUID refs |
+| Entity | Table | PK | Cross-service Long refs |
 |---|---|---|---|
-| `SearchDocument` | `search_documents` | `UUID` (`product_id`) | `productId: UUID` → product-service `Product`; `categoryId: UUID` → product-service `Category` |
-| `SearchIndexJob` | `search_index_jobs` | `UUID` | `productId: UUID` → product-service `Product` |
+| `SearchDocument` | `search_documents` | `Long` (`product_id BIGINT`) | `productId: Long` → product-service `Product`; `categoryId: Long` → product-service `Category` |
+| `SearchIndexJob` | `search_index_jobs` | `Long` | `productId: Long` → product-service `Product` |
 
-#### store-service (all PKs are `UUID`, `GenerationType.UUID`)
+Schema updated: `search_documents` table now has `localized_names JSONB` and `attributes JSONB` columns in addition to the core FTS fields.
 
-| Entity | Table | PK | Cross-service UUID refs |
+#### store-service (all PKs are `Long`, `GenerationType.IDENTITY`)
+
+| Entity | Table | PK | Cross-service refs |
 |---|---|---|---|
-| `Store` | `stores` | `UUID` | — |
-| `StoreSettings` | `store_settings` | `UUID` | References `Store` (local `@OneToOne`) |
-| `StoreApiKey` | `store_api_keys` | `UUID` | References `Store` (local `@ManyToOne`) |
-| `StoreWebhook` | `store_webhooks` | `UUID` | References `Store` (local) |
+| `Store` | `stores` | `Long` | — |
+| `StoreSettings` | `store_settings` | `Long` | References `Store` (local `@OneToOne`) |
+| `StoreApiKey` | `store_api_keys` | `Long` | References `Store` (local `@ManyToOne`) |
+| `StoreWebhook` | `store_webhooks` | `Long` | References `Store` (local) |
 
-### 3.2 Cross-Service UUID Reference Summary
+### 3.2 Cross-Service Reference Summary
+
+> **RESOLVED:** All services now use `Long` PKs. All cross-service references are consistent.
 
 | Reference field | Lives in service | Points to service | PK type at target | Mismatch? |
 |---|---|---|---|---|
-| `productId: UUID` | compatibility, pricing, recommendations, search | product-service `Product.id` | **Long** | **YES — critical type mismatch** |
-| `sourceProductTypeId: UUID` | compatibility | product-service `ProductType.id` | **Long** | **YES — critical type mismatch** |
-| `targetProductTypeId: UUID` | compatibility | product-service `ProductType.id` | **Long** | **YES — critical type mismatch** |
-| `categoryId: UUID` | search | product-service `Category.id` | **Long** | **YES — critical type mismatch** |
-| `entityId: UUID` | localization | product-service (`Product`, `Brand`, `Category`, `ProductType`) | **Long** | **YES — critical type mismatch** |
-| `storeId: UUID` | pricing | store-service `Store.id` | UUID | No mismatch |
+| `productId: Long` | compatibility, pricing, recommendations, search | product-service `Product.id` | `Long` | No |
+| `sourceProductTypeId: Long` | compatibility | product-service `ProductType.id` | `Long` | No |
+| `targetProductTypeId: Long` | compatibility | product-service `ProductType.id` | `Long` | No |
+| `categoryId: Long` | search | product-service `Category.id` | `Long` | No |
+| `entityId: Long` | localization | product-service (`Product`, `Brand`, `Category`, `ProductType`) | `Long` | No |
+| `storeId: Long` | pricing | store-service `Store.id` | `Long` | No |
 
-### 3.3 Summary of Type Mismatch
+### 3.3 PK Type Consistency — Resolved
 
-**product-service** uses auto-increment `Long` PKs for all entities. Every other service references products, brands, categories and product types using `UUID`. This is the most critical architectural inconsistency in the entire codebase: an api-service or any integration layer cannot join or correlate data across services without a lookup or mapping mechanism.
+**All services now use `Long` (AUTO INCREMENT) PKs for all entities.** The UUID→Long migration was completed by changing `GenerationType.UUID` to `GenerationType.IDENTITY` and all cross-service reference fields from `UUID` to `Long` in every non-product service.
+
+Seed data infrastructure was correspondingly updated: all `DataSeed` classes in product-service were rewritten to use `JdbcTemplate` with explicit SQL `INSERT ... ON CONFLICT (id) DO NOTHING` + `setval(pg_get_serial_sequence(...))` to support stable cross-service Long IDs (products 1001–1015, stores 2001–2003, product_types 201–208, categories 100–108).
 
 ---
 
 ## 4. API Contract Inconsistencies
 
-### 4.1 Product ID Type Mismatch (Critical)
+### 4.1 Product ID Type Mismatch — RESOLVED
 
-- **product-service** exposes `id: Long` in `ProductResponse`, `BrandResponse`, `CategoryResponse`, `ProductTypeResponse`.
-- **All other services** accept and store these cross-references as `UUID`.
-- When a client asks for price by `productId` (UUID), there is no product with that UUID in product-service.
-- **Impact:** api-service cannot call pricing/compatibility/recommendations/search with the product ID returned by product-service without a resolution layer.
+~~product-service exposes `id: Long` while all other services store these references as `UUID`.~~
+
+**Fixed.** All 6 non-product services were migrated from UUID to Long. `productId`, `storeId`, `sourceProductTypeId`, `targetProductTypeId`, `entityId`, and `categoryId` fields in all services are now `Long`, matching the product-service and store-service PKs. The api-service can now pass product IDs across services without any type conversion.
 
 ### 4.2 Docker-Compose Port Discrepancy
 
@@ -146,9 +160,15 @@ Cross-service references exist only as bare UUID fields stored in the database (
 - The assignment specification table states product-service should be on 8080, but the api-service container occupies that host port.
 - This is inconsistent across the specification vs. deployment configuration.
 
-### 4.3 Error Response Format — No Standard Body
+### 4.3 Error Response Format — RESOLVED
 
-None of the services defines a global `@ControllerAdvice` / `@ExceptionHandler`. All error responses are produced by Spring Boot's default `BasicErrorController` or by `ResponseStatusException` (which produces whitelabel error responses). There is no uniform error body format (e.g., `{ "code": "NOT_FOUND", "message": "..." }`).
+~~None of the services defines a global `@ControllerAdvice` / `@ExceptionHandler`.~~
+
+**Fixed.** `GlobalExceptionHandler.kt` (annotated with `@RestControllerAdvice`) was added to the `com.rest` package in all 7 services. It provides a uniform error body format:
+```json
+{ "status": 404, "error": "Not found" }
+```
+Handles both `ResponseStatusException` and generic `Exception`.
 
 ### 4.4 Missing `createdAt` / `updatedAt` on Several Entities
 
@@ -194,17 +214,17 @@ Most list endpoints return `List<T>` with no pagination:
 
 Only `GET /products` is paginated.
 
-### 4.7 Incomplete `ProductAttributeController`
+### 4.7 Incomplete `ProductAttributeController` — RESOLVED
 
-`PUT /products/{productId}/attributes` returns `Unit` (no response body), while all other mutation endpoints return the updated entity. This violates consistency.
+~~`PUT /products/{productId}/attributes` returns `Unit` (no response body).~~
 
-### 4.8 `PostgresConfig` Bug — Wrong Package Scan
+**Fixed.** `setProductAttributes()` in `ProductAttributeService` now returns `List<ProductAttribute>`, and `ProductAttributeController.setAttributes()` returns `ResponseEntity<List<ProductAttributeResponse>>`, consistent with other mutation endpoints.
 
-In every service, `PostgresConfig.kt` has:
-```kotlin
-setPackagesToScan("zero44.crm.core.data.postgres")
-```
-This is **copy-pasted from an unrelated project** and scans a package that does not exist. JPA entities are still found because Spring Boot's auto-configuration also scans `com.data.entity` via `@ComponentScan`. However this is fragile and the explicit entity manager factory likely has no entity classes registered from its own scan — it falls back to the boot auto-config context. This should be `setPackagesToScan("com.data.entity")`.
+### 4.8 `PostgresConfig` Bug — Wrong Package Scan — RESOLVED
+
+~~In every service, `PostgresConfig.kt` has `setPackagesToScan("zero44.crm.core.data.postgres")`.~~
+
+**Fixed.** All 7 services now have `setPackagesToScan("com.data.entity")` in their `PostgresConfig.kt`.
 
 ---
 
@@ -249,7 +269,7 @@ The api-service module currently contains only an IDE-generated `Main.kt` stub w
 | `GET /api/products/{id}/full` | product + pricing + localization + recommendations | Single call returning product detail with current prices, translations for user's locale, and similar/accessory product IDs |
 | `GET /api/search/products?q=...&storeId=...&lang=...` | search + pricing (batch) + localization | Search results enriched with prices and translated names |
 | `POST /api/compatibility/check` with product enrichment | compatibility + product | Check result enriched with product names |
-| `GET /api/recommendations/products/{id}` with enrichment | recommendations + product + pricing | Recommended product UUIDs enriched with product data and prices |
+| `GET /api/recommendations/products/{id}` with enrichment | recommendations + product + pricing | Recommended product IDs enriched with product data and prices |
 
 ### 6.3 Store Authentication Middleware
 
@@ -300,7 +320,7 @@ Based on the actual APIs implemented, the following endpoints are absent but wil
 
 | Missing Endpoint | Reason Needed |
 |---|---|
-| `GET /recommendations/products/{id}/accessories` with pricing | Currently returns List<UUID>; api-service needs enriched responses |
+| `GET /recommendations/products/{id}/accessories` with pricing | Currently returns `List<Long>`; api-service needs enriched responses |
 | `POST /recommendations/products/build` exists for PC build — no way to associate built products with a store's pricing | Needs `storeId` parameter |
 
 ### 7.5 search-service
@@ -308,8 +328,10 @@ Based on the actual APIs implemented, the following endpoints are absent but wil
 | Missing Endpoint | Reason Needed |
 |---|---|
 | `GET /search/products?storeId=` (store-scoped search) | Currently no store filtering in search |
-| `localizedNames` field not populated in search query results | `SearchService.search()` returns empty `localizedNames` map; FTS is on English/simple text only |
-| Filter by min/max price | `SearchQueryDto` has `minPrice`/`maxPrice` fields but `SearchService.search()` does not apply them in SQL |
+| ~~`localizedNames` not populated in search results~~ | **RESOLVED.** `SearchService.search()` now SELECTs `localized_names` and `attributes` JSONB columns and maps them to response. `SearchResultResponse` now includes both fields. |
+| ~~`indexProduct()` does not write JSONB columns~~ | **RESOLVED.** `indexProduct()` now writes `localizedNames` and `attributes` via `?::jsonb` parameters. |
+| Attribute filter not applied in search | `SearchQueryDto.attributes` map is now applied as `attributes @> ?::jsonb` containment filter in SQL. **RESOLVED.** |
+| Filter by min/max price | `SearchQueryDto` has `minPrice`/`maxPrice` fields but they cannot be applied — `search_documents` has no price column. Price data lives in pricing-service. Requires either schema denormalization or post-query filtering via pricing-service batch call. |
 
 ### 7.6 compatibility-service
 
@@ -329,13 +351,13 @@ A typical "product detail" page in an api-service request would require:
 ```
 1. GET product-service /products/{id}            → ~1 DB query
 2. GET product-service /products/{id}/attributes  → ~1 DB query  (separate HTTP call)
-3. GET pricing-service /prices/products/{uuid}    → ~1 DB query  (UUID/Long mismatch blocks this)
+3. GET pricing-service /prices/products/{id}      → ~1 DB query  (Long IDs now consistent)
 4. POST localization-service /translations/resolve × N fields → N DB queries
-5. GET recommendations-service /recommendations/products/{uuid}/similar → ~1 DB query
-6. GET recommendations-service /recommendations/products/{uuid}/accessories → ~1 DB query
+5. GET recommendations-service /recommendations/products/{id}/similar → ~1 DB query
+6. GET recommendations-service /recommendations/products/{id}/accessories → ~1 DB query
 ```
 
-Minimum **6 serial HTTP calls** on the critical path with current API design. With parallel execution (steps 2–6 can be fanned out after step 1), it reduces to **2 sequential hops**, but requires the UUID/Long mismatch to be resolved first.
+Minimum **6 serial HTTP calls** on the critical path with current API design. With parallel execution (steps 2–6 can be fanned out after step 1), it reduces to **2 sequential hops**.
 
 ### 8.2 N+1 Patterns
 
@@ -408,20 +430,17 @@ No Kubernetes manifests (Deployment, Service, Ingress) exist in the repository. 
 
 ---
 
-## 10. Recommendations (NOT YET IMPLEMENTED)
+## 10. Recommendations (Status)
 
-> All items below represent **future work** — none are currently implemented. Items are ordered by priority.
+> Items are ordered by priority. Resolved items are marked.
 
 ### 10.1 Critical Gaps Blocking api-service Integration
 
 **P0 — Must fix before any inter-service integration is possible:**
 
-1. **Resolve the Long vs UUID PK mismatch in product-service.**
-   - Option A (Recommended): Add a `uuid` column to `products`, `brands`, `categories`, `product_types` as a secondary stable external identifier. Expose it in all API responses. Downstream services reference this UUID. The internal Long PK is kept for JPA/DB performance.
-   - Option B: Migrate product-service to UUID PKs entirely (larger change, requires data migration).
-   - Without this, compatibility, localization, pricing, recommendations and search cannot reliably reference product-service entities.
+1. ~~**Resolve the Long vs UUID PK mismatch in product-service.**~~ **RESOLVED.** All 6 non-product services migrated from UUID→Long. Option B (full migration) was chosen. All `productId`, `storeId`, `entityId`, `categoryId`, `sourceProductTypeId`, `targetProductTypeId` fields are now `Long` throughout the codebase.
 
-2. **Fix the `PostgresConfig.setPackagesToScan("zero44.crm.core.data.postgres")` copy-paste bug** in all services. Change to `"com.data.entity"`. This may cause subtle issues with the custom `EntityManagerFactory` missing entity classes.
+2. ~~**Fix the `PostgresConfig.setPackagesToScan("zero44.crm.core.data.postgres")` copy-paste bug.**~~ **RESOLVED.** All 7 services now use `setPackagesToScan("com.data.entity")`.
 
 3. **Implement the api-service** as a proper Spring Boot application with:
    - Spring Cloud Gateway or Spring MVC-based routing.
@@ -433,10 +452,11 @@ No Kubernetes manifests (Deployment, Service, Ingress) exist in the repository. 
 5. **Add `GET /products/by-ids`** (batch) to product-service. Without it, recommendations and search enrichment cause N HTTP calls.
 
 6. **Fix stub implementations:**
-   - `CompatibilityCheckService.evaluateRule()` always returns `null` — all compatibility checks trivially pass.
-   - `CompatibilityCheckService.findCompatibleProducts()` always returns `emptyList()`.
-   - `SearchService.search()` ignores `minPrice` / `maxPrice` filter parameters.
-   - `SearchDocument.localizedNames` is not populated on query results.
+   - `CompatibilityCheckService.evaluateRule()` always returns `null` — all compatibility checks trivially pass. **Cannot be implemented without HTTP client to product-service** (needs product attributes to evaluate socket match, RAM compatibility, etc.). Requires inter-service integration.
+   - ~~`CompatibilityCheckService.findCompatibleProducts()` always returns `emptyList()`.~~ **RESOLVED.** Now queries `compatibility_checks` history: returns distinct product IDs that appeared together with the given product in a compatible check.
+   - `SearchService.search()` ignores `minPrice` / `maxPrice` filter parameters. **Cannot be implemented** — `search_documents` has no price column. Price data lives in pricing-service only.
+   - ~~`SearchService.search()` does not SELECT `localized_names`/`attributes` JSONB columns.~~ **RESOLVED.** `SearchService.search()` now SELECTs both JSONB columns and maps them to `SearchDocument.localizedNames` / `SearchDocument.attributes`. The `attributes` map from `SearchQueryDto` is applied as a PostgreSQL JSONB containment filter (`attributes @> ?::jsonb`).
+   - ~~`SearchService.indexProduct()` does not write `localized_names`/`attributes` to the new JSONB columns.~~ **RESOLVED.** `indexProduct()` now writes both JSONB columns; `SearchResultResponse` and `SearchResultResponseAdapter` updated to expose `localizedNames` and `attributes` in API responses.
 
 ### 10.2 Cross-Cutting Concerns
 
@@ -449,7 +469,7 @@ No Kubernetes manifests (Deployment, Service, Ingress) exist in the repository. 
 
 9. **Structured Logging.** Add a standard MDC with `traceId`, `storeId`, `serviceVersion` to all log entries. Currently logging is default Spring Boot with no correlation context.
 
-10. **Global Error Handler.** Add a `@ControllerAdvice` with a uniform error response format (`{ "status": 404, "code": "NOT_FOUND", "message": "..." }`) to all services.
+10. ~~**Global Error Handler.**~~ **RESOLVED.** `GlobalExceptionHandler` (`@RestControllerAdvice`) added to all 7 services. Returns `{ "status": <code>, "error": "<message>" }` for both `ResponseStatusException` and unhandled `Exception`.
 
 11. **Input Validation.** No `@Valid`, `@NotNull`, `@Size` or Bean Validation annotations are used in any request DTO. Invalid requests (e.g., null `productId` in `PriceCreateRequest`) will cause unhandled NullPointerException or Hibernate constraint violations with 500 responses.
 
@@ -457,44 +477,40 @@ No Kubernetes manifests (Deployment, Service, Ingress) exist in the repository. 
 
 12. **No distributed transaction support.** When an api-service creates a product (product-service) and immediately creates its price (pricing-service), there is no saga/compensation mechanism. A partial failure leaves the system in an inconsistent state.
 
-13. **search_documents is manually managed.** Currently the only way to update search data is via `POST /internal/search/reindex` with explicit product IDs. There is no trigger from product-service when a product is created/updated. Data in search will be stale unless a Kafka event pipeline or scheduled synchronisation is added.
+13. **search_documents is manually managed.** Currently the only way to update search data is via `POST /internal/search/reindex` with explicit product IDs. There is no trigger from product-service when a product is created/updated. Data in search will be stale unless a Kafka event pipeline or scheduled synchronisation is added. The reindex endpoint now correctly populates `localized_names` and `attributes` JSONB columns.
 
-14. **Translation consistency.** `Translation.entityId` stores a UUID, but product-service uses Long IDs. Translations created today cannot be reliably resolved to actual products until the UUID mismatch is fixed.
-
-15. **Pricing and product lifecycle.** When a product is archived in product-service, its prices in pricing-service remain active. There is no mechanism to deactivate prices when a product is archived.
+14. **Pricing and product lifecycle.** When a product is archived in product-service, its prices in pricing-service remain active. There is no mechanism to deactivate prices when a product is archived.
 
 ### 10.4 Performance Improvements
 
-16. **Add `spring-boot-starter-actuator`** to all services to expose `/actuator/health`, `/actuator/metrics`, and `/actuator/prometheus`. This is prerequisite for Kubernetes health probes and Prometheus scraping.
+15. **Add `spring-boot-starter-actuator`** to all services to expose `/actuator/health`, `/actuator/metrics`, and `/actuator/prometheus`. This is prerequisite for Kubernetes health probes and Prometheus scraping.
 
-17. **Add Spring Cache (`@Cacheable`) or Redis** for:
+16. **Add Spring Cache (`@Cacheable`) or Redis** for:
     - Exchange rates (change infrequently).
     - Language list.
     - Store settings (rate limits used on every request).
     - Product category tree.
 
-18. **Pagination on unbounded list endpoints.** `GET /translations`, `GET /discounts`, `GET /brands`, etc. should be paginated or limited. At scale, `translationRepository.findAll()` could return millions of rows.
+17. **Pagination on unbounded list endpoints.** `GET /translations`, `GET /discounts`, `GET /brands`, etc. should be paginated or limited. At scale, `translationRepository.findAll()` could return millions of rows.
 
-19. **Dockerfile layer caching.** Change Dockerfiles to copy `gradle*`, `build.gradle.kts`, `settings.gradle.kts` first and run a dependency download step before copying source code. This will make incremental builds significantly faster.
+18. **Dockerfile layer caching.** Change Dockerfiles to copy `gradle*`, `build.gradle.kts`, `settings.gradle.kts` first and run a dependency download step before copying source code. This will make incremental builds significantly faster.
 
-20. **Connection pool sizing.** The default `PRODUCT_HIKARI_POOL_MAX=25` is defined for every service. With 7 services each holding up to 25 connections, that is 175 connections to 7 separate Postgres instances. This is reasonable but should be tuned per service based on actual load.
+19. **Connection pool sizing.** The default `PRODUCT_HIKARI_POOL_MAX=25` is defined for every service. With 7 services each holding up to 25 connections, that is 175 connections to 7 separate Postgres instances. This is reasonable but should be tuned per service based on actual load.
 
 ### 10.5 Long-Term Architectural Evolution
 
-21. **Introduce Kafka for event-driven integration.** Key events:
+20. **Introduce Kafka for event-driven integration.** Key events:
     - `product.created` / `product.updated` / `product.archived` (produced by product-service) → consumed by search-service (re-index), pricing-service (validate productId), recommendations-service (clean stale relations).
     - `price.updated` (produced by pricing-service) → consumed by search-service to update search documents.
     - `store.deactivated` (produced by store-service) → consumed by pricing-service to deactivate store prices.
     This would eliminate the need for the api-service to orchestrate data consistency.
 
-22. **Align product-service PK strategy** with the rest of the platform. The long-term target should be UUID PKs throughout, as this simplifies distributed ID generation, enables global deduplication, and removes the ambiguity that currently affects 5 out of 6 downstream services.
+21. **Consider a dedicated API gateway** (Kong, Nginx, or Spring Cloud Gateway) in front of the api-service for rate limiting (store-service already stores `requestsPerSecond` and `burstLimit` per store), TLS termination, and request logging.
 
-23. **Consider a dedicated API gateway** (Kong, Nginx, or Spring Cloud Gateway) in front of the api-service for rate limiting (store-service already stores `requestsPerSecond` and `burstLimit` per store), TLS termination, and request logging.
-
-24. **Kubernetes manifests.** Create Helm charts or Kustomize overlays for each service with:
+22. **Kubernetes manifests.** Create Helm charts or Kustomize overlays for each service with:
     - `readinessProbe` on `/actuator/health/readiness` (requires actuator).
     - `livenessProbe` on `/actuator/health/liveness`.
     - Resource requests/limits.
     - `PodDisruptionBudget` for HA deployments.
 
-25. **Database migrations.** Currently `ddl-auto=update` is used in all services. This is not safe for production — schema drift is irreversible and there is no migration history. Replace with Flyway or Liquibase with versioned migration scripts.
+23. **Database migrations.** Currently `ddl-auto=update` is used in all services. This is not safe for production — schema drift is irreversible and there is no migration history. Replace with Flyway or Liquibase with versioned migration scripts.

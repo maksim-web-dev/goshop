@@ -57,7 +57,7 @@
 
 | Column | Type | Constraints | Notes |
 |---|---|---|---|
-| `id` | `UUID` | PK, auto-generated (UUID strategy) | |
+| `id` | `Long` | PK, auto-generated (`GenerationType.IDENTITY`) | |
 | `name` | `VARCHAR` | NOT NULL | Display name |
 | `domain` | `VARCHAR` | NOT NULL, UNIQUE | Tenant domain |
 | `country_code` | `VARCHAR(2)` | NOT NULL | ISO 3166-1 alpha-2 |
@@ -70,8 +70,8 @@
 
 | Column | Type | Constraints | Notes |
 |---|---|---|---|
-| `id` | `UUID` | PK, auto-generated | |
-| `store_id` | `UUID` | FK → `stores.id`, NOT NULL | `@ManyToOne LAZY` |
+| `id` | `Long` | PK, auto-generated (`GenerationType.IDENTITY`) | |
+| `store_id` | `Long` | FK → `stores.id`, NOT NULL | `@ManyToOne LAZY` |
 | `key_hash` | `VARCHAR` | NOT NULL | BCrypt hash of the full plaintext key |
 | `key_prefix` | `VARCHAR(16)` | NOT NULL | First 16 characters of the plaintext key (e.g. `sk_live_ab12cd34`) |
 | `status` | `VARCHAR` (enum) | NOT NULL | Default: `ACTIVE` |
@@ -83,8 +83,8 @@
 
 | Column | Type | Constraints | Notes |
 |---|---|---|---|
-| `id` | `UUID` | PK, auto-generated | |
-| `store_id` | `UUID` | FK → `stores.id`, NOT NULL, UNIQUE | `@OneToOne LAZY` |
+| `id` | `Long` | PK, auto-generated (`GenerationType.IDENTITY`) | |
+| `store_id` | `Long` | FK → `stores.id`, NOT NULL, UNIQUE | `@OneToOne LAZY` |
 | `requests_per_second` | `INT` | NOT NULL | Default: 100 |
 | `burst_limit` | `INT` | NOT NULL | Default: 200 |
 
@@ -92,15 +92,15 @@
 
 | Column | Type | Notes |
 |---|---|---|
-| `store_settings_id` | `UUID` | FK → `store_settings.id` |
+| `store_settings_id` | `Long` | FK → `store_settings.id` |
 | `language_code` | `VARCHAR(10)` | BCP 47 code (e.g. `"uk"`, `"en"`) |
 
 ### 3.6 Entity: `StoreWebhook` (table `store_webhooks`)
 
 | Column | Type | Constraints | Notes |
 |---|---|---|---|
-| `id` | `UUID` | PK, auto-generated | |
-| `store_id` | `UUID` | FK → `stores.id`, NOT NULL | `@ManyToOne LAZY` |
+| `id` | `Long` | PK, auto-generated (`GenerationType.IDENTITY`) | |
+| `store_id` | `Long` | FK → `stores.id`, NOT NULL | `@ManyToOne LAZY` |
 | `url` | `VARCHAR` | NOT NULL | Delivery target URL |
 | `secret_ref` | `VARCHAR` | NOT NULL | Reference to external secret; actual secret not stored |
 | `enabled` | `BOOLEAN` | NOT NULL | Default: `true` |
@@ -109,7 +109,7 @@
 
 | Column | Type | Notes |
 |---|---|---|
-| `webhook_id` | `UUID` | FK → `store_webhooks.id` |
+| `webhook_id` | `Long` | FK → `store_webhooks.id` |
 | `event_type` | `VARCHAR` | Free-form string, e.g. `"product.created"`, `"price.updated"` |
 
 ---
@@ -133,7 +133,7 @@ OpenAPI UI: `http://localhost:8087/api/swagger-ui.html`
 
 | Field | Type | Notes |
 |---|---|---|
-| `id` | `UUID` | |
+| `id` | `Long` | |
 | `name` | `String` | |
 | `domain` | `String` | |
 | `countryCode` | `String` | |
@@ -146,7 +146,7 @@ OpenAPI UI: `http://localhost:8087/api/swagger-ui.html`
 ```json
 [
   {
-    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "id": 1,
     "name": "GoShop Main",
     "domain": "goshop.com",
     "countryCode": "US",
@@ -169,7 +169,7 @@ OpenAPI UI: `http://localhost:8087/api/swagger-ui.html`
 
 | Variable | Type | Required | Notes |
 |---|---|---|---|
-| `id` | `UUID` | yes | Store identifier |
+| `id` | `Long` | yes | Store identifier |
 
 **Response:** `200 OK` — single `StoreResponse` (same fields as above)
 
@@ -182,7 +182,7 @@ OpenAPI UI: `http://localhost:8087/api/swagger-ui.html`
 **Example response:**
 ```json
 {
-  "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "id": 1,
   "name": "GoShop Main",
   "domain": "goshop.com",
   "countryCode": "US",
@@ -232,7 +232,7 @@ OpenAPI UI: `http://localhost:8087/api/swagger-ui.html`
 **Example response:**
 ```json
 {
-  "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+  "id": 2,
   "name": "My Shop",
   "domain": "myshop.com",
   "countryCode": "US",
@@ -254,7 +254,7 @@ OpenAPI UI: `http://localhost:8087/api/swagger-ui.html`
 
 | Variable | Type | Required |
 |---|---|---|
-| `id` | `UUID` | yes |
+| `id` | `Long` | yes |
 
 **Request body:** `StoreUpdateRequest` — all fields are optional
 
@@ -292,7 +292,7 @@ OpenAPI UI: `http://localhost:8087/api/swagger-ui.html`
 
 | Variable | Type | Required |
 |---|---|---|
-| `id` | `UUID` | yes |
+| `id` | `Long` | yes |
 
 **Response:** `204 No Content`
 
@@ -313,7 +313,7 @@ OpenAPI UI: `http://localhost:8087/api/swagger-ui.html`
 
 | Variable | Type | Required |
 |---|---|---|
-| `storeId` | `UUID` | yes |
+| `storeId` | `Long` | yes |
 
 **Request body:** `StoreApiKeyCreateRequest`
 
@@ -325,7 +325,7 @@ OpenAPI UI: `http://localhost:8087/api/swagger-ui.html`
 
 | Field | Type | Notes |
 |---|---|---|
-| `id` | `UUID` | Key record identifier |
+| `id` | `Long` | Key record identifier |
 | `keyPrefix` | `String` | First 16 characters of the key, e.g. `"sk_live_ab12cd34"` |
 | `plainKey` | `String` | **Full plaintext key — shown only once.** Format: `sk_live_` + 64 hex chars |
 | `status` | `ApiKeyStatus` | Always `ACTIVE` on creation |
@@ -348,7 +348,7 @@ OpenAPI UI: `http://localhost:8087/api/swagger-ui.html`
 **Example response** (key masked after the prefix for illustration):
 ```json
 {
-  "id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
+  "id": 1,
   "keyPrefix": "sk_live_ab12cd34",
   "plainKey": "sk_live_ab12cd34ef56gh78****************************",
   "status": "ACTIVE",
@@ -368,8 +368,8 @@ OpenAPI UI: `http://localhost:8087/api/swagger-ui.html`
 
 | Variable | Type | Required |
 |---|---|---|
-| `storeId` | `UUID` | yes |
-| `keyId` | `UUID` | yes |
+| `storeId` | `Long` | yes |
+| `keyId` | `Long` | yes |
 
 **Response:** `204 No Content`
 
@@ -391,14 +391,14 @@ OpenAPI UI: `http://localhost:8087/api/swagger-ui.html`
 
 | Variable | Type | Required |
 |---|---|---|
-| `storeId` | `UUID` | yes |
+| `storeId` | `Long` | yes |
 
 **Response:** `200 OK` — `StoreSettingsResponse`
 
 | Field | Type | Notes |
 |---|---|---|
-| `id` | `UUID` | Settings record identifier |
-| `storeId` | `UUID` | Owning store identifier |
+| `id` | `Long` | Settings record identifier |
+| `storeId` | `Long` | Owning store identifier |
 | `requestsPerSecond` | `Int` | |
 | `burstLimit` | `Int` | |
 | `allowedLanguages` | `List<String>` | BCP 47 codes |
@@ -412,8 +412,8 @@ OpenAPI UI: `http://localhost:8087/api/swagger-ui.html`
 **Example response:**
 ```json
 {
-  "id": "d4e5f6a7-b8c9-0123-def0-234567890123",
-  "storeId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "id": 1,
+  "storeId": 1,
   "requestsPerSecond": 100,
   "burstLimit": 200,
   "allowedLanguages": ["en", "uk"]
@@ -431,7 +431,7 @@ OpenAPI UI: `http://localhost:8087/api/swagger-ui.html`
 
 | Variable | Type | Required |
 |---|---|---|
-| `storeId` | `UUID` | yes |
+| `storeId` | `Long` | yes |
 
 **Request body:** `StoreSettingsUpdateRequest` — all fields optional
 
@@ -469,7 +469,7 @@ OpenAPI UI: `http://localhost:8087/api/swagger-ui.html`
 
 | Variable | Type | Required |
 |---|---|---|
-| `storeId` | `UUID` | yes |
+| `storeId` | `Long` | yes |
 
 **Request body:** `StoreWebhookCreateRequest`
 
@@ -484,8 +484,8 @@ OpenAPI UI: `http://localhost:8087/api/swagger-ui.html`
 
 | Field | Type | Notes |
 |---|---|---|
-| `id` | `UUID` | Webhook record identifier |
-| `storeId` | `UUID` | Owning store identifier |
+| `id` | `Long` | Webhook record identifier |
+| `storeId` | `Long` | Owning store identifier |
 | `url` | `String` | |
 | `eventTypes` | `List<String>` | |
 | `secretRef` | `String` | |
@@ -510,8 +510,8 @@ OpenAPI UI: `http://localhost:8087/api/swagger-ui.html`
 **Example response:**
 ```json
 {
-  "id": "e5f6a7b8-c9d0-1234-ef01-345678901234",
-  "storeId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "id": 1,
+  "storeId": 1,
   "url": "https://myshop.com/hooks/goshop",
   "eventTypes": ["product.created", "order.placed"],
   "secretRef": "secret/goshop/myshop/webhook",
@@ -580,8 +580,8 @@ Errors are thrown as `org.springframework.web.server.ResponseStatusException` fr
   "timestamp": "2024-06-01T12:00:00.000+00:00",
   "status": 404,
   "error": "Not Found",
-  "message": "Store a1b2c3d4-... not found",
-  "path": "/api/stores/a1b2c3d4-..."
+  "message": "Store 999 not found",
+  "path": "/api/stores/999"
 }
 ```
 

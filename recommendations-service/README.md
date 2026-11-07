@@ -40,7 +40,7 @@ Part of the **GoShop** e-commerce monorepo. Responsible for surfacing similar, a
 
 **Data ownership:**
 
-The service owns all three tables: `recommendation_rules`, `product_relations`, and `recommendation_snapshots` / `recommendation_snapshot_products`. Product IDs from other services are stored as plain UUIDs (cross-service references) — no foreign keys to other databases.
+The service owns all three tables: `recommendation_rules`, `product_relations`, and `recommendation_snapshots` / `recommendation_snapshot_products`. Product IDs from other services are stored as plain `Long` values (cross-service references) — no foreign keys to other databases.
 
 ---
 
@@ -77,7 +77,7 @@ Stores named recommendation strategies with optional JSONB configuration paramet
 
 | Column | Kotlin type | Nullable | Notes |
 |---|---|---|---|
-| `id` | `UUID` | No | PK, `GenerationType.UUID` |
+| `id` | `Long` | No | PK, `GenerationType.IDENTITY` |
 | `name` | `String` | No | Human-readable rule name |
 | `strategy` | `RecommendationStrategy` | No | Stored as `STRING` enum |
 | `parameters` | `String?` | Yes | `columnDefinition = "jsonb"` — strategy-specific config |
@@ -92,9 +92,9 @@ Stores directional, typed product relationships with a relevance score.
 
 | Column | Kotlin type | Nullable | Notes |
 |---|---|---|---|
-| `id` | `UUID` | No | PK, `GenerationType.UUID` |
-| `source_product_id` | `UUID` | No | The product being viewed |
-| `target_product_id` | `UUID` | No | The recommended product |
+| `id` | `Long` | No | PK, `GenerationType.IDENTITY` |
+| `source_product_id` | `Long` | No | The product being viewed |
+| `target_product_id` | `Long` | No | The recommended product |
 | `relation_type` | `RelationType` | No | Stored as `STRING` enum |
 | `score` | `Double` | No | Relevance weight in range `0.0`–`1.0`; default `0.0` |
 
@@ -119,8 +119,8 @@ Pre-computed snapshot of recommended product IDs for a (product, strategy) pair.
 
 | Column | Kotlin type | Nullable | Notes |
 |---|---|---|---|
-| `id` | `UUID` | No | PK, `GenerationType.UUID` |
-| `product_id` | `UUID` | No | Product for which the snapshot was generated |
+| `id` | `Long` | No | PK, `GenerationType.IDENTITY` |
+| `product_id` | `Long` | No | Product for which the snapshot was generated |
 | `strategy` | `RecommendationStrategy` | No | Strategy used to generate the list |
 | `recommended_product_ids` | `MutableList<UUID>` | No | `@ElementCollection` stored in `recommendation_snapshot_products`; `@OrderColumn(name = "position")` preserves insertion order |
 | `generated_at` | `Instant` | No | Timestamp set at object construction; `updatable = false` |
@@ -129,9 +129,9 @@ Child table `recommendation_snapshot_products`:
 
 | Column | Type |
 |---|---|
-| `snapshot_id` | UUID (FK to `recommendation_snapshots.id`) |
+| `snapshot_id` | Long (FK to `recommendation_snapshots.id`) |
 | `position` | INT (order column) |
-| `recommended_product_id` | UUID |
+| `recommended_product_id` | Long |
 
 **`RecommendationStrategy` enum values:**
 
@@ -171,24 +171,20 @@ Security is fully open — `SecurityConfig` disables CSRF, sets stateless sessio
 
 | Name | Type | Required | Description |
 |---|---|---|---|
-| `id` | `UUID` | Yes | Source product ID |
+| `id` | `Long` | Yes | Source product ID |
 
 **Request body:** none
 
-**Response:** `200 OK` — `List<UUID>` (JSON array of UUID strings)
+**Response:** `200 OK` — `List<Long>` (JSON array of integers)
 
 **Example request:**
 ```
-GET /api/recommendations/products/11111111-1111-1111-1111-111111111001
+GET /api/recommendations/products/1001
 ```
 
 **Example response:**
 ```json
-[
-  "11111111-1111-1111-1111-111111111006",
-  "11111111-1111-1111-1111-111111111007",
-  "11111111-1111-1111-1111-111111111008"
-]
+[1006, 1007, 1008]
 ```
 
 **Possible errors:**
@@ -211,22 +207,20 @@ GET /api/recommendations/products/11111111-1111-1111-1111-111111111001
 
 | Name | Type | Required | Description |
 |---|---|---|---|
-| `id` | `UUID` | Yes | Source product ID |
+| `id` | `Long` | Yes | Source product ID |
 
 **Request body:** none
 
-**Response:** `200 OK` — `List<UUID>`
+**Response:** `200 OK` — `List<Long>`
 
 **Example request:**
 ```
-GET /api/recommendations/products/11111111-1111-1111-1111-111111111001/similar
+GET /api/recommendations/products/1001/similar
 ```
 
 **Example response:**
 ```json
-[
-  "11111111-1111-1111-1111-111111111006"
-]
+[1006]
 ```
 
 **Possible errors:** `200` with empty array if no `SIMILAR` relations exist.
@@ -245,22 +239,20 @@ GET /api/recommendations/products/11111111-1111-1111-1111-111111111001/similar
 
 | Name | Type | Required | Description |
 |---|---|---|---|
-| `id` | `UUID` | Yes | Source product ID |
+| `id` | `Long` | Yes | Source product ID |
 
 **Request body:** none
 
-**Response:** `200 OK` — `List<UUID>`
+**Response:** `200 OK` — `List<Long>`
 
 **Example request:**
 ```
-GET /api/recommendations/products/11111111-1111-1111-1111-111111111001/alternatives
+GET /api/recommendations/products/1001/alternatives
 ```
 
 **Example response:**
 ```json
-[
-  "11111111-1111-1111-1111-111111111007"
-]
+[1007]
 ```
 
 ---
@@ -277,22 +269,20 @@ GET /api/recommendations/products/11111111-1111-1111-1111-111111111001/alternati
 
 | Name | Type | Required | Description |
 |---|---|---|---|
-| `id` | `UUID` | Yes | Source product ID |
+| `id` | `Long` | Yes | Source product ID |
 
 **Request body:** none
 
-**Response:** `200 OK` — `List<UUID>`
+**Response:** `200 OK` — `List<Long>`
 
 **Example request:**
 ```
-GET /api/recommendations/products/11111111-1111-1111-1111-111111111001/accessories
+GET /api/recommendations/products/1001/accessories
 ```
 
 **Example response:**
 ```json
-[
-  "11111111-1111-1111-1111-111111111008"
-]
+[1008]
 ```
 
 ---
@@ -309,35 +299,24 @@ GET /api/recommendations/products/11111111-1111-1111-1111-111111111001/accessori
 
 | Field | Type | Required | Description |
 |---|---|---|---|
-| `productIds` | `List<UUID>` | Yes | List of source product IDs |
+| `productIds` | `List<Long>` | Yes | List of source product IDs |
 
-**Response:** `200 OK` — `Map<UUID, List<UUID>>`
+**Response:** `200 OK` — `Map<Long, List<Long>>`
 
 Each key is an input product ID; the value is the list of recommended product IDs (all relation types, sorted by score descending). Products with no relations will be present in the map with an empty list.
 
 **Example request:**
 ```json
 {
-  "productIds": [
-    "11111111-1111-1111-1111-111111111001",
-    "11111111-1111-1111-1111-111111111002"
-  ]
+  "productIds": [1001, 1002]
 }
 ```
 
 **Example response:**
 ```json
 {
-  "11111111-1111-1111-1111-111111111001": [
-    "11111111-1111-1111-1111-111111111006",
-    "11111111-1111-1111-1111-111111111007",
-    "11111111-1111-1111-1111-111111111008"
-  ],
-  "11111111-1111-1111-1111-111111111002": [
-    "11111111-1111-1111-1111-111111111003",
-    "11111111-1111-1111-1111-111111111009",
-    "11111111-1111-1111-1111-111111111010"
-  ]
+  "1001": [1006, 1007, 1008],
+  "1002": [1003, 1009, 1010]
 }
 ```
 
@@ -365,7 +344,7 @@ Each key is an input product ID; the value is the list of recommended product ID
 
 | Field | Type | Nullable | Description |
 |---|---|---|---|
-| `id` | `UUID` | No | Rule ID |
+| `id` | `Long` | No | Rule ID |
 | `name` | `String` | No | Rule name |
 | `strategy` | `RecommendationStrategy` | No | One of the five strategy enum values |
 | `parameters` | `String?` | Yes | Raw JSONB string or `null` |
@@ -376,7 +355,7 @@ Each key is an input product ID; the value is the list of recommended product ID
 ```json
 [
   {
-    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "id": 1,
     "name": "Similar GPU by attributes",
     "strategy": "SIMILAR_ATTRIBUTES",
     "parameters": "{\"fields\": [\"memory_gb\", \"memory_type\", \"tdp_w\"], \"tolerance\": 0.2}",
@@ -422,7 +401,7 @@ Each key is an input product ID; the value is the list of recommended product ID
 **Example response:**
 ```json
 {
-  "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+  "id": 2,
   "name": "Compatible accessories",
   "strategy": "COMPATIBILITY_BASED",
   "parameters": "{\"relation_types\": [\"ACCESSORY\"]}",
@@ -451,7 +430,7 @@ Each key is an input product ID; the value is the list of recommended product ID
 
 | Name | Type | Required | Description |
 |---|---|---|---|
-| `id` | `UUID` | Yes | Rule ID |
+| `id` | `Long` | Yes | Rule ID |
 
 **Request body:** `RecommendationRuleUpdateRequest` — all fields are optional
 
@@ -477,7 +456,7 @@ Note: `strategy` is not a field in `RecommendationRuleUpdateRequest` and **canno
 **Example response:**
 ```json
 {
-  "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+  "id": 2,
   "name": "Compatible accessories",
   "strategy": "COMPATIBILITY_BASED",
   "parameters": "{\"relation_types\": [\"ACCESSORY\"]}",
@@ -499,7 +478,7 @@ Note: `strategy` is not a field in `RecommendationRuleUpdateRequest` and **canno
 
 ### `RecommendationService`
 
-**`findAll(productId: UUID): List<UUID>`**
+**`findAll(productId: Long): List<Long>`**
 
 Calls `ProductRelationRepository.findBySourceProductIdOrderByScoreDesc`. Returns target product IDs for all relation types, ordered by score descending.
 
@@ -507,11 +486,11 @@ Calls `ProductRelationRepository.findBySourceProductIdOrderByScoreDesc`. Returns
 
 Each delegates to the private `findByType(productId, type)` helper, which calls `findBySourceProductIdAndRelationTypeOrderByScoreDesc`. Returns target product IDs filtered to the respective `RelationType` and sorted by score descending. Note: there is no `findUpgrades` endpoint — the `UPGRADE` relation type exists in the database model but has no dedicated controller method.
 
-**`buildForPc(productIds: List<UUID>): Map<UUID, List<UUID>>`**
+**`buildForPc(productIds: List<Long>): Map<Long, List<Long>>`**
 
 Iterates over the input list and calls `findAll` for each ID, assembling a map of `productId -> List<UUID>`. Each product is queried independently; no cross-product aggregation or deduplication is performed.
 
-**`generateSnapshot(productId: UUID, strategy: RecommendationStrategy): RecommendationSnapshot`**
+**`generateSnapshot(productId: Long, strategy: RecommendationStrategy): RecommendationSnapshot`**
 
 Upsert logic:
 1. Resolves the recommended ID list based on strategy:
@@ -534,7 +513,7 @@ Upsert logic:
 
 ## 6. Inter-Service Communication
 
-No inter-service communication is currently implemented. The service does not declare any HTTP client dependency (`WebClient`, `RestTemplate`, `Feign`, or similar) and makes no outbound calls to other microservices. Product IDs are accepted as plain UUIDs from the caller without validation against the product-service.
+No inter-service communication is currently implemented. The service does not declare any HTTP client dependency (`WebClient`, `RestTemplate`, `Feign`, or similar) and makes no outbound calls to other microservices. Product IDs are accepted as plain `Long` values from the caller without validation against the product-service.
 
 ---
 
@@ -553,6 +532,7 @@ No `@ControllerAdvice` or `@ExceptionHandler` class is defined in the service. E
 | Trigger | HTTP Status | Source |
 |---|---|---|
 | `ResponseStatusException(NOT_FOUND, "Rule $id not found")` in `RecommendationRuleService.findById` | `404 Not Found` | Spring's `ResponseStatusExceptionResolver` |
+
 | Invalid enum value in request body (e.g. unknown `strategy`) | `400 Bad Request` | Jackson deserialization error |
 | Malformed UUID path variable | `400 Bad Request` | Spring MVC type conversion |
 | Duplicate `(source, target, relation_type)` on insert | `500 Internal Server Error` | PostgreSQL constraint violation bubbles up unhandled |
@@ -564,8 +544,8 @@ No `@ControllerAdvice` or `@ExceptionHandler` class is defined in the service. E
   "timestamp": "2026-11-06T12:00:00.000+00:00",
   "status": 404,
   "error": "Not Found",
-  "message": "Rule a1b2c3d4-e5f6-7890-abcd-ef1234567890 not found",
-  "path": "/api/recommendations/rules/a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+  "message": "Rule 999 not found",
+  "path": "/api/recommendations/rules/999"
 }
 ```
 

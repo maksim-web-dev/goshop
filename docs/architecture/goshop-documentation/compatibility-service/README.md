@@ -22,15 +22,15 @@ Part of the **GoShop** monorepo. Responsible for checking hardware component com
 
 ## 1. Service Overview
 
-**Purpose:** The Compatibility Service determines whether a set of hardware products (identified by UUIDs from the product-service) are mutually compatible, based on a library of typed compatibility rules stored in its own database.
+**Purpose:** The Compatibility Service determines whether a set of hardware products (identified by Long IDs from the product-service) are mutually compatible, based on a library of typed compatibility rules stored in its own database.
 
 **Responsibilities:**
 - ✅ Storing and managing compatibility rules (`CompatibilityRule`)
 - ✅ Running a multi-product compatibility check against all enabled rules and persisting the result (`CompatibilityCheck` + `CompatibilityIssue`)
 - ✅ Running a point-to-point (pair) compatibility check as a convenience wrapper
-- ❌ Returning a list of products compatible with a given product (stub — always returns an empty list)
+- ✅ Returning a list of products compatible with a given product (implemented — searches via existing compatible checks)
 
-**Data ownership:** The service owns its own PostgreSQL database (`compatibility_db`). References to product-type UUIDs from the product-service are stored as plain `UUID` columns — there are no cross-service foreign-key constraints.
+**Data ownership:** The service owns its own PostgreSQL database (`compatibility_db`). References to product-type IDs from the product-service are stored as plain `Long` columns — there are no cross-service foreign-key constraints.
 
 ---
 
@@ -72,14 +72,14 @@ compatibility_rules  ←── compatibility_issues ───→  compatibility_
 
 ### 3.2 `compatibility_rules`
 
-Stores the library of typed rules. Each rule references two product-type UUIDs (cross-service references, no FK constraint).
+Stores the library of typed rules. Each rule references two product-type IDs (cross-service references, no FK constraint).
 
 | Column | Kotlin type | Nullable | Constraints | Notes |
 |---|---|---|---|---|
-| `id` | `UUID` | NO | PK, `GenerationType.UUID` | Auto-generated |
+| `id` | `Long` | NO | PK, `GenerationType.IDENTITY` | Auto-generated |
 | `code` | `String` | NO | UNIQUE | Human-readable rule identifier, e.g. `CPU_MOTHERBOARD_SOCKET` |
-| `source_product_type_id` | `UUID` | NO | — | Product-type UUID from product-service (source side) |
-| `target_product_type_id` | `UUID` | NO | — | Product-type UUID from product-service (target side) |
+| `source_product_type_id` | `Long` | NO | — | Product-type ID from product-service (source side) |
+| `target_product_type_id` | `Long` | NO | — | Product-type ID from product-service (target side) |
 | `rule_type` | `RuleType` (enum, stored as `STRING`) | NO | — | See enum values below |
 | `parameters` | `String?` | YES | `columnDefinition = "jsonb"` | JSON parameters for the rule handler |
 | `severity` | `Severity` (enum, stored as `STRING`) | NO | default `ERROR` | Outcome severity if the rule is violated |
@@ -96,7 +96,7 @@ One record per invocation of the compatibility check endpoint.
 
 | Column | Kotlin type | Nullable | Constraints | Notes |
 |---|---|---|---|---|
-| `id` | `UUID` | NO | PK, `GenerationType.UUID` | Auto-generated |
+| `id` | `Long` | NO | PK, `GenerationType.IDENTITY` | Auto-generated |
 | `compatible` | `Boolean` | NO | — | `true` only when no `ERROR`-severity issues were found |
 | `checked_at` | `Instant` | NO | `updatable = false`, default `Instant.now()` | Timestamp of the check |
 
@@ -106,8 +106,8 @@ Join table backing the `productIds` collection on `CompatibilityCheck`.
 
 | Column | Type | Notes |
 |---|---|---|
-| `check_id` | `UUID` | FK → `compatibility_checks.id` |
-| `product_id` | `UUID` | UUID of a product from product-service |
+| `check_id` | `Long` | FK → `compatibility_checks.id` |
+| `product_id` | `Long` | ID of a product from product-service |
 
 ### 3.5 `compatibility_issues`
 
@@ -115,9 +115,9 @@ One record per rule violation found during a check.
 
 | Column | Kotlin type | Nullable | Constraints | Notes |
 |---|---|---|---|---|
-| `id` | `UUID` | NO | PK, `GenerationType.UUID` | Auto-generated |
-| `check_id` | `UUID` | NO | FK → `compatibility_checks.id` (LAZY `@ManyToOne`) | Parent check |
-| `rule_id` | `UUID` | NO | FK → `compatibility_rules.id` (LAZY `@ManyToOne`) | Rule that produced the issue |
+| `id` | `Long` | NO | PK, `GenerationType.IDENTITY` | Auto-generated |
+| `check_id` | `Long` | NO | FK → `compatibility_checks.id` (LAZY `@ManyToOne`) | Parent check |
+| `rule_id` | `Long` | NO | FK → `compatibility_rules.id` (LAZY `@ManyToOne`) | Rule that produced the issue |
 | `severity` | `Severity` (enum, stored as `STRING`) | NO | — | Copied from the rule at the time of the check |
 | `message_code` | `String` | NO | — | i18n key for the issue message, e.g. `SOCKET_MISMATCH` |
 
@@ -139,13 +139,13 @@ Security: all requests are permitted without authentication (CSRF disabled, stat
 
 **Controller:** `CompatibilityController` — `check()`
 
-**Purpose:** Run a compatibility check against all enabled rules for a list of product UUIDs. Persists the check and all detected issues. Returns the aggregate result.
+**Purpose:** Run a compatibility check against all enabled rules for a list of product IDs. Persists the check and all detected issues. Returns the aggregate result.
 
 **Request body — `CheckRequest`:**
 
 | Field | Type | Required | Notes |
 |---|---|---|---|
-| `productIds` | `List<UUID>` | YES | UUIDs of the products to check together |
+| `productIds` | `List<Long>` | YES | IDs of the products to check together |
 
 **Response body — `CheckResponse`:**
 
@@ -158,7 +158,7 @@ Security: all requests are permitted without authentication (CSRF disabled, stat
 
 | Field | Type | Notes |
 |---|---|---|
-| `ruleId` | `UUID` | ID of the violated rule |
+| `ruleId` | `Long` | ID of the violated rule |
 | `severity` | `Severity` | `ERROR`, `WARNING`, or `INFO` |
 | `messageCode` | `String` | i18n key for the issue |
 
@@ -170,11 +170,7 @@ POST /api/compatibility/check
 Content-Type: application/json
 
 {
-  "productIds": [
-    "a1b2c3d4-0001-0000-0000-000000000001",
-    "a1b2c3d4-0002-0000-0000-000000000002",
-    "a1b2c3d4-0003-0000-0000-000000000003"
-  ]
+  "productIds": [1, 2, 3]
 }
 ```
 
@@ -192,7 +188,7 @@ Content-Type: application/json
   "compatible": false,
   "issues": [
     {
-      "ruleId": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+      "ruleId": 1,
       "severity": "ERROR",
       "messageCode": "SOCKET_MISMATCH"
     }
@@ -214,8 +210,8 @@ Content-Type: application/json
 
 | Field | Type | Required | Notes |
 |---|---|---|---|
-| `sourceProductId` | `UUID` | YES | First product UUID |
-| `targetProductId` | `UUID` | YES | Second product UUID |
+| `sourceProductId` | `Long` | YES | First product ID |
+| `targetProductId` | `Long` | YES | Second product ID |
 
 **Response body:** Same as `CheckResponse` above.
 
@@ -227,8 +223,8 @@ POST /api/compatibility/pairs/check
 Content-Type: application/json
 
 {
-  "sourceProductId": "a1b2c3d4-0001-0000-0000-000000000001",
-  "targetProductId": "a1b2c3d4-0002-0000-0000-000000000002"
+  "sourceProductId": 1,
+  "targetProductId": 2
 }
 ```
 
@@ -246,29 +242,27 @@ Content-Type: application/json
 
 **Controller:** `CompatibilityController` — `findCompatible()`
 
-**Purpose:** Return a list of product UUIDs that are compatible with the given product.
+**Purpose:** Return a list of product IDs that are compatible with the given product.
 
 **Path variables:**
 
 | Variable | Type | Notes |
 |---|---|---|
-| `id` | `UUID` | UUID of the reference product |
+| `id` | `Long` | ID of the reference product |
 
-**Response body:** `List<UUID>`
+**Response body:** `List<Long>`
 
 **HTTP status codes:** `200 OK`
 
 **Example request:**
 ```
-GET /api/compatibility/products/a1b2c3d4-0001-0000-0000-000000000001
+GET /api/compatibility/products/1
 ```
 
 **Example response:**
 ```json
-[]
+[2, 3, 5]
 ```
-
-**Note:** ⚠️ This endpoint always returns an empty list. See [Known Limitations](#11-known-limitations-and-missing-functionality).
 
 ---
 
@@ -284,10 +278,10 @@ GET /api/compatibility/products/a1b2c3d4-0001-0000-0000-000000000001
 
 | Field | Type | Notes |
 |---|---|---|
-| `id` | `UUID` | Rule ID |
+| `id` | `Long` | Rule ID |
 | `code` | `String` | Unique rule code |
-| `sourceProductTypeId` | `UUID` | Source product-type UUID |
-| `targetProductTypeId` | `UUID` | Target product-type UUID |
+| `sourceProductTypeId` | `Long` | Source product-type ID |
+| `targetProductTypeId` | `Long` | Target product-type ID |
 | `ruleType` | `RuleType` | One of the six rule types |
 | `parameters` | `String?` | JSON parameters, may be `null` |
 | `severity` | `Severity` | `ERROR`, `WARNING`, or `INFO` |
@@ -300,10 +294,10 @@ GET /api/compatibility/products/a1b2c3d4-0001-0000-0000-000000000001
 ```json
 [
   {
-    "id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+    "id": 1,
     "code": "CPU_MOTHERBOARD_SOCKET",
-    "sourceProductTypeId": "22222222-2222-2222-2222-222222222001",
-    "targetProductTypeId": "22222222-2222-2222-2222-222222222002",
+    "sourceProductTypeId": 101,
+    "targetProductTypeId": 102,
     "ruleType": "SOCKET_MATCH",
     "parameters": "{\"cpu_field\": \"socket\", \"motherboard_field\": \"socket\"}",
     "severity": "ERROR",
@@ -326,8 +320,8 @@ GET /api/compatibility/products/a1b2c3d4-0001-0000-0000-000000000001
 | Field | Type | Required | Default | Notes |
 |---|---|---|---|---|
 | `code` | `String` | YES | — | Must be unique across all rules |
-| `sourceProductTypeId` | `UUID` | YES | — | Product-type UUID (source) |
-| `targetProductTypeId` | `UUID` | YES | — | Product-type UUID (target) |
+| `sourceProductTypeId` | `Long` | YES | — | Product-type ID (source) |
+| `targetProductTypeId` | `Long` | YES | — | Product-type ID (target) |
 | `ruleType` | `RuleType` | YES | — | `SOCKET_MATCH`, `RAM_COMPATIBILITY`, `POWER_CAPACITY`, `GPU_CLEARANCE`, `COOLING_TDP`, or `FORM_FACTOR` |
 | `parameters` | `String?` | NO | `null` | JSON string with handler parameters |
 | `severity` | `Severity` | NO | `ERROR` | `ERROR`, `WARNING`, or `INFO` |
@@ -344,8 +338,8 @@ Content-Type: application/json
 
 {
   "code": "CPU_MOTHERBOARD_SOCKET",
-  "sourceProductTypeId": "22222222-2222-2222-2222-222222222001",
-  "targetProductTypeId": "22222222-2222-2222-2222-222222222002",
+  "sourceProductTypeId": 101,
+  "targetProductTypeId": 102,
   "ruleType": "SOCKET_MATCH",
   "parameters": "{\"cpu_field\": \"socket\", \"motherboard_field\": \"socket\"}",
   "severity": "ERROR",
@@ -356,10 +350,10 @@ Content-Type: application/json
 **Example response:**
 ```json
 {
-  "id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+  "id": 1,
   "code": "CPU_MOTHERBOARD_SOCKET",
-  "sourceProductTypeId": "22222222-2222-2222-2222-222222222001",
-  "targetProductTypeId": "22222222-2222-2222-2222-222222222002",
+  "sourceProductTypeId": 101,
+  "targetProductTypeId": 102,
   "ruleType": "SOCKET_MATCH",
   "parameters": "{\"cpu_field\": \"socket\", \"motherboard_field\": \"socket\"}",
   "severity": "ERROR",
@@ -383,7 +377,7 @@ Content-Type: application/json
 
 | Variable | Type | Notes |
 |---|---|---|
-| `id` | `UUID` | Rule ID |
+| `id` | `Long` | Rule ID |
 
 **Request body — `CompatibilityRuleUpdateRequest`:**
 
@@ -399,7 +393,7 @@ Content-Type: application/json
 
 **Example request:**
 ```json
-PUT /api/compatibility/rules/f47ac10b-58cc-4372-a567-0e02b2c3d479
+PUT /api/compatibility/rules/1
 Content-Type: application/json
 
 {
@@ -411,10 +405,10 @@ Content-Type: application/json
 **Example response:**
 ```json
 {
-  "id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+  "id": 1,
   "code": "CPU_MOTHERBOARD_SOCKET",
-  "sourceProductTypeId": "22222222-2222-2222-2222-222222222001",
-  "targetProductTypeId": "22222222-2222-2222-2222-222222222002",
+  "sourceProductTypeId": 101,
+  "targetProductTypeId": 102,
   "ruleType": "SOCKET_MATCH",
   "parameters": "{\"cpu_field\": \"socket\", \"motherboard_field\": \"socket\"}",
   "severity": "WARNING",
@@ -438,7 +432,7 @@ Content-Type: application/json
 
 | Variable | Type | Notes |
 |---|---|---|
-| `id` | `UUID` | Rule ID |
+| `id` | `Long` | Rule ID |
 
 **Response body:** none
 
@@ -446,7 +440,7 @@ Content-Type: application/json
 
 **Example request:**
 ```
-DELETE /api/compatibility/rules/f47ac10b-58cc-4372-a567-0e02b2c3d479
+DELETE /api/compatibility/rules/1
 ```
 
 **Possible errors:**
@@ -481,9 +475,9 @@ Runs in a single `@Transactional` block:
 
 Convenience method. Constructs a `CheckCompatibilityDto` with `listOf(dto.sourceProductId, dto.targetProductId)` and delegates to `check()`.
 
-#### `findCompatibleProducts(productId: UUID): List<UUID>`
+#### `findCompatibleProducts(productId: Long): List<Long>`
 
-Stub method. Always returns `emptyList()`. Comment in source: "full implementation requires product catalog integration."
+Implemented. Searches all existing `CompatibilityCheck` records for checks that include `productId` and returns the other product IDs found in those checks.
 
 ---
 
@@ -493,7 +487,7 @@ Stub method. Always returns `emptyList()`. Comment in source: "full implementati
 
 Returns all rules via `JpaRepository.findAll()`. No filtering.
 
-#### `findById(id: UUID): CompatibilityRule`
+#### `findById(id: Long): CompatibilityRule`
 
 Looks up a rule by ID. Throws `ResponseStatusException(404)` if not found.
 
@@ -502,13 +496,13 @@ Looks up a rule by ID. Throws `ResponseStatusException(404)` if not found.
 1. Checks `existsByCode(dto.code)`. If the code already exists, throws `ResponseStatusException(409)`.
 2. Saves a new `CompatibilityRule` with `version = 1` (default).
 
-#### `update(id: UUID, dto: UpdateCompatibilityRuleDto): CompatibilityRule`
+#### `update(id: Long, dto: UpdateCompatibilityRuleDto): CompatibilityRule`
 
 1. Loads the existing rule (throws 404 if absent).
 2. Saves a new `CompatibilityRule` entity instance with the same `id` and immutable fields (`code`, `sourceProductTypeId`, `targetProductTypeId`, `ruleType`), merging the nullable patch fields from the DTO: if `dto.parameters` is `null`, keeps `existing.parameters`; same for `severity` and `enabled`.
 3. Increments `version` by 1.
 
-#### `disable(id: UUID)`
+#### `disable(id: Long)`
 
 1. Loads the existing rule (throws 404 if absent).
 2. Saves a new entity instance with `enabled = false` and `version + 1`. Does not delete the record.
@@ -519,7 +513,7 @@ Looks up a rule by ID. Throws `ResponseStatusException(404)` if not found.
 
 No inter-service communication is currently implemented.
 
-Product-type UUIDs in `CompatibilityRule` and product UUIDs in `CompatibilityCheck` are plain identifiers — the service does not make any HTTP calls to the product-service or any other service.
+Product-type IDs in `CompatibilityRule` and product IDs in `CompatibilityCheck` are plain identifiers — the service does not make any HTTP calls to the product-service or any other service.
 
 ---
 
@@ -538,6 +532,7 @@ Errors thrown explicitly:
 | Location | Exception | HTTP Status | Message |
 |---|---|---|---|
 | `CompatibilityRuleService.findById` | `ResponseStatusException` | `404 Not Found` | `"Rule {id} not found"` |
+
 | `CompatibilityRuleService.create` | `ResponseStatusException` | `409 Conflict` | `"Rule with code '{code}' already exists"` |
 
 **Default Spring Boot error response format:**
@@ -547,7 +542,7 @@ Errors thrown explicitly:
   "timestamp": "2026-11-06T12:00:00.000+00:00",
   "status": 404,
   "error": "Not Found",
-  "path": "/api/compatibility/rules/00000000-0000-0000-0000-000000000000"
+  "path": "/api/compatibility/rules/999"
 }
 ```
 
@@ -662,13 +657,9 @@ No test classes exist under `src/test/`. The `spring-boot-starter-test` dependen
 
 The six `RuleType` values (`SOCKET_MATCH`, `RAM_COMPATIBILITY`, `POWER_CAPACITY`, `GPU_CLEARANCE`, `COOLING_TDP`, `FORM_FACTOR`) are defined but have no corresponding handler implementations.
 
-### ❌ `findCompatibleProducts` is a stub
-
-`GET /api/compatibility/products/{id}` always returns `[]`. The source code comment states: "full implementation requires product catalog integration."
-
 ### ❌ No cross-service product validation
 
-The service stores product UUIDs and product-type UUIDs as plain identifiers. It does not validate that the referenced products or product types actually exist in the product-service.
+The service stores product IDs and product-type IDs as plain `Long` identifiers. It does not validate that the referenced products or product types actually exist in the product-service.
 
 ### ❌ No test coverage
 
@@ -684,4 +675,4 @@ Inside `check()`, each call to `evaluateRule()` is wrapped in `runCatching { }.g
 
 ### ⚠️ `FORM_FACTOR` rule type has no seed data
 
-The `FORM_FACTOR` enum value exists in `RuleType` but no corresponding seed entry is present in `data/init/compatibility_rule.json`.
+The `FORM_FACTOR` enum value exists in `RuleType` but no corresponding seed entry is present in `compatibility_rule.json`.

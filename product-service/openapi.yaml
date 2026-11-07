@@ -150,6 +150,12 @@ paths:
       responses:
         '200':
           description: Attributes set
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProductAttributeResponse'
 
   /brands:
     get:
@@ -971,6 +977,9 @@ components:
       properties:
         name:
           type: string
+        code:
+          type: string
+          nullable: true
         order:
           type: integer
           default: 0
@@ -1039,6 +1048,9 @@ components:
           format: int64
         name:
           type: string
+        code:
+          type: string
+          nullable: true
         order:
           type: integer
         categoryId:

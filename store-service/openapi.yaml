@@ -42,8 +42,8 @@ paths:
           in: path
           required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
+            format: int64
       responses:
         '200':
           description: Store found
@@ -58,8 +58,8 @@ paths:
           in: path
           required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
+            format: int64
       requestBody:
         required: true
         content:
@@ -80,8 +80,8 @@ paths:
           in: path
           required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
+            format: int64
       responses:
         '204':
           description: Store deactivated
@@ -94,8 +94,8 @@ paths:
           in: path
           required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
+            format: int64
       requestBody:
         required: true
         content:
@@ -118,14 +118,14 @@ paths:
           in: path
           required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
+            format: int64
         - name: keyId
           in: path
           required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
+            format: int64
       responses:
         '204':
           description: API key revoked
@@ -138,8 +138,8 @@ paths:
           in: path
           required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
+            format: int64
       responses:
         '200':
           description: Store settings
@@ -154,8 +154,8 @@ paths:
           in: path
           required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
+            format: int64
       requestBody:
         required: true
         content:
@@ -178,8 +178,8 @@ paths:
           in: path
           required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
+            format: int64
       requestBody:
         required: true
         content:
@@ -239,8 +239,8 @@ components:
       required: [id, name, domain, countryCode, defaultLanguage, defaultCurrency, status, createdAt]
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         name:
           type: string
         domain:
@@ -270,8 +270,8 @@ components:
       required: [id, keyPrefix, plainKey, status, createdAt]
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         keyPrefix:
           type: string
         plainKey:
@@ -306,11 +306,11 @@ components:
       required: [id, storeId, requestsPerSecond, burstLimit, allowedLanguages]
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         storeId:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         requestsPerSecond:
           type: integer
         burstLimit:
@@ -341,11 +341,11 @@ components:
       required: [id, storeId, url, eventTypes, secretRef, enabled]
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         storeId:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         url:
           type: string
         eventTypes:
