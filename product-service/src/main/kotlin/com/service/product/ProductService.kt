@@ -4,9 +4,11 @@ import com.data.entity.Product
 import com.data.entity.ProductStatus
 import com.data.repository.BrandRepository
 import com.data.repository.CategoryRepository
+import com.data.repository.ProductAttributeRepository
 import com.data.repository.ProductRepository
 import com.data.repository.ProductTypeRepository
 import com.service.product.dto.CreateProductDto
+import com.service.product.dto.ProductWithAttributesDto
 import com.service.product.dto.UpdateProductDto
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -22,7 +24,8 @@ class ProductService(
     private val productRepository: ProductRepository,
     private val brandRepository: BrandRepository,
     private val categoryRepository: CategoryRepository,
-    private val productTypeRepository: ProductTypeRepository
+    private val productTypeRepository: ProductTypeRepository,
+    private val productAttributeRepository: ProductAttributeRepository
 ) {
 
     fun findAll(categoryId: Long?, status: ProductStatus?, pageable: Pageable): Page<Product> =
@@ -102,6 +105,23 @@ class ProductService(
                 updatedAt = Instant.now()
             )
         )
+    }
+
+    @Transactional(readOnly = true)
+    fun batchGet(ids: List<Long>): Pair<List<Product>, List<Long>> {
+        val found = productRepository.findAllWithRelationsByIds(ids)
+        val foundIds = found.map { it.id }.toSet()
+        val notFoundIds = ids.filter { it !in foundIds }
+        val ordered = ids.mapNotNull { id -> found.find { it.id == id } }
+        return Pair(ordered, notFoundIds)
+    }
+
+    @Transactional(readOnly = true)
+    fun findDetails(id: Long): ProductWithAttributesDto {
+        val product = productRepository.findByIdWithRelations(id)
+            .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Product $id not found") }
+        val attributes = productAttributeRepository.findByProductIdWithParameter(id)
+        return ProductWithAttributesDto(product, attributes)
     }
 
     private fun buildSpec(categoryId: Long?, status: ProductStatus?): Specification<Product> {

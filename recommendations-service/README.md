@@ -57,6 +57,7 @@ The service owns all three tables: `recommendation_rules`, `product_relations`, 
 | `spring-boot-starter-web` | (managed by Spring Boot 3.3.5) |
 | `spring-boot-starter-data-jpa` | (managed) |
 | `spring-boot-starter-security` | (managed) |
+| `spring-boot-starter-validation` | (managed) |
 | `jackson-module-kotlin` | (managed) |
 | `springdoc-openapi-starter-webmvc-ui` | 2.6.0 |
 | `org.postgresql:postgresql` | (managed, runtime) |
@@ -100,6 +101,13 @@ Stores directional, typed product relationships with a relevance score.
 
 **Unique constraint:** `(source_product_id, target_product_id, relation_type)` — a given source/target pair may appear at most once per relation type.
 
+**Indexes on `product_relations`:**
+
+| Index name | Columns | Purpose |
+|---|---|---|
+| `idx_product_relations_source_id` | `source_product_id` | Lookup by source product |
+| `idx_product_relations_source_type` | `source_product_id, relation_type` | Filtered lookup by source + type |
+
 **`RelationType` enum values:**
 
 | Value | Meaning |
@@ -112,6 +120,7 @@ Stores directional, typed product relationships with a relevance score.
 Repository methods:
 - `findBySourceProductIdAndRelationTypeOrderByScoreDesc(sourceProductId, relationType)` — filtered by type, ordered by score
 - `findBySourceProductIdOrderByScoreDesc(sourceProductId)` — all types, ordered by score
+- `findBySourceProductIdIn(ids)` — batch lookup for multiple source IDs in a single query; used by `buildForPc`
 
 ### 3.3 `RecommendationSnapshot` — tables `recommendation_snapshots` + `recommendation_snapshot_products`
 
@@ -142,6 +151,13 @@ Child table `recommendation_snapshot_products`:
 | `PRICE_RANGE` | Products within a comparable price bracket |
 | `COMPATIBILITY_BASED` | Products verified as hardware-compatible |
 | `POPULAR_IN_CATEGORY` | Trending products in the same category |
+
+**Indexes on `recommendation_snapshots`:**
+
+| Index name | Columns | Purpose |
+|---|---|---|
+| `idx_recommendation_snapshots_product_id` | `product_id` | Lookup by product |
+| `idx_recommendation_snapshots_product_strategy` | `product_id, strategy` | Exact match for upsert check |
 
 Repository method: `findByProductIdAndStrategy(productId, strategy): RecommendationSnapshot?`
 
@@ -297,13 +313,13 @@ GET /api/recommendations/products/1001/accessories
 
 **Request body:** `BuildRecommendationRequest`
 
-| Field | Type | Required | Description |
-|---|---|---|---|
-| `productIds` | `List<Long>` | Yes | List of source product IDs |
+| Field | Type | Required | Constraints | Description |
+|---|---|---|---|---|
+| `productIds` | `List<Long>` | Yes | `@NotEmpty`, `@Size(max=100)` | Source product IDs |
 
 **Response:** `200 OK` — `Map<Long, List<Long>>`
 
-Each key is an input product ID; the value is the list of recommended product IDs (all relation types, sorted by score descending). Products with no relations will be present in the map with an empty list.
+Each key is an input product ID; the value is the list of recommended product IDs (all relation types, sorted by score descending). Products with no relations are present in the map with an empty list.
 
 **Example request:**
 ```json
@@ -320,11 +336,13 @@ Each key is an input product ID; the value is the list of recommended product ID
 }
 ```
 
+**N+1 prevention:** a single JPQL `IN` query (`findBySourceProductIdIn`) loads all relations for all product IDs at once; grouping is done in memory.
+
 **Possible errors:**
 
 | Status | Condition |
 |---|---|
-| `400 Bad Request` | Malformed UUID in `productIds` array |
+| `400 Bad Request` | `productIds` is empty or exceeds 100 items |
 
 ---
 
@@ -377,9 +395,9 @@ Each key is an input product ID; the value is the list of recommended product ID
 
 **Request body:** `RecommendationRuleCreateRequest`
 
-| Field | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `name` | `String` | Yes | — | Human-readable name |
+| Field | Type | Required | Default | Constraints | Description |
+|---|---|---|---|---|---|
+| `name` | `String` | Yes | — | `@NotBlank`, `@Size(max=255)` | Human-readable name |
 | `strategy` | `RecommendationStrategy` | Yes | — | Strategy enum value |
 | `parameters` | `String?` | No | `null` | JSONB string with strategy-specific config |
 | `priority` | `Int` | No | `0` | Rule priority |
@@ -488,7 +506,7 @@ Each delegates to the private `findByType(productId, type)` helper, which calls 
 
 **`buildForPc(productIds: List<Long>): Map<Long, List<Long>>`**
 
-Iterates over the input list and calls `findAll` for each ID, assembling a map of `productId -> List<UUID>`. Each product is queried independently; no cross-product aggregation or deduplication is performed.
+Loads all relations for the given product IDs in a single JPQL `IN` query (`ProductRelationRepository.findBySourceProductIdIn`), groups the results by `sourceProductId` in memory, then returns a map keyed by each input ID. Products with no relations receive an empty list. This avoids N×1 queries that the previous per-product loop implementation required.
 
 **`generateSnapshot(productId: Long, strategy: RecommendationStrategy): RecommendationSnapshot`**
 
@@ -525,29 +543,39 @@ Kafka is not implemented. No Kafka dependency exists in `build.gradle.kts` and n
 
 ## 8. Error Handling
 
-No `@ControllerAdvice` or `@ExceptionHandler` class is defined in the service. Error responses are produced entirely by Spring Boot's default `BasicErrorController` and `ResponseStatusException` where explicitly thrown.
+A `GlobalExceptionHandler` (`@RestControllerAdvice`) handles all exceptions with a consistent JSON response body.
 
-**Known error mappings:**
+**HTTP status codes in use:**
 
-| Trigger | HTTP Status | Source |
-|---|---|---|
-| `ResponseStatusException(NOT_FOUND, "Rule $id not found")` in `RecommendationRuleService.findById` | `404 Not Found` | Spring's `ResponseStatusExceptionResolver` |
+| Scenario | Status |
+|---|---|
+| Successful GET | `200 OK` |
+| Successful POST (create) | `201 Created` |
+| Bean Validation failure (`@Valid`) | `400 Bad Request` |
+| Rule not found | `404 Not Found` |
+| Unhandled exception | `500 Internal Server Error` |
 
-| Invalid enum value in request body (e.g. unknown `strategy`) | `400 Bad Request` | Jackson deserialization error |
-| Malformed UUID path variable | `400 Bad Request` | Spring MVC type conversion |
-| Duplicate `(source, target, relation_type)` on insert | `500 Internal Server Error` | PostgreSQL constraint violation bubbles up unhandled |
-
-**Default Spring Boot error response format:**
-
+**Error response format:**
 ```json
 {
-  "timestamp": "2026-11-06T12:00:00.000+00:00",
   "status": 404,
-  "error": "Not Found",
-  "message": "Rule 999 not found",
-  "path": "/api/recommendations/rules/999"
+  "error": "Rule 999 not found"
 }
 ```
+
+**Validation error response format (`400`):**
+```json
+{
+  "status": 400,
+  "error": "Validation failed",
+  "details": [
+    "name: must not be blank",
+    "productIds: must not be empty"
+  ]
+}
+```
+
+**Note:** Duplicate `(source_product_id, target_product_id, relation_type)` inserts still produce a `500` — the PostgreSQL unique constraint violation is not caught by the application layer.
 
 ---
 
@@ -651,31 +679,33 @@ No test files exist under `src/test/`. The `spring-boot-starter-test` dependency
 
 ## 11. Known Limitations and Missing Functionality
 
-### ❌ NOT IMPLEMENTED
-
-- **`generateSnapshot` has no REST endpoint.** The method exists in `RecommendationService` but no controller exposes it. Snapshots cannot be created or read via the API.
-- **No endpoint for `UPGRADE` relation type.** `RelationType.UPGRADE` exists in the enum and in seed data (`score: 0.72` for product `...002 -> ...010`), but no `GET /recommendations/products/{id}/upgrades` controller method exists.
-- **No `GET /recommendations/rules/{id}` endpoint.** `RecommendationRuleService.findById` is implemented but no controller exposes individual rule lookup.
-- **No `DELETE` endpoint for rules.** Neither `RecommendationRuleService` nor `RecommendationRuleController` implement deletion.
-- **No `ProductRelation` CRUD API.** Relations can only be inserted via the seed mechanism; there are no REST endpoints to create, update, or delete `ProductRelation` records at runtime.
-- **No test coverage.** Zero test classes exist in the project.
-- **No global exception handler.** Database constraint violations (e.g. duplicate product relation) result in an unhandled `500` response instead of a meaningful `409 Conflict`.
-- **Kafka / event-driven integration absent.** No product update events are consumed, so snapshots are never invalidated when a product changes in the product-service.
-
-### ⚠️ PARTIALLY IMPLEMENTED
-
-- **`generateSnapshot` strategy branching is incomplete.** Only `SIMILAR_ATTRIBUTES` maps to `RelationType.SIMILAR`; both `SAME_CATEGORY` and all remaining strategies (`PRICE_RANGE`, `COMPATIBILITY_BASED`, `POPULAR_IN_CATEGORY`) fall through to `findAll()` which returns all relation types indiscriminately. The strategies `PRICE_RANGE`, `COMPATIBILITY_BASED`, and `POPULAR_IN_CATEGORY` have no distinct resolution logic.
-- **`RecommendationRule` is stored but never applied.** Rules are created, persisted, and returned via the API, but `RecommendationRuleService` and `RecommendationService` have no code path that reads enabled rules and uses them to filter or rank results. The `findByEnabledTrueOrderByPriorityDesc()` repository method exists but is called nowhere.
-- **JSONB `parameters` field is untyped.** The column is declared as `jsonb` in PostgreSQL but the Kotlin field is `String?`. No deserialization, validation, or use of the JSON content occurs in the application layer.
-- **`ApiTypeAdapter` base class contains stub implementations.** Both `toServiceModel()` and `toApiModel()` default to `TODO("Not yet implemented")` in the abstract base; each concrete adapter must override both directions. The `RecommendationController` does not use adapters and returns entity types directly from the service — only `RecommendationRuleController` uses the adapter pattern correctly.
-
 ### ✅ IMPLEMENTED
 
 - Querying product relations by type and score for the four main recommendation endpoints (`all`, `similar`, `alternatives`, `accessories`).
-- Bulk recommendation resolution for a list of product IDs (`buildForPc`).
-- Full CRUD (create, read-all, update) for `RecommendationRule` with proper adapter-based DTO mapping.
+- **N+1-free `buildForPc`** — single JPQL `IN` query for all product IDs, in-memory grouping; max 100 IDs validated.
+- **Bean Validation** (`@NotEmpty`, `@Size(max=100)` on `BuildRecommendationRequest`; `@NotBlank`, `@Size(max=255)` on rule name).
+- **Global exception handler** with structured JSON error responses including `details` for validation errors.
+- **PostgreSQL indexes** on `product_relations` (source_product_id; source_product_id+relation_type) and `recommendation_snapshots` (product_id; product_id+strategy).
+- Full CRUD (create, read-all, update) for `RecommendationRule` with adapter-based DTO mapping.
 - Snapshot upsert logic keyed on `(productId, strategy)`.
 - HikariCP connection pool with full configuration via environment variables.
 - Data seeding via classpath JSON files, guarded by row count and feature flag.
 - Stateless security configuration (all endpoints publicly accessible, no CSRF).
 - Springdoc OpenAPI UI at `/api/swagger-ui.html`.
+
+### ⚠️ PARTIALLY IMPLEMENTED
+
+- **`generateSnapshot` strategy branching is incomplete.** Only `SIMILAR_ATTRIBUTES` maps to `RelationType.SIMILAR`; `PRICE_RANGE`, `COMPATIBILITY_BASED`, and `POPULAR_IN_CATEGORY` fall through to `findAll()`.
+- **`RecommendationRule` is stored but never applied.** `findByEnabledTrueOrderByPriorityDesc()` exists but is called nowhere in the service layer.
+- **JSONB `parameters` field is untyped.** The column is `jsonb` in PostgreSQL but the Kotlin field is `String?` — no deserialization or validation occurs.
+
+### ❌ NOT IMPLEMENTED
+
+- **`generateSnapshot` has no REST endpoint.** Snapshots cannot be created or read via the API.
+- **No endpoint for `UPGRADE` relation type.** `RelationType.UPGRADE` exists but no `GET /recommendations/products/{id}/upgrades` controller method exists.
+- **No `GET /recommendations/rules/{id}` endpoint.** Individual rule lookup is not exposed.
+- **No `DELETE` endpoint for rules.**
+- **No `ProductRelation` CRUD API.** Relations can only be inserted via the seed mechanism.
+- **No test coverage.**
+- **Duplicate `(source, target, relation_type)` inserts** result in an unhandled `500` — the unique constraint violation is not caught at the application layer.
+- **Kafka / event-driven integration absent.** Snapshots are never invalidated when a product changes.

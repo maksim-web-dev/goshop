@@ -5,7 +5,11 @@ import jakarta.persistence.*
 @Entity
 @Table(
     name = "product_relations",
-    uniqueConstraints = [UniqueConstraint(columnNames = ["source_product_id", "target_product_id", "relation_type"])]
+    uniqueConstraints = [UniqueConstraint(columnNames = ["source_product_id", "target_product_id", "relation_type"])],
+    indexes = [
+        Index(name = "idx_product_relations_source_id", columnList = "source_product_id"),
+        Index(name = "idx_product_relations_source_type", columnList = "source_product_id, relation_type")
+    ]
 )
 class ProductRelation(
     @Id

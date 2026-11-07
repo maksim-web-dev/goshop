@@ -89,7 +89,7 @@ paths:
 
   /prices/batch:
     post:
-      summary: Get prices for multiple products in batch
+      summary: Get current prices for multiple products (max 100 IDs)
       requestBody:
         required: true
         content:
@@ -98,17 +98,19 @@ paths:
               $ref: '#/components/schemas/BatchPriceRequest'
       responses:
         '200':
-          description: List of prices for requested products
+          description: List of active prices for requested products
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/PriceResponse'
+        '400':
+          description: Invalid request (empty list or exceeds 100 items)
 
   /prices/calculate:
     post:
-      summary: Calculate effective price for a product
+      summary: Calculate effective price for a single product
       requestBody:
         required: true
         content:
@@ -122,6 +124,29 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CalculatePriceResponse'
+        '404':
+          description: No active price found for the requested combination
+
+  /prices/calculate/batch:
+    post:
+      summary: Batch price calculation with optional currency conversion (max 100 items)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchCalculateRequest'
+      responses:
+        '200':
+          description: Calculated prices and not-found items
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchCalculateResponse'
+        '400':
+          description: Invalid request (empty list, oversized, invalid currency code)
+        '404':
+          description: Required exchange rate not found for a targetCurrencyCode conversion
 
   /discounts:
     get:
@@ -307,6 +332,90 @@ components:
           items:
             type: integer
             format: int64
+          minItems: 1
+          maxItems: 100
+
+    BatchCalculateRequest:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/BatchCalculateItem'
+          minItems: 1
+          maxItems: 100
+
+    BatchCalculateItem:
+      type: object
+      required: [productId, currencyCode]
+      properties:
+        productId:
+          type: integer
+          format: int64
+        storeId:
+          type: integer
+          format: int64
+          nullable: true
+        currencyCode:
+          type: string
+          minLength: 3
+          maxLength: 3
+          description: ISO 4217 code — must match a stored price's currency
+        targetCurrencyCode:
+          type: string
+          minLength: 3
+          maxLength: 3
+          nullable: true
+          description: If set, the result amounts are converted to this currency
+
+    BatchCalculateResponse:
+      type: object
+      required: [results, notFoundItems]
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/BatchCalculateResult'
+        notFoundItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/BatchCalculateNotFound'
+
+    BatchCalculateResult:
+      type: object
+      required: [productId, originalAmount, finalAmount, currencyCode, discountApplied]
+      properties:
+        productId:
+          type: integer
+          format: int64
+        storeId:
+          type: integer
+          format: int64
+          nullable: true
+        originalAmount:
+          type: number
+        finalAmount:
+          type: number
+        currencyCode:
+          type: string
+          description: Reflects targetCurrencyCode if conversion was applied
+        discountApplied:
+          type: boolean
+
+    BatchCalculateNotFound:
+      type: object
+      required: [productId, currencyCode]
+      properties:
+        productId:
+          type: integer
+          format: int64
+        storeId:
+          type: integer
+          format: int64
+          nullable: true
+        currencyCode:
+          type: string
 
     CalculatePriceRequest:
       type: object

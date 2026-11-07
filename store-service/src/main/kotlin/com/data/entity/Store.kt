@@ -4,7 +4,12 @@ import jakarta.persistence.*
 import java.time.Instant
 
 @Entity
-@Table(name = "stores")
+@Table(
+    name = "stores",
+    indexes = [
+        Index(name = "idx_stores_status", columnList = "status")
+    ]
+)
 class Store(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

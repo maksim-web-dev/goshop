@@ -5,6 +5,7 @@ import com.rest.controller.storeWebhook.data.StoreWebhookCreateRequest
 import com.rest.controller.storeWebhook.data.StoreWebhookResponse
 import com.service.storeWebhook.StoreWebhookService
 import com.service.storeWebhook.dto.CreateStoreWebhookDto
+import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.*
 
@@ -16,7 +17,7 @@ class StoreWebhookController(private val storeWebhookService: StoreWebhookServic
     @ResponseStatus(HttpStatus.CREATED)
     fun create(
         @PathVariable storeId: Long,
-        @RequestBody request: StoreWebhookCreateRequest
+        @Valid @RequestBody request: StoreWebhookCreateRequest
     ): StoreWebhookResponse {
         val dto = CreateStoreWebhookDto(
             url = request.url, eventTypes = request.eventTypes,

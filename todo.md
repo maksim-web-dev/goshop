@@ -615,8 +615,11 @@ Ensure each service:
 Update README and OpenAPI documentation.
 
 ---
+# Phase 7 — FlyWay для product-service
+# Phase 8 — FlyWay для інших вищезшаданих сервісів на основі як зроблено для product-service
+---
 
-# Phase 8 — Implement api-service
+# Phase 9 — Implement api-service
 
 ## Goal
 
@@ -626,7 +629,7 @@ The api-service must not directly access databases belonging to other services.
 
 It must not have its own business database for this initial version.
 
-## 8.1 Application Setup
+## 9.1 Application Setup
 
 Convert the existing `api-service` Kotlin stub into a Spring Boot application.
 
@@ -652,7 +655,7 @@ Keep the service stateless.
 
 Default container port: 8080.
 
-## 8.2 Downstream Configuration
+## 9.2 Downstream Configuration
 
 All downstream base URLs must be configurable.
 
@@ -683,7 +686,7 @@ Configure:
 
 Do not use unlimited retries.
 
-## 8.3 Store Authentication
+## 9.3 Store Authentication
 
 Implement a security filter or middleware that:
 
@@ -701,7 +704,7 @@ Avoid unrestricted public access to downstream service endpoints.
 
 For the first version, document the cost of validating every request against store-service and establish a baseline before adding caching in a later sprint.
 
-## 8.4 API Endpoints
+## 9.4 API Endpoints
 
 Implement the following aggregated endpoints under `/api/v1`.
 
@@ -845,7 +848,7 @@ Use existing category endpoints.
 
 If a category tree is required but unsupported, implement or document the necessary product-service endpoint explicitly.
 
-## 8.5 Parallel Request Execution
+## 9.5 Parallel Request Execution
 
 When independent downstream requests can run concurrently, execute them in parallel.
 
@@ -871,7 +874,7 @@ Price service failure must not silently produce price = 0.
 
 If a requested price is unavailable, distinguish missing price from a service outage.
 
-## 8.6 API Rate Limiting
+## 9.6 API Rate Limiting
 
 Implement an initial local/in-memory rate-limiting solution if it can be introduced cleanly.
 
@@ -890,7 +893,7 @@ Do not introduce Redis now.
 
 Design the implementation behind a RateLimiter interface so it can later be replaced by a distributed solution.
 
-## 8.7 Security
+## 9.7 Security
 
 Separate:
 
@@ -904,7 +907,7 @@ Ensure rate-limiting and authentication decisions use verified store identity.
 
 Validate supported language and currency overrides.
 
-## 8.8 API Documentation
+## 9.8 API Documentation
 
 Generate OpenAPI documentation for api-service.
 
@@ -918,7 +921,7 @@ For each endpoint provide:
 - Examples.
 - Authentication requirements.
 
-## 8.9 Docker Integration
+## 9.9 Docker Integration
 
 Update Docker Compose.
 
@@ -931,7 +934,7 @@ Ensure:
 - Existing services and databases remain functional.
 - No dependency on Redis or Kafka is introduced.
 
-## 8.10 Testing
+## 9.10 Testing
 
 Implement:
 
@@ -975,7 +978,7 @@ Verify:
 
 ---
 
-# Phase 9 — Final Verification and Documentation
+# Phase 10 — Final Verification and Documentation
 
 After implementation:
 

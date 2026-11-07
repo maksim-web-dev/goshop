@@ -1,8 +1,9 @@
 package com.rest.controller.translation.data
 
 import com.data.entity.TranslationStatus
+import jakarta.validation.constraints.Size
 
 data class TranslationUpdateRequest(
-    val translatedValue: String? = null,
+    @field:Size(min = 1) val translatedValue: String? = null,
     val status: TranslationStatus? = null
 )

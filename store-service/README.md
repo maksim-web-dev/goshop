@@ -23,6 +23,7 @@
 | Spring Dependency Management plugin | 1.1.6 |
 | `spring-boot-starter-web` | (managed by Boot 3.3.5) |
 | `spring-boot-starter-data-jpa` | (managed by Boot 3.3.5) |
+| `spring-boot-starter-validation` | (managed by Boot 3.3.5) |
 | `spring-boot-starter-security` | (managed by Boot 3.3.5) |
 | `jackson-module-kotlin` | (managed by Boot 3.3.5) |
 | `springdoc-openapi-starter-webmvc-ui` | 2.6.0 |
@@ -66,6 +67,8 @@
 | `status` | `VARCHAR` (enum) | NOT NULL | Default: `ACTIVE` |
 | `created_at` | `TIMESTAMP` | NOT NULL, not updatable | Set at creation |
 
+**Indexes:** `idx_stores_status` (`status`). `domain` has a column-level `UNIQUE` constraint (implicit index).
+
 ### 3.4 Entity: `StoreApiKey` (table `store_api_keys`)
 
 | Column | Type | Constraints | Notes |
@@ -78,6 +81,8 @@
 | `created_at` | `TIMESTAMP` | NOT NULL, not updatable | |
 | `expires_at` | `TIMESTAMP` | nullable | Optional expiry; not enforced at runtime |
 | `last_used_at` | `TIMESTAMP` | nullable | Not updated by any current logic |
+
+**Indexes:** `idx_store_api_keys_store_id` (`store_id`), `idx_store_api_keys_key_prefix_status` (`key_prefix, status`).
 
 ### 3.5 Entity: `StoreSettings` (table `store_settings`)
 
@@ -95,6 +100,8 @@
 | `store_settings_id` | `Long` | FK → `store_settings.id` |
 | `language_code` | `VARCHAR(10)` | BCP 47 code (e.g. `"uk"`, `"en"`) |
 
+The `store_id` FK has a column-level `UNIQUE` constraint (implicit index).
+
 ### 3.6 Entity: `StoreWebhook` (table `store_webhooks`)
 
 | Column | Type | Constraints | Notes |
@@ -104,6 +111,8 @@
 | `url` | `VARCHAR` | NOT NULL | Delivery target URL |
 | `secret_ref` | `VARCHAR` | NOT NULL | Reference to external secret; actual secret not stored |
 | `enabled` | `BOOLEAN` | NOT NULL | Default: `true` |
+
+**Indexes:** `idx_store_webhooks_store_id` (`store_id`).
 
 **Collection table `store_webhook_event_types`** (`@ElementCollection`):
 
@@ -163,7 +172,7 @@ OpenAPI UI: `http://localhost:8087/api/swagger-ui.html`
 ### 4.2 `GET /api/stores/{id}`
 
 **Controller:** `StoreController.getById()`  
-**Purpose:** Returns a single store by its UUID.
+**Purpose:** Returns a single store by its ID.
 
 **Path variables:**
 
@@ -171,27 +180,13 @@ OpenAPI UI: `http://localhost:8087/api/swagger-ui.html`
 |---|---|---|---|
 | `id` | `Long` | yes | Store identifier |
 
-**Response:** `200 OK` — single `StoreResponse` (same fields as above)
+**Response:** `200 OK` — single `StoreResponse`
 
 **Possible errors:**
 
 | Status | Condition |
 |---|---|
 | `404 Not Found` | No store with the given `id` exists |
-
-**Example response:**
-```json
-{
-  "id": 1,
-  "name": "GoShop Main",
-  "domain": "goshop.com",
-  "countryCode": "US",
-  "defaultLanguage": "en",
-  "defaultCurrency": "USD",
-  "status": "ACTIVE",
-  "createdAt": "2024-01-15T10:30:00Z"
-}
-```
 
 ---
 
@@ -202,13 +197,13 @@ OpenAPI UI: `http://localhost:8087/api/swagger-ui.html`
 
 **Request body:** `StoreCreateRequest`
 
-| Field | Type | Required | Notes |
-|---|---|---|---|
-| `name` | `String` | yes | Display name |
-| `domain` | `String` | yes | Must be unique across all stores |
-| `countryCode` | `String` | yes | ISO 3166-1 alpha-2, e.g. `"US"` |
-| `defaultLanguage` | `String` | yes | BCP 47, e.g. `"en"` |
-| `defaultCurrency` | `String` | yes | ISO 4217, e.g. `"USD"` |
+| Field | Type | Required | Constraints | Notes |
+|---|---|---|---|---|
+| `name` | `String` | yes | 1–255 chars | Display name |
+| `domain` | `String` | yes | 1–255 chars, unique | Tenant domain |
+| `countryCode` | `String` | yes | exactly 2 chars | ISO 3166-1 alpha-2, e.g. `"US"` |
+| `defaultLanguage` | `String` | yes | 2–10 chars | BCP 47, e.g. `"en"` |
+| `defaultCurrency` | `String` | yes | exactly 3 chars | ISO 4217, e.g. `"USD"` |
 
 **Response:** `201 Created` — `StoreResponse`
 
@@ -216,6 +211,7 @@ OpenAPI UI: `http://localhost:8087/api/swagger-ui.html`
 
 | Status | Condition |
 |---|---|
+| `400 Bad Request` | Blank fields or wrong code lengths |
 | `409 Conflict` | The `domain` is already registered |
 
 **Example request:**
@@ -258,12 +254,12 @@ OpenAPI UI: `http://localhost:8087/api/swagger-ui.html`
 
 **Request body:** `StoreUpdateRequest` — all fields are optional
 
-| Field | Type | Required | Notes |
-|---|---|---|---|
-| `name` | `String?` | no | New display name |
-| `defaultLanguage` | `String?` | no | New BCP 47 language code |
-| `defaultCurrency` | `String?` | no | New ISO 4217 currency code |
-| `status` | `StoreStatus?` | no | `ACTIVE`, `INACTIVE`, or `SUSPENDED` |
+| Field | Type | Required | Constraints | Notes |
+|---|---|---|---|---|
+| `name` | `String?` | no | 1–255 chars if provided | New display name |
+| `defaultLanguage` | `String?` | no | 2–10 chars if provided | New BCP 47 language code |
+| `defaultCurrency` | `String?` | no | exactly 3 chars if provided | New ISO 4217 currency code |
+| `status` | `StoreStatus?` | no | | `ACTIVE`, `INACTIVE`, or `SUSPENDED` |
 
 **Response:** `200 OK` — `StoreResponse`
 
@@ -271,6 +267,7 @@ OpenAPI UI: `http://localhost:8087/api/swagger-ui.html`
 
 | Status | Condition |
 |---|---|
+| `400 Bad Request` | Wrong code lengths |
 | `404 Not Found` | No store with the given `id` exists |
 
 **Example request:**
@@ -435,11 +432,11 @@ OpenAPI UI: `http://localhost:8087/api/swagger-ui.html`
 
 **Request body:** `StoreSettingsUpdateRequest` — all fields optional
 
-| Field | Type | Required | Notes |
-|---|---|---|---|
-| `requestsPerSecond` | `Int?` | no | New requests-per-second limit |
-| `burstLimit` | `Int?` | no | New burst limit |
-| `allowedLanguages` | `List<String>?` | no | Replaces the entire list of allowed language codes |
+| Field | Type | Required | Constraints | Notes |
+|---|---|---|---|---|
+| `requestsPerSecond` | `Int?` | no | > 0 if provided | New requests-per-second limit |
+| `burstLimit` | `Int?` | no | > 0 if provided | New burst limit |
+| `allowedLanguages` | `List<String>?` | no | | Replaces the entire list of allowed language codes |
 
 **Response:** `200 OK` — `StoreSettingsResponse`
 
@@ -447,6 +444,7 @@ OpenAPI UI: `http://localhost:8087/api/swagger-ui.html`
 
 | Status | Condition |
 |---|---|
+| `400 Bad Request` | Non-positive rate limit values |
 | `404 Not Found` | No store with the given `storeId` exists |
 
 **Example request:**
@@ -473,12 +471,12 @@ OpenAPI UI: `http://localhost:8087/api/swagger-ui.html`
 
 **Request body:** `StoreWebhookCreateRequest`
 
-| Field | Type | Required | Notes |
-|---|---|---|---|
-| `url` | `String` | yes | HTTPS endpoint that receives events |
-| `eventTypes` | `List<String>` | yes | Event type strings, e.g. `["product.created", "price.updated"]` |
-| `secretRef` | `String` | yes | Reference path to signing secret in Vault/Secrets Manager |
-| `enabled` | `Boolean` | no | Default: `true` |
+| Field | Type | Required | Constraints | Notes |
+|---|---|---|---|---|
+| `url` | `String` | yes | not blank | HTTPS endpoint that receives events |
+| `eventTypes` | `List<String>` | yes | not empty | Event type strings, e.g. `["product.created", "price.updated"]` |
+| `secretRef` | `String` | yes | not blank | Reference path to signing secret in Vault/Secrets Manager |
+| `enabled` | `Boolean` | no | | Default: `true` |
 
 **Response:** `201 Created` — `StoreWebhookResponse`
 
@@ -495,6 +493,7 @@ OpenAPI UI: `http://localhost:8087/api/swagger-ui.html`
 
 | Status | Condition |
 |---|---|
+| `400 Bad Request` | Blank url/secretRef or empty eventTypes |
 | `404 Not Found` | No store with the given `storeId` exists |
 
 **Example request:**
@@ -571,17 +570,23 @@ Kafka is not implemented. There is no Kafka dependency in `build.gradle.kts` and
 
 ## 8. Error Handling
 
-There is no `@ControllerAdvice` or `@ExceptionHandler` in the codebase. Error responses are produced by Spring Boot's default `BasicErrorController`.
+`GlobalExceptionHandler` (`@RestControllerAdvice`) provides consistent JSON error responses:
 
-Errors are thrown as `org.springframework.web.server.ResponseStatusException` from service methods and propagated directly. The default Spring Boot error response format is:
+| Exception | HTTP Status | Notes |
+|---|---|---|
+| `MethodArgumentNotValidException` | `400 Bad Request` | `@RequestBody` validation failures; response includes `details` array with field-level messages |
+| `ResponseStatusException` | varies | Thrown explicitly by service methods (e.g. `404`, `409`, `403`) |
+| `Exception` (catch-all) | `500 Internal Server Error` | Unexpected errors |
 
+**Validation error response format:**
 ```json
 {
-  "timestamp": "2024-06-01T12:00:00.000+00:00",
-  "status": 404,
-  "error": "Not Found",
-  "message": "Store 999 not found",
-  "path": "/api/stores/999"
+  "status": 400,
+  "error": "Validation failed",
+  "details": [
+    "countryCode: size must be between 2 and 2",
+    "defaultCurrency: size must be between 3 and 3"
+  ]
 }
 ```
 
@@ -689,7 +694,7 @@ OpenAPI docs: `http://localhost:8087/api/swagger-ui.html`
 
 ## 10. Testing
 
-✅ / ❌ No test files exist under `src/test/`. The `build.gradle.kts` includes `spring-boot-starter-test` as a test dependency and configures JUnit Platform, but no test classes have been written.
+No test files exist under `src/test/`. The `build.gradle.kts` includes `spring-boot-starter-test` as a test dependency and configures JUnit Platform, but no test classes have been written.
 
 ---
 
@@ -705,7 +710,5 @@ OpenAPI docs: `http://localhost:8087/api/swagger-ui.html`
 | Expiry enforcement | ❌ NOT IMPLEMENTED | `StoreApiKey.expiresAt` is stored and accepted as input, but no scheduler or request-time check compares it against the current time. `ApiKeyStatus.EXPIRED` is never set by any logic. |
 | `lastUsedAt` tracking | ❌ NOT IMPLEMENTED | The column exists on `StoreApiKey` but is never updated. |
 | `StoreStatus.SUSPENDED` | ⚠️ PARTIALLY IMPLEMENTED | The enum value exists and can be set via `PATCH /stores/{id}` with `"status": "SUSPENDED"`, but no business logic is attached to this state. |
-| Input validation | ❌ NOT IMPLEMENTED | No `@Valid`, `@NotNull`, `@Size`, or Bean Validation annotations are present on any request DTO. Invalid or missing fields result in a Jackson deserialization error or a null field reaching the service layer. |
 | Authentication / authorization | ❌ NOT IMPLEMENTED | Spring Security is included but configured to permit all requests without authentication. There is no JWT validation, API-key-based auth, or role enforcement. |
-| Error handling | ⚠️ PARTIALLY IMPLEMENTED | Errors are thrown as `ResponseStatusException` with meaningful messages, but there is no global `@ControllerAdvice` to produce a consistent error response schema across all endpoints. |
 | Test coverage | ❌ NOT IMPLEMENTED | No unit or integration tests exist. |

@@ -1,9 +1,11 @@
 package com.data.entity
 
 import jakarta.persistence.*
+import org.hibernate.annotations.BatchSize
 
 @Entity
 @Table(name = "brands")
+@BatchSize(size = 25)
 class Brand(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

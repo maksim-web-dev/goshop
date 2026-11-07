@@ -6,7 +6,11 @@ import java.time.Instant
 @Entity
 @Table(
     name = "translations",
-    uniqueConstraints = [UniqueConstraint(columnNames = ["entity_type", "entity_id", "field_name", "language_code"])]
+    uniqueConstraints = [UniqueConstraint(columnNames = ["entity_type", "entity_id", "field_name", "language_code"])],
+    indexes = [
+        Index(name = "idx_translations_entity_type_entity_id", columnList = "entity_type, entity_id"),
+        Index(name = "idx_translations_language_code", columnList = "language_code")
+    ]
 )
 class Translation(
     @Id

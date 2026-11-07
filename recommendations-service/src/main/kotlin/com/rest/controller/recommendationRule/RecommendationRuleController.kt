@@ -7,6 +7,7 @@ import com.rest.controller.recommendationRule.data.RecommendationRuleCreateReque
 import com.rest.controller.recommendationRule.data.RecommendationRuleResponse
 import com.rest.controller.recommendationRule.data.RecommendationRuleUpdateRequest
 import com.service.recommendationRule.RecommendationRuleService
+import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.*
 
@@ -20,13 +21,13 @@ class RecommendationRuleController(private val ruleService: RecommendationRuleSe
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    fun create(@RequestBody request: RecommendationRuleCreateRequest): RecommendationRuleResponse {
+    fun create(@Valid @RequestBody request: RecommendationRuleCreateRequest): RecommendationRuleResponse {
         val dto = with(RecommendationRuleCreateDtoAdapter) { request.toServiceModel() }
         return with(RecommendationRuleResponseAdapter) { ruleService.create(dto).toApiModel() }
     }
 
     @PutMapping("/{id}")
-    fun update(@PathVariable id: Long, @RequestBody request: RecommendationRuleUpdateRequest): RecommendationRuleResponse {
+    fun update(@PathVariable id: Long, @Valid @RequestBody request: RecommendationRuleUpdateRequest): RecommendationRuleResponse {
         val dto = with(RecommendationRuleUpdateDtoAdapter) { request.toServiceModel() }
         return with(RecommendationRuleResponseAdapter) { ruleService.update(id, dto).toApiModel() }
     }

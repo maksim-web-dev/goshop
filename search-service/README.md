@@ -51,6 +51,7 @@ The `search-service` is responsible for full-text search, keyword-based filterin
 | `spring-boot-starter-web` | (Spring Boot BOM) |
 | `spring-boot-starter-data-jpa` | (Spring Boot BOM) — used only for `SearchIndexJob` |
 | `spring-boot-starter-security` | (Spring Boot BOM) |
+| `spring-boot-starter-validation` | (Spring Boot BOM) |
 | `jackson-module-kotlin` | (Spring Boot BOM) |
 | `springdoc-openapi-starter-webmvc-ui` | 2.6.0 |
 | PostgreSQL JDBC driver | (Spring Boot BOM, runtime) |
@@ -121,6 +122,13 @@ IndexOperation : INDEX | UPDATE | DELETE
 IndexJobStatus : PENDING | IN_PROGRESS | DONE | FAILED
 ```
 
+**Indexes on `search_index_jobs`:**
+
+| Index name | Columns | Purpose |
+|---|---|---|
+| `idx_search_index_jobs_product_id` | `product_id` | Lookup by product |
+| `idx_search_index_jobs_status` | `status` | Filter jobs by status (e.g. pending queue) |
+
 ### 3.3 `SearchDocument` data class
 
 `SearchDocument` is a Kotlin data class used as an in-memory projection returned by `JdbcTemplate` queries. It is **not** a JPA entity.
@@ -165,8 +173,8 @@ Security: all endpoints are publicly accessible (`permitAll()`), CSRF disabled, 
 | `q` | `String` | No | `null` | FTS query string; if omitted, all documents match |
 | `brand` | `String` | No | `null` | Exact brand filter |
 | `categoryId` | `Long` | No | `null` | Category ID filter |
-| `page` | `Int` | No | `0` | Zero-based page number |
-| `size` | `Int` | No | `20` | Page size |
+| `page` | `Int` | No | `0` | Zero-based page number; must be `≥ 0` |
+| `size` | `Int` | No | `20` | Page size; range `1–100` |
 
 **Response:** `200 OK` — JSON array of `SearchResultResponse`
 
@@ -210,7 +218,8 @@ GET /api/search/products?q=RTX+4090&brand=NVIDIA&categoryId=201&page=0&size=10
 
 **Possible errors:**
 
-- `500 Internal Server Error` — database error or malformed UUID parameter.
+- `400 Bad Request` — `page < 0` or `size` outside `1–100` range.
+- `500 Internal Server Error` — database error.
 
 ---
 
@@ -230,8 +239,8 @@ GET /api/search/products?q=RTX+4090&brand=NVIDIA&categoryId=201&page=0&size=10
 | `minPrice` | `BigDecimal?` | No | `null` | Minimum price — **accepted but not applied** (see Section 11) |
 | `maxPrice` | `BigDecimal?` | No | `null` | Maximum price — **accepted but not applied** (see Section 11) |
 | `attributes` | `Map<String, String>` | No | `{}` | Attribute filters — applied via JSONB `@>` containment on the `attributes` column |
-| `page` | `Int` | No | `0` | Zero-based page number |
-| `size` | `Int` | No | `20` | Page size |
+| `page` | `Int` | No | `0` | Zero-based page number; `@Min(0)` |
+| `size` | `Int` | No | `20` | Page size; `@Min(1) @Max(100)` |
 
 **Response:** `200 OK` — JSON array of `SearchResultResponse` (same structure as Section 4.1)
 
@@ -270,7 +279,7 @@ POST /api/search/products/query
 
 **Possible errors:**
 
-- `400 Bad Request` — malformed JSON or invalid UUID field.
+- `400 Bad Request` — validation failure (`page < 0`, `size > 100`, or malformed JSON).
 - `500 Internal Server Error` — database error.
 
 ---
@@ -317,9 +326,9 @@ GET /api/search/suggestions?prefix=NVID
 
 **Request body:** `ReindexRequest`
 
-| Field | Type | Required | Notes |
-|---|---|---|---|
-| `productIds` | `List<UUID>` | Yes | One or more product UUIDs to reindex |
+| Field | Type | Required | Constraints | Notes |
+|---|---|---|---|---|
+| `productIds` | `List<Long>` | Yes | `@NotEmpty`, `@Size(max=100)` | One or more product IDs to reindex |
 
 **Response:** `202 Accepted` — JSON array of `SearchIndexJobResponse`
 
@@ -369,8 +378,10 @@ POST /api/internal/search/reindex
 
 **Possible errors:**
 
-- `400 Bad Request` — malformed JSON or invalid UUID.
+- `400 Bad Request` — `productIds` is empty or exceeds 100 items.
 - `500 Internal Server Error` — database error.
+
+**N+1 prevention:** uses `JpaRepository.saveAll()` — a single batch INSERT instead of N separate `save()` calls.
 
 ---
 
@@ -478,9 +489,9 @@ Located at `com.service.searchIndex.SearchIndexJobService`.
 
 | Method | Description |
 |---|---|
-| `findById(id: UUID)` | Loads a `SearchIndexJob` by ID; throws `ResponseStatusException(NOT_FOUND)` if absent |
+| `findById(id: Long)` | Loads a `SearchIndexJob` by ID; throws `ResponseStatusException(NOT_FOUND)` if absent |
 | `enqueue(productId, operation)` | Creates and saves a new `SearchIndexJob` with status `PENDING` and `attempts = 0` |
-| `reindexAll(productIds)` | Calls `enqueue(id, INDEX)` for each ID in the list; runs in a single `@Transactional` block |
+| `reindexAll(productIds)` | Builds a list of `SearchIndexJob` entities and persists them all via `saveAll()` in a single `@Transactional` call — avoids N×`save()` |
 
 ### 5.3 `SearchDocumentDataSeed` (CommandLineRunner)
 
@@ -502,25 +513,46 @@ Kafka is not implemented. The `build.gradle.kts` contains no Kafka dependency. I
 
 ## 8. Error Handling
 
-There is no `@ControllerAdvice` or global exception handler implemented in this service. Error responses are produced by Spring Boot's default error handling mechanism (`BasicErrorController`).
+A `GlobalExceptionHandler` (`@RestControllerAdvice`) handles all exceptions with a consistent JSON response body.
 
-**Known error responses:**
+**HTTP status codes in use:**
 
-| Scenario | HTTP Status | Mechanism |
-|---|---|---|
-| Job not found by ID | `404 Not Found` | `ResponseStatusException` thrown in `SearchIndexJobService.findById()` |
-| Invalid request body | `400 Bad Request` | Spring MVC default (`HttpMessageNotReadableException`) |
-| Database / server error | `500 Internal Server Error` | Spring Boot default error page |
+| Scenario | Status |
+|---|---|
+| Successful GET | `200 OK` |
+| Successful POST (reindex) | `202 Accepted` |
+| Bean Validation failure on request body | `400 Bad Request` |
+| `@Validated` constraint violation on query params | `400 Bad Request` |
+| Job not found | `404 Not Found` |
+| Unhandled exception | `500 Internal Server Error` |
 
-**Default Spring Boot error response format:**
-
+**Error response format:**
 ```json
 {
-  "timestamp": "2026-11-06T10:00:00.000+00:00",
   "status": 404,
-  "error": "Not Found",
-  "message": "Job 999 not found",
-  "path": "/api/internal/search/index-jobs/999"
+  "error": "Job 999 not found"
+}
+```
+
+**Validation error response format (`400`):**
+```json
+{
+  "status": 400,
+  "error": "Validation failed",
+  "details": [
+    "productIds: must not be empty"
+  ]
+}
+```
+
+**Query param constraint violation format (`400`, from `@Validated` + `@Max`):**
+```json
+{
+  "status": 400,
+  "error": "Validation failed",
+  "details": [
+    "size: must be less than or equal to 100"
+  ]
 }
 ```
 
@@ -629,17 +661,31 @@ No test files exist under `src/test/`. The `spring-boot-starter-test` dependency
 
 ## 11. Known Limitations and Missing Functionality
 
-| Issue | Label |
-|---|---|
-| `minPrice` / `maxPrice` fields are accepted in `SearchRequest` and `SearchQueryDto` but are **never applied** to the SQL query in `SearchService.search()` | ⚠️ PARTIALLY IMPLEMENTED |
-| `attributes` map filter is applied via JSONB `@>` containment on the `attributes` column | ✅ IMPLEMENTED |
-| `status` filter is defined in `SearchQueryDto` but is **not bound** in `SearchController.search()` and **not applied** in the SQL | ⚠️ PARTIALLY IMPLEMENTED |
-| `localizedNames` and `attributes` JSONB columns are stored in `search_documents` and populated by `SearchService.indexProduct()` | ✅ IMPLEMENTED |
-| `SearchIndexJob` records are created with status `PENDING` but **no worker, scheduler, or event listener** exists to process them and call `SearchService.indexProduct()` or `removeProduct()`. Index jobs are effectively a dead queue. | ❌ NOT IMPLEMENTED |
-| No faceted search endpoint (aggregations by brand, category, attribute values) | ❌ NOT IMPLEMENTED |
-| No pagination metadata returned (total count, total pages). Responses are plain arrays. | ❌ NOT IMPLEMENTED |
-| No integration with OpenSearch / Elasticsearch. The `SearchDocument` comment mentions this as a future migration target. | ❌ NOT IMPLEMENTED |
-| No test coverage | ❌ NOT IMPLEMENTED |
-| No global exception handler (`@ControllerAdvice`). Error responses use Spring Boot defaults. | ❌ NOT IMPLEMENTED |
-| SSL for PostgreSQL is hardcoded to `disable` in `PostgresConfig` (not configurable via env vars despite the `ssl` field in `PostgresProps`) | ⚠️ PARTIALLY IMPLEMENTED |
-| The `IndexOperation.UPDATE` and `IndexOperation.DELETE` enum values exist but the reindex API only ever creates `INDEX` operations. No endpoint creates `UPDATE` or `DELETE` jobs. | ⚠️ PARTIALLY IMPLEMENTED |
+### ✅ IMPLEMENTED
+
+- Full-text search via PostgreSQL FTS (`searchable_text @@ plainto_tsquery`).
+- Attribute filter via JSONB `@>` containment.
+- Autocomplete suggestions via `ILIKE` prefix match.
+- `search_documents` indexes via `schema.sql`: GIN on `searchable_text`, B-tree on `brand` and `category_id`.
+- **Bean Validation** on `ReindexRequest` (`@NotEmpty`, `@Size(max=100)`) and `SearchRequest` (`@Min(0)` on `page`, `@Min(1) @Max(100)` on `size`).
+- **Page size cap** on `GET /search/products` (`@Max(100)` via `@Validated`).
+- **N+1-free `reindexAll`** — `saveAll()` batch INSERT instead of N×`save()`.
+- **Global exception handler** with structured JSON for validation and `ResponseStatusException` errors, plus `ConstraintViolationException` for query param violations.
+- **PostgreSQL indexes** on `search_index_jobs` (product_id; status).
+- Upsert for `search_documents` via `ON CONFLICT (product_id) DO UPDATE`.
+- `SearchIndexJob` CRUD with `findByStatus` for queue polling.
+
+### ⚠️ PARTIALLY IMPLEMENTED
+
+- `minPrice` / `maxPrice` are accepted in `SearchRequest` but are **never applied** to the SQL query (`search_documents` has no price column).
+- `status` filter is defined in `SearchQueryDto` but **not applied** in the SQL construction.
+- `IndexOperation.UPDATE` and `IndexOperation.DELETE` exist but the reindex API only ever creates `INDEX` operations.
+- SSL for PostgreSQL is hardcoded to `disable` in `PostgresConfig`.
+
+### ❌ NOT IMPLEMENTED
+
+- `SearchIndexJob` records are created with status `PENDING` but **no worker** processes them — index jobs are a dead queue.
+- No faceted search (aggregations by brand, category, attribute values).
+- No pagination metadata (total count, total pages) — responses are plain arrays.
+- No integration with OpenSearch / Elasticsearch.
+- No test coverage.

@@ -27,8 +27,11 @@ class RecommendationService(
     fun findAccessories(productId: Long): List<Long> =
         findByType(productId, RelationType.ACCESSORY)
 
-    fun buildForPc(productIds: List<Long>): Map<Long, List<Long>> =
-        productIds.associateWith { findAll(it) }
+    fun buildForPc(productIds: List<Long>): Map<Long, List<Long>> {
+        val all = productRelationRepository.findBySourceProductIdIn(productIds)
+        val grouped = all.groupBy { it.sourceProductId }
+        return productIds.associateWith { id -> grouped[id]?.map { it.targetProductId } ?: emptyList() }
+    }
 
     @Transactional
     fun generateSnapshot(productId: Long, strategy: RecommendationStrategy): RecommendationSnapshot {

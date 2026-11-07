@@ -7,6 +7,7 @@ import com.rest.controller.store.data.StoreCreateRequest
 import com.rest.controller.store.data.StoreResponse
 import com.rest.controller.store.data.StoreUpdateRequest
 import com.service.store.StoreService
+import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.*
 
@@ -24,13 +25,13 @@ class StoreController(private val storeService: StoreService) {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    fun create(@RequestBody request: StoreCreateRequest): StoreResponse {
+    fun create(@Valid @RequestBody request: StoreCreateRequest): StoreResponse {
         val dto = with(StoreCreateDtoAdapter) { request.toServiceModel() }
         return with(StoreResponseAdapter) { storeService.create(dto).toApiModel() }
     }
 
     @PatchMapping("/{id}")
-    fun update(@PathVariable id: Long, @RequestBody request: StoreUpdateRequest): StoreResponse {
+    fun update(@PathVariable id: Long, @Valid @RequestBody request: StoreUpdateRequest): StoreResponse {
         val dto = with(StoreUpdateDtoAdapter) { request.toServiceModel() }
         return with(StoreResponseAdapter) { storeService.update(id, dto).toApiModel() }
     }

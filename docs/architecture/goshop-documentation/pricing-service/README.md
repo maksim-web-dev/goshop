@@ -30,6 +30,7 @@ Microservice responsible for managing product prices, store-specific discounts, 
 - Storing currency exchange rates with historical tracking (`effectiveAt`)
 - Recording price change history automatically whenever a price `amount` is modified
 - Computing final prices for a given `(productId, storeId, currencyCode)` tuple by applying the best available active discount
+- Batch price calculation with optional currency conversion for up to 100 items in a single request
 
 **Data ownership:**
 - `prices` table — owned exclusively by this service; `productId` values are foreign references to `product-service` (no FK enforced at DB level)
@@ -52,6 +53,7 @@ Microservice responsible for managing product prices, store-specific discounts, 
 | Spring Web (MVC) | `spring-boot-starter-web` |
 | Spring Data JPA | `spring-boot-starter-data-jpa` |
 | Spring Security | `spring-boot-starter-security` |
+| Spring Validation | `spring-boot-starter-validation` |
 | Jackson Kotlin module | `jackson-module-kotlin` (managed by Boot) |
 | SpringDoc OpenAPI (Swagger UI) | `springdoc-openapi-starter-webmvc-ui:2.6.0` |
 | PostgreSQL JDBC driver | `org.postgresql:postgresql` (runtime) |
@@ -77,6 +79,15 @@ Microservice responsible for managing product prices, store-specific discounts, 
 | `valid_to` | `Instant` | nullable | `null` = no expiry |
 | `updated_at` | `Instant` | NOT NULL | Updated explicitly on every `PriceService.update()` call |
 
+**Indexes on `prices`:**
+
+| Index name | Columns | Purpose |
+|---|---|---|
+| `idx_prices_product_id` | `product_id` | Active-price lookup by product |
+| `idx_prices_store_id` | `store_id` | Filter by store |
+| `idx_prices_currency_code` | `currency_code` | Filter by currency |
+| `idx_prices_valid_to` | `valid_to` | Active-price range filter (`validTo IS NULL OR validTo > now`) |
+
 ### 3.2 `discounts`
 
 | Column | Java type | DB constraints | Notes |
@@ -89,6 +100,15 @@ Microservice responsible for managing product prices, store-specific discounts, 
 | `starts_at` | `Instant` | NOT NULL | Discount activation time |
 | `ends_at` | `Instant` | nullable | `null` = no expiry |
 | `status` | `DiscountStatus` (enum) | NOT NULL | Stored as `STRING`; default `ACTIVE`; values: `ACTIVE`, `INACTIVE`, `EXPIRED` |
+
+**Indexes on `discounts`:**
+
+| Index name | Columns | Purpose |
+|---|---|---|
+| `idx_discounts_store_id` | `store_id` | Discount lookup by store |
+| `idx_discounts_product_id` | `product_id` | Discount lookup by product |
+| `idx_discounts_status` | `status` | Filter active discounts |
+| `idx_discounts_starts_at` | `starts_at` | Date-range filter on activation time |
 
 ### 3.3 `exchange_rates`
 
@@ -137,7 +157,7 @@ Dates are serialized as ISO-8601 strings (e.g. `"2024-01-15T10:00:00Z"`) because
 
 - **Handler:** `PriceController.getByProduct`
 - **Purpose:** Returns all currently-active prices for a given product (base price and all store-specific prices).
-- **Path variables:** `productId` — `UUID`
+- **Path variables:** `productId` — `Long`
 - **Query parameters:** none
 - **Request body:** none
 - **Response body:** `List<PriceResponse>` — `200 OK`
@@ -206,19 +226,6 @@ Only prices where `validTo IS NULL OR validTo > now()` are returned, ordered by 
 | `validFrom` | `Instant` (ISO-8601) | no | Defaults to current server time |
 | `validTo` | `Instant` (ISO-8601) | no | Omit for open-ended price |
 
-**Example request:**
-```json
-{
-  "productId": 1001,
-  "storeId": 501,
-  "amount": 189.99,
-  "currencyCode": "USD",
-  "validFrom": "2024-03-01T00:00:00Z"
-}
-```
-
-**Example response:** same shape as `PriceResponse` above with `201 Created`.
-
 **Possible errors:** none declared at application level (Jackson deserialization errors return `400` from Spring)
 
 ---
@@ -241,14 +248,6 @@ Only prices where `validTo IS NULL OR validTo > now()` are returned, ordered by 
 
 - **Response body:** `PriceResponse` — `200 OK`
 
-**Example request:**
-```json
-{
-  "amount": 175.00,
-  "validTo": "2025-12-31T23:59:59Z"
-}
-```
-
 **Possible errors:**
 - `404 Not Found` — price with given `id` does not exist
 
@@ -259,8 +258,6 @@ Only prices where `validTo IS NULL OR validTo > now()` are returned, ordered by 
 - **Handler:** `PriceController.getHistory`
 - **Purpose:** Returns the price change history for a price record, most recent first.
 - **Path variables:** `id` — `Long`
-- **Query parameters:** none
-- **Request body:** none
 - **Response body:** `List<PriceHistoryResponse>` — `200 OK`
 
 **`PriceHistoryResponse` fields:**
@@ -273,19 +270,6 @@ Only prices where `validTo IS NULL OR validTo > now()` are returned, ordered by 
 | `newAmount` | `BigDecimal` | no |
 | `changedAt` | `Instant` (ISO-8601 string) | no |
 
-**Example response:**
-```json
-[
-  {
-    "id": 1,
-    "priceId": 2,
-    "oldAmount": 189.9900,
-    "newAmount": 175.0000,
-    "changedAt": "2024-07-10T09:30:00Z"
-  }
-]
-```
-
 **Possible errors:** returns empty list if no history; no `404` guard for the price itself
 
 ---
@@ -293,32 +277,36 @@ Only prices where `validTo IS NULL OR validTo > now()` are returned, ordered by 
 #### POST /prices/batch
 
 - **Handler:** `PriceController.getBatch`
-- **Purpose:** Returns all price records (not filtered by `validTo`) for a list of product IDs. Uses `findByProductIdIn` — no active-price filter applied.
+- **Purpose:** Returns all currently-active price records for a list of product IDs in a single query. Uses `findCurrentByProductIdIn` — active-price filter (`validTo IS NULL OR validTo > now()`) is applied.
 - **Request body:** `BatchPriceRequest`
+- **Validation:** `productIds` must be non-empty and contain at most 100 items.
 
 **`BatchPriceRequest` fields:**
 
-| Field | Type | Required |
-|---|---|---|
-| `productIds` | `List<Long>` | yes |
+| Field | Type | Required | Constraints |
+|---|---|---|---|
+| `productIds` | `List<Long>` | yes | `@NotEmpty`, `@Size(max=100)` |
 
 - **Response body:** `List<PriceResponse>` — `200 OK`
 
 **Example request:**
 ```json
 {
-  "productIds": [1001, 1002]
+  "productIds": [1001, 1002, 1003]
 }
 ```
 
-**Possible errors:** none declared
+**Possible errors:**
+- `400 Bad Request` — `productIds` is empty or exceeds 100 items
+
+**N+1 prevention:** single JPQL `IN` query for all product IDs — `PriceRepository.findCurrentByProductIdIn()`.
 
 ---
 
 #### POST /prices/calculate
 
 - **Handler:** `PriceController.calculate`
-- **Purpose:** Computes the final price for a product in a given store and currency, applying the best active discount if available.
+- **Purpose:** Computes the final price for a single product in a given store and currency, applying the best active discount.
 - **Request body:** `CalculatePriceRequest`
 
 **`CalculatePriceRequest` fields:**
@@ -327,7 +315,7 @@ Only prices where `validTo IS NULL OR validTo > now()` are returned, ordered by 
 |---|---|---|---|
 | `productId` | `Long` | yes | |
 | `storeId` | `Long` | no | If `null`, discounts are not looked up |
-| `currencyCode` | `String` | yes | ISO 4217 code |
+| `currencyCode` | `String` | yes | ISO 4217 code; must match a stored price's currency |
 
 - **Response body:** `CalculatePriceResponse` — `200 OK`
 
@@ -340,27 +328,108 @@ Only prices where `validTo IS NULL OR validTo > now()` are returned, ordered by 
 | `currencyCode` | `String` | no |
 | `discountApplied` | `Boolean` | no |
 
+**Possible errors:**
+- `404 Not Found` — no active price found for the requested `(productId, currencyCode)` / `(productId, storeId, currencyCode)` combination
+
+---
+
+#### POST /prices/calculate/batch
+
+- **Handler:** `PriceController.calculateBatch`
+- **Purpose:** Computes final prices for up to 100 `(productId, storeId, currencyCode)` combinations in a single request. Optionally converts each result to a `targetCurrencyCode` using the latest available exchange rate. Products without a matching price are reported separately in `notFoundItems`.
+- **Request body:** `BatchCalculateRequest`
+- **Validation:** `items` must be non-empty and contain at most 100 items; each item's `currencyCode` and `targetCurrencyCode` must be exactly 3 characters.
+
+**`BatchCalculateRequest` fields:**
+
+| Field | Type | Required | Constraints |
+|---|---|---|---|
+| `items` | `List<BatchCalculateItem>` | yes | `@NotEmpty`, `@Size(max=100)` |
+
+**`BatchCalculateItem` fields:**
+
+| Field | Type | Required | Constraints | Notes |
+|---|---|---|---|---|
+| `productId` | `Long` | yes | `@Positive` | |
+| `storeId` | `Long` | no | — | `null` = no store; discounts not applied |
+| `currencyCode` | `String` | yes | `@NotBlank`, `@Size(min=3,max=3)` | Currency in which the price is stored |
+| `targetCurrencyCode` | `String` | no | `@Size(min=3,max=3)` | If set, the result is converted to this currency |
+
+- **Response body:** `BatchCalculateResponse` — `200 OK`
+
+**`BatchCalculateResponse` fields:**
+
+| Field | Type | Notes |
+|---|---|---|
+| `results` | `List<ResultItem>` | Successfully calculated items |
+| `notFoundItems` | `List<NotFoundItem>` | Items for which no matching price was found |
+
+**`ResultItem` fields:**
+
+| Field | Type | Nullable |
+|---|---|---|
+| `productId` | `Long` | no |
+| `storeId` | `Long` | yes |
+| `originalAmount` | `BigDecimal` | no |
+| `finalAmount` | `BigDecimal` | no |
+| `currencyCode` | `String` | no — reflects `targetCurrencyCode` if conversion was applied |
+| `discountApplied` | `Boolean` | no |
+
+**`NotFoundItem` fields:**
+
+| Field | Type |
+|---|---|
+| `productId` | `Long` |
+| `storeId` | `Long` (nullable) |
+| `currencyCode` | `String` |
+
 **Example request:**
 ```json
 {
-  "productId": 1001,
-  "storeId": 501,
-  "currencyCode": "USD"
+  "items": [
+    { "productId": 1001, "storeId": 501, "currencyCode": "USD" },
+    { "productId": 1002, "storeId": 501, "currencyCode": "USD", "targetCurrencyCode": "EUR" },
+    { "productId": 9999, "storeId": 501, "currencyCode": "USD" }
+  ]
 }
 ```
 
-**Example response (with discount applied):**
+**Example response:**
 ```json
 {
-  "originalAmount": 189.9900,
-  "finalAmount": 161.4165,
-  "currencyCode": "USD",
-  "discountApplied": true
+  "results": [
+    {
+      "productId": 1001,
+      "storeId": 501,
+      "originalAmount": 189.9900,
+      "finalAmount": 161.4165,
+      "currencyCode": "USD",
+      "discountApplied": true
+    },
+    {
+      "productId": 1002,
+      "storeId": 501,
+      "originalAmount": 184.7108,
+      "finalAmount": 184.7108,
+      "currencyCode": "EUR",
+      "discountApplied": false
+    }
+  ],
+  "notFoundItems": [
+    { "productId": 9999, "storeId": 501, "currencyCode": "USD" }
+  ]
 }
 ```
 
 **Possible errors:**
-- `404 Not Found` — no active price found for the requested `(productId, currencyCode)` / `(productId, storeId, currencyCode)` combination
+- `400 Bad Request` — validation failure (empty items, > 100 items, invalid currency code length)
+- `404 Not Found` — a required exchange rate is not found for a `targetCurrencyCode` conversion (fails fast for the whole batch)
+
+**N+1 prevention strategy:**
+1. All prices loaded in a single `IN` query: `PriceRepository.findCurrentByProductIdIn(productIds, now)`.
+2. All active discounts loaded in a single `IN` query: `DiscountRepository.findActiveForStores(storeIds, productIds, now)`.
+3. Exchange rates per unique `(from, to)` pair are fetched once and cached in-memory for the duration of the call.
+4. All remaining processing is in-memory.
 
 ---
 
@@ -372,7 +441,6 @@ Only prices where `validTo IS NULL OR validTo > now()` are returned, ordered by 
 
 - **Handler:** `DiscountController.getAll`
 - **Purpose:** Returns all discount records regardless of status or date.
-- **Request body:** none
 - **Response body:** `List<DiscountResponse>` — `200 OK`
 
 **`DiscountResponse` fields:**
@@ -388,28 +456,12 @@ Only prices where `validTo IS NULL OR validTo > now()` are returned, ordered by 
 | `endsAt` | `Instant` (ISO-8601 string) | yes |
 | `status` | `String` (enum) | no — `ACTIVE`, `INACTIVE`, or `EXPIRED` |
 
-**Example response:**
-```json
-[
-  {
-    "id": 1,
-    "storeId": 501,
-    "productId": null,
-    "discountType": "PERCENTAGE",
-    "discountValue": 15.0000,
-    "startsAt": "2024-01-01T00:00:00Z",
-    "endsAt": "2024-12-31T23:59:59Z",
-    "status": "ACTIVE"
-  }
-]
-```
-
 ---
 
 #### POST /discounts
 
 - **Handler:** `DiscountController.create`
-- **Purpose:** Creates a new discount. New discounts are always created with status `ACTIVE` (default entity value; status is not part of the create request).
+- **Purpose:** Creates a new discount with status `ACTIVE`.
 - **Request body:** `DiscountCreateRequest`
 - **Response body:** `DiscountResponse` — `201 Created`
 
@@ -424,35 +476,14 @@ Only prices where `validTo IS NULL OR validTo > now()` are returned, ordered by 
 | `startsAt` | `Instant` (ISO-8601) | yes | |
 | `endsAt` | `Instant` (ISO-8601) | no | Omit for open-ended discount |
 
-**Example request:**
-```json
-{
-  "storeId": 501,
-  "discountType": "PERCENTAGE",
-  "discountValue": 15.00,
-  "startsAt": "2024-06-01T00:00:00Z",
-  "endsAt": "2024-08-31T23:59:59Z"
-}
-```
-
 ---
 
 #### PUT /discounts/{id}
 
 - **Handler:** `DiscountController.update`
-- **Purpose:** Partially updates an existing discount. `storeId`, `productId`, and `discountType` are immutable after creation.
+- **Purpose:** Partially updates an existing discount. `storeId`, `productId`, and `discountType` are immutable.
 - **Path variables:** `id` — `Long`
 - **Request body:** `DiscountUpdateRequest` — all fields optional
-
-**`DiscountUpdateRequest` fields:**
-
-| Field | Type | Required |
-|---|---|---|
-| `discountValue` | `BigDecimal` | no |
-| `startsAt` | `Instant` (ISO-8601) | no |
-| `endsAt` | `Instant` (ISO-8601) | no |
-| `status` | `String` (enum) | no — `ACTIVE`, `INACTIVE`, or `EXPIRED` |
-
 - **Response body:** `DiscountResponse` — `200 OK`
 
 **Possible errors:**
@@ -463,9 +494,8 @@ Only prices where `validTo IS NULL OR validTo > now()` are returned, ordered by 
 #### DELETE /discounts/{id}
 
 - **Handler:** `DiscountController.disable`
-- **Purpose:** Sets the discount status to `INACTIVE`. The record is not deleted from the database.
+- **Purpose:** Sets the discount status to `INACTIVE`. Record is not deleted.
 - **Path variables:** `id` — `Long`
-- **Request body:** none
 - **Response body:** none — `204 No Content`
 
 **Possible errors:**
@@ -480,8 +510,7 @@ Only prices where `validTo IS NULL OR validTo > now()` are returned, ordered by 
 #### GET /exchange-rates
 
 - **Handler:** `ExchangeRateController.getAll`
-- **Purpose:** Returns all exchange rate records stored in the database (all historical entries, not just the latest per pair).
-- **Request body:** none
+- **Purpose:** Returns all exchange rate records (all historical entries, not just the latest per pair).
 - **Response body:** `List<ExchangeRateResponse>` — `200 OK`
 
 **`ExchangeRateResponse` fields:**
@@ -494,96 +523,71 @@ Only prices where `validTo IS NULL OR validTo > now()` are returned, ordered by 
 | `rate` | `BigDecimal` | no |
 | `effectiveAt` | `Instant` (ISO-8601 string) | no |
 
-**Example response:**
-```json
-[
-  {
-    "id": 1,
-    "fromCurrency": "USD",
-    "toCurrency": "EUR",
-    "rate": 0.92000000,
-    "effectiveAt": "2024-01-01T00:00:00Z"
-  }
-]
-```
-
 ---
 
 ## 5. Business Logic
 
-### 5.1 `PriceService.calculate()` — Final Price Computation
+### 5.1 `PriceService.calculate()` — Single-Item Price Computation
 
-**Location:** `com.service.price.PriceService`
+**Input:** `CalculatePriceDto(productId, storeId?, currencyCode)`
 
-**Input:** `CalculatePriceDto(productId: Long, storeId: Long?, currencyCode: String)`
+**Algorithm:**
+1. Load all active prices for `productId` (single query, ordered `storeId NULLS LAST, validFrom DESC`).
+2. Find base price: store-specific first, platform fallback second (same `currencyCode`). Throw `404` if not found.
+3. If `storeId` is not null, load active discounts for the store + product. Take the discount with the highest `discountValue`.
+4. Apply discount:
+   - `PERCENTAGE`: `amount * (1 - discountValue / 100)`, scale=4 `HALF_UP`
+   - `FIXED`: `(amount - discountValue).coerceAtLeast(0)`, scale=4 `HALF_UP`
+5. Return `CalculatedPrice` with `discountApplied = (best != null)`.
 
-**Return type:** `CalculatedPrice` data class
+> **Note:** When multiple discounts are eligible, the one with the highest `discountValue` wins (numeric ordering, not by effective saving).
 
-```
-data class CalculatedPrice(
-    val originalAmount: BigDecimal,
-    val finalAmount: BigDecimal,
-    val currencyCode: String,
-    val discountApplied: Boolean
-)
-```
+### 5.2 `PriceService.calculateBatch()` — Batch Price Computation
 
-**Algorithm (step by step):**
+**Input:** `BatchCalculatePriceDto` with up to 100 items, each `(productId, storeId?, currencyCode, targetCurrencyCode?)`
 
-1. Query `prices` for all active records matching `productId` (where `validTo IS NULL OR validTo > now()`), ordered `storeId NULLS LAST, validFrom DESC`.
-2. Select the base price using the following fallback chain:
-   - First preference: a price where `storeId == dto.storeId` AND `currencyCode == dto.currencyCode`
-   - Second preference: a base platform price where `storeId IS NULL` AND `currencyCode == dto.currencyCode`
-   - If neither is found: throw `ResponseStatusException(404)`
-3. If `dto.storeId` is not null, query `discounts` for active discounts matching the store and product:
-   - Conditions: `storeId = dto.storeId`, `(productId IS NULL OR productId = dto.productId)`, `status = 'ACTIVE'`, `startsAt <= now()`, `(endsAt IS NULL OR endsAt > now())`
-   - Ordered by `discountValue DESC` — the highest-value discount wins
-   - If `dto.storeId` is `null`, no discount lookup is performed (empty list)
-4. Take only the first (highest-value) discount from the result list.
-5. Apply the discount:
-   - `PERCENTAGE`: `finalAmount = amount * (1 - discountValue / 100)`, then `.setScale(4, RoundingMode.HALF_UP)`
-   - `FIXED`: `finalAmount = (amount - discountValue).coerceAtLeast(BigDecimal.ZERO)` — no explicit scale rounding applied for FIXED type
-6. If no discount exists, `finalAmount = originalAmount` unchanged.
-7. Return `CalculatedPrice` with `discountApplied = (best != null)`.
+**Algorithm (N+1-free):**
+1. Collect unique `productIds` and `storeIds` from all items.
+2. Load all active prices in one `IN` query: `PriceRepository.findCurrentByProductIdIn(productIds, now)`. Group by `productId` in memory.
+3. If any `storeId` values are present, load all active discounts in one `IN` query: `DiscountRepository.findActiveForStores(storeIds, productIds, now)`.
+4. Identify all unique `(currencyCode → targetCurrencyCode)` conversion pairs. Prefetch exchange rates upfront — one query per unique pair, cached in a `Map`. Throw `404` immediately if any required rate is missing.
+5. For each item:
+   - Find base price (store-specific → platform fallback) in the in-memory map.
+   - Find the best applicable discount in memory (filtered and sorted by `discountValue DESC`).
+   - Apply discount (same `PERCENTAGE`/`FIXED` logic as `calculate()`).
+   - If `targetCurrencyCode != currencyCode`, multiply both `originalAmount` and `finalAmount` by the cached exchange rate. The returned `currencyCode` reflects `targetCurrencyCode`.
+   - Items without a matching price are added to `notFoundItems`.
+6. Return `BatchCalculateResultDto(results, notFoundItems)`.
 
-**Note:** When multiple discounts are eligible, the one with the highest `discountValue` wins. This means a 50% discount always beats a 10% discount regardless of which is more beneficial for the customer in absolute terms (e.g. a $5 fixed discount on a $3 item still loses to a 1% percentage discount because `discountValue` ordering is numeric, not by effective saving).
+### 5.3 `PriceService.update()` — Automatic History Recording
 
-### 5.2 `PriceService.update()` — Automatic History Recording
+When `amount` changes: a `PriceHistory` record is inserted with `oldAmount`/`newAmount`, then the price entity is replaced with `updatedAt = Instant.now()`. Both in a single `@Transactional` method.
 
-When `PriceService.update()` is called with a non-null `dto.amount` that differs from the existing amount:
-- A new `PriceHistory` record is inserted with `oldAmount = existing.amount` and `newAmount = dto.amount`
-- The price entity is then replaced via `save()` with a new `Price` instance carrying `updatedAt = Instant.now()`
-- Both operations run inside a single `@Transactional` method
+### 5.4 `ExchangeRateService.getRate()`
 
-### 5.3 `ExchangeRateService.getRate()`
+Returns `BigDecimal.ONE` immediately if `from == to`. Otherwise queries for the latest rate record where `effectiveAt <= now()`. Throws `404` if no rate is found.
 
-Returns `BigDecimal.ONE` immediately if `from == to`. Otherwise queries for the latest rate record where `effectiveAt <= now()`. Throws `404` if no rate is found. This method is **not called from any controller** — it is an internal utility that is currently unused by the REST layer.
+### 5.5 `DiscountService.disable()`
 
-### 5.4 `DiscountService.disable()`
-
-Sets `status = DiscountStatus.INACTIVE` on the target discount. Does not set `endsAt` or verify that `startsAt` is in the past. The `EXPIRED` status is defined in the enum but is never set programmatically — it would need to be set either manually via `PUT /discounts/{id}` or by a scheduled job (not implemented).
+Sets `status = DiscountStatus.INACTIVE`. The `EXPIRED` status is defined in the enum but never set programmatically — it must be set manually via `PUT /discounts/{id}` or by an external scheduler (not implemented).
 
 ---
 
 ## 6. Inter-Service Communication
 
-No inter-service communication is currently implemented. The service does not make any HTTP calls to other services. `productId` and `storeId` values stored in the database are externally-provided `Long` IDs with no runtime validation against `product-service` or `store-service`.
+No inter-service HTTP communication is implemented. `productId` and `storeId` values are externally-provided `Long` IDs with no runtime validation against `product-service` or `store-service`.
 
 ---
 
 ## 7. Kafka and Asynchronous Events
 
-Kafka is not implemented. The `build.gradle.kts` file contains no Kafka dependency. No `@KafkaListener`, `@KafkaHandler`, or `KafkaTemplate` usages exist anywhere in the codebase.
+Kafka is not implemented. The `build.gradle.kts` file contains no Kafka dependency.
 
 ---
 
 ## 8. Error Handling
 
-No `@ControllerAdvice` or `@ExceptionHandler` class is implemented in this service. Error handling relies entirely on Spring Boot's default mechanism:
-
-- `ResponseStatusException` thrown in service methods is translated by Spring MVC to the specified HTTP status code and its `reason` string as the response body.
-- Jackson deserialization failures (malformed JSON, wrong types) produce a `400 Bad Request` from Spring's default error handling.
-- Unhandled exceptions produce a `500 Internal Server Error`.
+A `GlobalExceptionHandler` (`@RestControllerAdvice`) is registered and handles all exceptions with a consistent JSON response body.
 
 **HTTP status codes in use:**
 
@@ -592,18 +596,28 @@ No `@ControllerAdvice` or `@ExceptionHandler` class is implemented in this servi
 | Successful GET / PUT / batch POST | `200 OK` |
 | Successful POST (create) | `201 Created` |
 | Successful DELETE (disable) | `204 No Content` |
+| Bean Validation failure (`@Valid`) | `400 Bad Request` |
 | Price or discount not found | `404 Not Found` |
 | No active price for calculate | `404 Not Found` |
-| No exchange rate found | `404 Not Found` |
+| Exchange rate not found | `404 Not Found` |
+| Unhandled exception | `500 Internal Server Error` |
 
-**Error response format (Spring Boot default `/error` endpoint):**
+**Error response format:**
 ```json
 {
-  "timestamp": "2024-07-10T09:30:00.000+00:00",
   "status": 404,
-  "error": "Not Found",
-  "message": "Price 999 not found",
-  "path": "/api/prices/999"
+  "error": "No price found for product 999"
+}
+```
+
+**Validation error response format (`400`):**
+```json
+{
+  "status": 400,
+  "error": "Validation failed",
+  "details": [
+    "items: must not be empty"
+  ]
 }
 ```
 
@@ -616,7 +630,7 @@ No `@ControllerAdvice` or `@ExceptionHandler` class is implemented in this servi
 | Env variable | Default | Description |
 |---|---|---|
 | `PRICING_SERVER_PORT` | `8084` | HTTP port the service listens on |
-| `PRICING_API_PREFIX` | `/api` | Servlet context path (all endpoints prefixed with this) |
+| `PRICING_API_PREFIX` | `/api` | Servlet context path |
 | `PRICING_POSTGRES_HOST` | `localhost` | PostgreSQL hostname |
 | `PRICING_POSTGRES_PORT` | `5432` | PostgreSQL port |
 | `PRICING_POSTGRES_DB` | _(required)_ | Database name |
@@ -626,12 +640,12 @@ No `@ControllerAdvice` or `@ExceptionHandler` class is implemented in this servi
 | `PRICING_HIKARI_POOL_MIN` | `2` | HikariCP minimum idle connections |
 | `PRICING_HIKARI_POOL_TIMEOUT_MILLIS` | `30000` | HikariCP connection timeout (ms) |
 | `PRICING_POSTGRES_SHOW_SQL` | `true` | Log Hibernate SQL statements |
-| `PRICING_POSTGRES_DDL_AUTO` | `update` | Hibernate DDL mode (`update`, `create`, `none`, etc.) |
+| `PRICING_POSTGRES_DDL_AUTO` | `update` | Hibernate DDL mode |
 | `PRICING_SEED_ENABLE` | `false` | Enable data seeding on startup |
 | `PRICING_SEED_MODE` | `init` | Seed data directory under `static/data/` |
-| `PRICING_SEED_STOP_COUNT` | `1` | Skip seed if table already has more than this many rows |
+| `PRICING_SEED_STOP_COUNT` | `1` | Skip seed if table already has more rows |
 
-SSL for the JDBC connection is hardcoded to `disable` in `PostgresConfig` (`sslmode=disable`).
+SSL for the JDBC connection is hardcoded to `disable` in `PostgresConfig`.
 
 ### 9.2 OpenAPI / Swagger UI
 
@@ -642,7 +656,7 @@ SSL for the JDBC connection is hardcoded to `disable` in `PostgresConfig` (`sslm
 
 ### 9.3 Security
 
-Spring Security is included but configured to **permit all requests** (`anyRequest().permitAll()`). CSRF is disabled. Session management is stateless. No authentication or authorization is enforced.
+Spring Security is included but configured to **permit all requests**. CSRF is disabled. Session management is stateless.
 
 ### 9.4 Data Seeding
 
@@ -654,9 +668,7 @@ Three `CommandLineRunner` beans seed initial data from JSON files in `src/main/r
 | 2 | `PriceDataSeed` | `price.json` | `prices` |
 | 3 | `DiscountDataSeed` | `discount.json` | `discounts` |
 
-The seed JSON for `prices` reads `validFrom` and `validTo` fields from each record. The seed JSON for `exchange_rates` reads the `effectiveAt` field from each record.
-
-Each seed runner skips if `PRICING_SEED_ENABLE=false` or if the table row count exceeds `PRICING_SEED_STOP_COUNT`.
+Each runner skips if `PRICING_SEED_ENABLE=false` or if the table row count exceeds `PRICING_SEED_STOP_COUNT`.
 
 ### 9.5 Docker
 
@@ -664,45 +676,10 @@ Each seed runner skips if `PRICING_SEED_ENABLE=false` or if the table row count 
 - Stage 1: `gradle:8.10-jdk21` — runs `./gradlew :pricing-service:bootJar --no-daemon -x test`
 - Stage 2: `eclipse-temurin:21-jre-alpine` — copies the built JAR, exposes port `8084`
 
-**docker-compose.yml entry:**
-
-```yaml
-pricing-service:
-  build:
-    context: .
-    dockerfile: pricing-service/Dockerfile
-  container_name: pricing-service
-  ports:
-    - "8084:8084"
-  environment:
-    PRICING_POSTGRES_HOST: postgres-pricing
-    PRICING_POSTGRES_PORT: 5432
-    PRICING_POSTGRES_DB: pricing_db
-    PRICING_POSTGRES_USER: postgres
-    PRICING_POSTGRES_PASSWORD: postgres
-    PRICING_POSTGRES_DDL_AUTO: update
-    PRICING_POSTGRES_SHOW_SQL: "false"
-    PRICING_SEED_ENABLE: "false"
-  depends_on:
-    postgres-pricing:
-      condition: service_healthy
-  networks:
-    - goshop-network
-```
-
-The corresponding `postgres-pricing` service runs `postgres:16-alpine` on host port `5435` (mapped to container port `5432`).
-
 ### 9.6 Running Locally
 
 ```bash
-# Start the database
 docker compose up postgres-pricing -d
-
-# Copy and fill environment variables
-cp pricing-service/.env.sample .env
-# Set PRICING_POSTGRES_DB, PRICING_POSTGRES_USER, PRICING_POSTGRES_PASSWORD
-
-# Run the service
 ./gradlew :pricing-service:bootRun
 ```
 
@@ -710,7 +687,7 @@ cp pricing-service/.env.sample .env
 
 ## 10. Testing
 
-No test files exist under `src/test/`. The `spring-boot-starter-test` dependency is declared in `build.gradle.kts` but no test classes have been written.
+No test files exist under `src/test/`. The `spring-boot-starter-test` dependency is declared but no test classes have been written.
 
 ---
 
@@ -720,29 +697,32 @@ No test files exist under `src/test/`. The `spring-boot-starter-test` dependency
 
 - CRUD for prices with active-price filtering and time-bound validity
 - Automatic `PriceHistory` recording when price `amount` changes
-- CRUD for discounts with soft-delete (status → `INACTIVE`) instead of hard delete
-- Price calculation with `PERCENTAGE` and `FIXED` discount types, best-discount selection by highest `discountValue`
-- Exchange rate storage and retrieval (read-only via REST; lookup via `ExchangeRateService.getRate()`)
+- CRUD for discounts with soft-delete (status → `INACTIVE`)
+- Single-item price calculation with `PERCENTAGE` and `FIXED` discount types
+- **Batch price retrieval** (`POST /prices/batch`) — up to 100 product IDs, single `IN` query, validation
+- **Batch price calculation** (`POST /prices/calculate/batch`) — up to 100 items, N+1-free, with optional currency conversion
+- **Currency conversion in batch calculate** via `ExchangeRateService.getRate()`, exchange rates prefetched and cached per unique pair
+- **PostgreSQL indexes** on `prices` (product_id, store_id, currency_code, valid_to) and `discounts` (store_id, product_id, status, starts_at)
+- **Bean Validation** (`@NotEmpty`, `@Size`, `@Positive`, `@NotBlank`) on `BatchPriceRequest` and `BatchCalculateRequest`
+- **Global exception handler** (`GlobalExceptionHandler`) with structured JSON error responses including validation details
+- Exchange rate storage and retrieval (read-only via REST)
 - Data seeding from bundled JSON files
 - Swagger UI / OpenAPI spec endpoint
 - HikariCP connection pool with configurable limits
 
 ### ⚠️ PARTIALLY IMPLEMENTED
 
-- **Exchange rate usage in price calculation:** `ExchangeRateService.getRate()` exists and is correct, but `PriceService.calculate()` does not call it. If the requested `currencyCode` does not match a stored price's `currencyCode`, a `404` is thrown instead of converting the amount using an exchange rate.
-- **Discount `EXPIRED` status:** The `EXPIRED` enum value is defined but never set by any service method. Expiry detection must be done manually via `PUT /discounts/{id}` with `status: "EXPIRED"` or inferred at query time by `endsAt`.
-- **`GET /discounts` filtering:** The endpoint returns all discounts via `findAll()`. The existing README listed `storeId` and `productId` query parameters, but these are not implemented — `DiscountController.getAll()` accepts no parameters.
-- **`Main.kt` stub file:** A leftover IDE-generated `Main.kt` with a `fun main()` hello-world print exists in `src/main/kotlin/com/`. It compiles but serves no purpose.
+- **Discount `EXPIRED` status:** The `EXPIRED` enum value is defined but never set programmatically. Expiry detection must be done via `PUT /discounts/{id}` with `status: "EXPIRED"` or inferred from `endsAt`.
+- **`GET /discounts` filtering:** Returns all discounts via `findAll()`. No `storeId` or `productId` query parameters are exposed.
+- **`POST /prices/calculate` currency conversion:** The single-item calculate endpoint requires `currencyCode` to match a stored price's currency exactly. Use `POST /prices/calculate/batch` for conversion.
 
 ### ❌ NOT IMPLEMENTED
 
-- **No `@ControllerAdvice` / global error handler:** Error responses use Spring Boot's default `/error` endpoint format; no custom structured error body.
 - **No authentication or authorization:** Spring Security is configured to permit all requests.
-- **No Kafka event publishing:** Price updates, discount creation, and price calculations do not emit any events to other services.
-- **No inter-service HTTP clients:** No `RestTemplate`, `WebClient`, or Feign client. Product and store existence is not validated.
-- **No exchange-rate auto-refresh:** Exchange rates are static seed data; there is no scheduler or external API integration to keep them current.
+- **No Kafka event publishing:** Price updates, discount creation, and price calculations do not emit any events.
+- **No inter-service HTTP clients:** Product and store existence is not validated.
+- **No exchange-rate auto-refresh:** Exchange rates are static seed data.
 - **No `DELETE` endpoint for prices:** Prices can only be expired by setting `validTo` via `PUT /prices/{id}`.
-- **No `GET /discounts/{id}` endpoint:** Individual discount lookup by ID exists in `DiscountService` but is not exposed via a controller method.
-- **No tests:** Zero test classes exist despite the test dependency being declared.
-- **No currency conversion in `/prices/calculate`:** The `currencyCode` in the request must exactly match a stored price's `currencyCode`; no conversion is applied.
-- **No pagination:** All list endpoints return unbounded results; large datasets will return everything in a single response.
+- **No `GET /discounts/{id}` endpoint:** Individual discount lookup exists in `DiscountService` but is not exposed.
+- **No tests:** Zero test classes exist.
+- **No pagination on list endpoints:** `GET /discounts` and `GET /exchange-rates` return unbounded results.

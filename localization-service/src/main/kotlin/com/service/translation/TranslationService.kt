@@ -5,9 +5,13 @@ import com.data.entity.Translation
 import com.data.entity.TranslationStatus
 import com.data.repository.LanguageRepository
 import com.data.repository.TranslationRepository
+import com.service.translation.dto.BatchResolveDto
+import com.service.translation.dto.BatchResolveResultDto
 import com.service.translation.dto.CreateTranslationDto
 import com.service.translation.dto.ResolveTranslationDto
 import com.service.translation.dto.UpdateTranslationDto
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -20,10 +24,12 @@ class TranslationService(
     private val languageRepository: LanguageRepository
 ) {
 
-    fun findAll(entityType: EntityType?, entityId: Long?): List<Translation> {
+    fun findAll(entityType: EntityType?, entityId: Long?, pageable: Pageable): Page<Translation> {
         if (entityType != null && entityId != null)
-            return translationRepository.findByEntityTypeAndEntityId(entityType, entityId)
-        return translationRepository.findAll()
+            return translationRepository.findByEntityTypeAndEntityId(entityType, entityId, pageable)
+        if (entityType != null)
+            return translationRepository.findByEntityType(entityType, pageable)
+        return translationRepository.findAll(pageable)
     }
 
     fun findById(id: Long): Translation =
@@ -67,6 +73,28 @@ class TranslationService(
         if (!translationRepository.existsById(id))
             throw ResponseStatusException(HttpStatus.NOT_FOUND, "Translation $id not found")
         translationRepository.deleteById(id)
+    }
+
+    @Transactional(readOnly = true)
+    fun batchResolve(dto: BatchResolveDto): BatchResolveResultDto {
+        val language = languageRepository.findById(dto.languageCode)
+            .orElseThrow { ResponseStatusException(HttpStatus.BAD_REQUEST, "Language '${dto.languageCode}' not found") }
+        if (!language.enabled)
+            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Language '${dto.languageCode}' is disabled")
+
+        val found = translationRepository.findApprovedBatch(dto.entityType, dto.entityIds, dto.fieldNames, dto.languageCode)
+        val foundIndex = found.associateBy { it.entityId to it.fieldName }
+
+        val missing = dto.entityIds.flatMap { entityId ->
+            dto.fieldNames
+                .filter { fieldName -> (entityId to fieldName) !in foundIndex }
+                .map { fieldName -> BatchResolveResultDto.MissingItem(entityId, fieldName) }
+        }
+
+        return BatchResolveResultDto(
+            found = found.map { BatchResolveResultDto.FoundItem(it.entityId, it.fieldName, it.translatedValue) },
+            missing = missing
+        )
     }
 
     fun resolve(dto: ResolveTranslationDto): Translation {

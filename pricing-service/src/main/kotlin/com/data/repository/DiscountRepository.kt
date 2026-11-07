@@ -19,4 +19,15 @@ interface DiscountRepository : JpaRepository<Discount, Long> {
         ORDER BY d.discountValue DESC
     """)
     fun findActiveForProduct(storeId: Long, productId: Long, now: Instant): List<Discount>
+
+    @Query("""
+        SELECT d FROM Discount d
+        WHERE d.storeId IN :storeIds
+          AND (d.productId IS NULL OR d.productId IN :productIds)
+          AND d.status = 'ACTIVE'
+          AND d.startsAt <= :now
+          AND (d.endsAt IS NULL OR d.endsAt > :now)
+        ORDER BY d.storeId ASC, d.discountValue DESC
+    """)
+    fun findActiveForStores(storeIds: Collection<Long>, productIds: Collection<Long>, now: Instant): List<Discount>
 }

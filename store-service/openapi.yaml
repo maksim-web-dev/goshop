@@ -33,6 +33,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StoreResponse'
+        '400':
+          description: Invalid request body (blank fields, wrong code lengths)
+        '409':
+          description: Domain already registered
 
   /stores/{id}:
     get:
@@ -51,6 +55,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StoreResponse'
+        '404':
+          description: Store not found
     patch:
       summary: Update a store
       parameters:
@@ -73,6 +79,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StoreResponse'
+        '400':
+          description: Invalid request body (wrong code lengths)
+        '404':
+          description: Store not found
     delete:
       summary: Deactivate a store
       parameters:
@@ -85,6 +95,8 @@ paths:
       responses:
         '204':
           description: Store deactivated
+        '404':
+          description: Store not found
 
   /stores/{storeId}/api-keys:
     post:
@@ -109,6 +121,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StoreApiKeyCreateResponse'
+        '404':
+          description: Store not found
 
   /stores/{storeId}/api-keys/{keyId}/revoke:
     post:
@@ -129,6 +143,10 @@ paths:
       responses:
         '204':
           description: API key revoked
+        '403':
+          description: Key belongs to a different store
+        '404':
+          description: Key not found
 
   /stores/{storeId}/settings:
     get:
@@ -147,6 +165,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StoreSettingsResponse'
+        '404':
+          description: Store not found
     put:
       summary: Update settings for a store
       parameters:
@@ -169,6 +189,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StoreSettingsResponse'
+        '400':
+          description: Invalid request body (non-positive rate limits)
+        '404':
+          description: Store not found
 
   /stores/{storeId}/webhooks:
     post:
@@ -193,6 +217,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StoreWebhookResponse'
+        '400':
+          description: Invalid request body (blank url/secretRef, empty eventTypes)
+        '404':
+          description: Store not found
 
 components:
   schemas:
@@ -210,26 +238,45 @@ components:
       properties:
         name:
           type: string
+          minLength: 1
+          maxLength: 255
         domain:
           type: string
+          minLength: 1
+          maxLength: 255
         countryCode:
           type: string
+          minLength: 2
+          maxLength: 2
+          description: ISO 3166-1 alpha-2, e.g. "US"
         defaultLanguage:
           type: string
+          minLength: 2
+          maxLength: 10
+          description: BCP 47, e.g. "en"
         defaultCurrency:
           type: string
+          minLength: 3
+          maxLength: 3
+          description: ISO 4217, e.g. "USD"
 
     StoreUpdateRequest:
       type: object
       properties:
         name:
           type: string
+          minLength: 1
+          maxLength: 255
           nullable: true
         defaultLanguage:
           type: string
+          minLength: 2
+          maxLength: 10
           nullable: true
         defaultCurrency:
           type: string
+          minLength: 3
+          maxLength: 3
           nullable: true
         status:
           $ref: '#/components/schemas/StoreStatus'
@@ -291,9 +338,11 @@ components:
       properties:
         requestsPerSecond:
           type: integer
+          minimum: 1
           nullable: true
         burstLimit:
           type: integer
+          minimum: 1
           nullable: true
         allowedLanguages:
           type: array
@@ -326,12 +375,15 @@ components:
       properties:
         url:
           type: string
+          minLength: 1
         eventTypes:
           type: array
           items:
             type: string
+          minItems: 1
         secretRef:
           type: string
+          minLength: 1
         enabled:
           type: boolean
           default: true

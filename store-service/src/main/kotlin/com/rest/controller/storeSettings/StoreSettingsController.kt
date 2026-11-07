@@ -5,6 +5,7 @@ import com.rest.controller.storeSettings.data.StoreSettingsResponse
 import com.rest.controller.storeSettings.data.StoreSettingsUpdateRequest
 import com.service.storeSettings.StoreSettingsService
 import com.service.storeSettings.dto.UpdateStoreSettingsDto
+import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -16,7 +17,7 @@ class StoreSettingsController(private val storeSettingsService: StoreSettingsSer
         with(StoreSettingsResponseAdapter) { storeSettingsService.findByStore(storeId).toApiModel() }
 
     @PutMapping
-    fun update(@PathVariable storeId: Long, @RequestBody request: StoreSettingsUpdateRequest): StoreSettingsResponse {
+    fun update(@PathVariable storeId: Long, @Valid @RequestBody request: StoreSettingsUpdateRequest): StoreSettingsResponse {
         val dto = UpdateStoreSettingsDto(
             requestsPerSecond = request.requestsPerSecond,
             burstLimit = request.burstLimit,

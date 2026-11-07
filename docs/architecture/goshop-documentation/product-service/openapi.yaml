@@ -113,6 +113,45 @@ paths:
         '204':
           description: Product archived
 
+  /products/batch:
+    post:
+      summary: Batch product retrieval (max 100 IDs)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductBatchRequest'
+      responses:
+        '200':
+          description: Batch result with found products and not-found IDs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductBatchResponse'
+        '400':
+          description: Invalid request (empty list or more than 100 IDs)
+
+  /products/{id}/details:
+    get:
+      summary: Get detailed product info including brand, category, product type and attributes
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Detailed product information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDetailsResponse'
+        '404':
+          description: Product not found
+
   /products/{productId}/attributes:
     get:
       summary: Get product attributes
@@ -859,6 +898,112 @@ components:
           type: integer
         number:
           type: integer
+
+    ProductBatchRequest:
+      type: object
+      required: [productIds]
+      properties:
+        productIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          minItems: 1
+          maxItems: 100
+
+    ProductBatchResponse:
+      type: object
+      required: [products, notFoundIds]
+      properties:
+        products:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductResponse'
+        notFoundIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+
+    ProductDetailsResponse:
+      type: object
+      required: [id, sku, name, status, brand, category, productType, attributes, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+          format: int64
+        sku:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        status:
+          $ref: '#/components/schemas/ProductStatus'
+        brand:
+          $ref: '#/components/schemas/BrandInfo'
+        category:
+          $ref: '#/components/schemas/CategoryInfo'
+        productType:
+          $ref: '#/components/schemas/ProductTypeInfo'
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductAttributeInfo'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    BrandInfo:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        websiteUrl:
+          type: string
+          nullable: true
+
+    CategoryInfo:
+      type: object
+      required: [id, name, slug]
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        slug:
+          type: string
+
+    ProductTypeInfo:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+
+    ProductAttributeInfo:
+      type: object
+      required: [name, value]
+      properties:
+        code:
+          type: string
+          nullable: true
+        name:
+          type: string
+        value:
+          type: string
 
     ProductAttributeSetRequest:
       type: object

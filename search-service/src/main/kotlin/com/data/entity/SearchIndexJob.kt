@@ -4,7 +4,13 @@ import jakarta.persistence.*
 import java.time.Instant
 
 @Entity
-@Table(name = "search_index_jobs")
+@Table(
+    name = "search_index_jobs",
+    indexes = [
+        Index(name = "idx_search_index_jobs_product_id", columnList = "product_id"),
+        Index(name = "idx_search_index_jobs_status", columnList = "status")
+    ]
+)
 class SearchIndexJob(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

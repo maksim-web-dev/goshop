@@ -22,5 +22,5 @@ class SearchIndexJobService(private val jobRepository: SearchIndexJobRepository)
 
     @Transactional
     fun reindexAll(productIds: List<Long>): List<SearchIndexJob> =
-        productIds.map { enqueue(it, IndexOperation.INDEX) }
+        jobRepository.saveAll(productIds.map { SearchIndexJob(productId = it, operation = IndexOperation.INDEX) })
 }

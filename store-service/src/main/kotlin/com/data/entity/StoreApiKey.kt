@@ -4,7 +4,13 @@ import jakarta.persistence.*
 import java.time.Instant
 
 @Entity
-@Table(name = "store_api_keys")
+@Table(
+    name = "store_api_keys",
+    indexes = [
+        Index(name = "idx_store_api_keys_store_id", columnList = "store_id"),
+        Index(name = "idx_store_api_keys_key_prefix_status", columnList = "key_prefix, status")
+    ]
+)
 class StoreApiKey(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

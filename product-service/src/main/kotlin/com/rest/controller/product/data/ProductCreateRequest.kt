@@ -1,10 +1,13 @@
 package com.rest.controller.product.data
 
+import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.Positive
+
 data class ProductCreateRequest(
-    val sku: String,
-    val name: String,
-    val brandId: Long,
-    val categoryId: Long,
-    val productTypeId: Long,
+    @field:NotBlank val sku: String,
+    @field:NotBlank val name: String,
+    @field:Positive val brandId: Long,
+    @field:Positive val categoryId: Long,
+    @field:Positive val productTypeId: Long,
     val description: String? = null
 )

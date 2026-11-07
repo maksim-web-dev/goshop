@@ -16,9 +16,13 @@
 **Implemented capabilities:**
 - ✅ Full CRUD for Brand, Category, ProductType, ParameterGroup, Component / ComponentGroup
 - ✅ Create / update / archive for Product (delete is soft: sets status to `ARCHIVED`)
-- ✅ Paginated, filterable product listing (by `categoryId`, `status`)
+- ✅ Paginated, filterable product listing (by `categoryId`, `status`) — max page size: 100
+- ✅ Batch product retrieval (`POST /products/batch`, max 100 IDs, single JOIN FETCH query)
+- ✅ Detailed product endpoint (`GET /products/{id}/details`) — product + brand + category + type + attributes, 2 queries
 - ✅ Atomic replace of all product attributes in a single PUT call
 - ✅ Attribute schema lookup for a ProductType (`GET /product-types/{id}/attributes`)
+- ✅ Bean Validation on all write endpoints (`@Valid`, `@NotBlank`, `@Positive`, `@Size`)
+- ✅ `GlobalExceptionHandler` with structured error responses (400, 404, 409, 500)
 - ✅ Database seed mechanism (controlled by env variables, runs on startup)
 - ✅ OpenAPI / Swagger UI via springdoc
 
@@ -47,6 +51,7 @@
 | `spring-boot-starter-web` | managed by Boot 3.3.5 | REST controllers (Spring MVC) |
 | `spring-boot-starter-data-jpa` | managed by Boot 3.3.5 | JPA / Hibernate ORM |
 | `spring-boot-starter-security` | managed by Boot 3.3.5 | Security filter chain (all requests permitted, CSRF disabled) |
+| `spring-boot-starter-validation` | managed by Boot 3.3.5 | Jakarta Bean Validation (`@Valid`, `@NotBlank`, `@Positive`, `@Size`) |
 | `jackson-module-kotlin` | managed by Boot 3.3.5 | Kotlin-aware JSON serialization |
 | `springdoc-openapi-starter-webmvc-ui` | 2.6.0 | Swagger UI + OpenAPI 3 spec generation |
 | `postgresql` (runtimeOnly) | managed by Boot 3.3.5 | PostgreSQL JDBC driver |
@@ -133,7 +138,7 @@ All primary keys use `GenerationType.IDENTITY` (PostgreSQL `BIGSERIAL` / auto-in
 | Column | Kotlin Type | Constraints |
 |---|---|---|
 | `id` | `Long` | PK, auto-increment |
-| `sku` | `String` | NOT NULL, UNIQUE |
+| `sku` | `String` | NOT NULL, UNIQUE (index via unique constraint) |
 | `name` | `String` | NOT NULL |
 | `brand_id` | `Long` | FK → `brands.id`, NOT NULL, LAZY |
 | `category_id` | `Long` | FK → `categories.id`, NOT NULL, LAZY |
@@ -142,6 +147,15 @@ All primary keys use `GenerationType.IDENTITY` (PostgreSQL `BIGSERIAL` / auto-in
 | `status` | `String` (enum) | NOT NULL, default `DRAFT` — values: `DRAFT`, `ACTIVE`, `ARCHIVED` |
 | `created_at` | `Instant` | NOT NULL, not updatable |
 | `updated_at` | `Instant` | NOT NULL, mutable |
+
+**Indexes on `products`:**
+| Index name | Columns | Purpose |
+|---|---|---|
+| `idx_products_category_id` | `category_id` | filter by category |
+| `idx_products_product_type_id` | `product_type_id` | filter by product type |
+| `idx_products_status` | `status` | filter by status |
+
+**Hibernate `@BatchSize(size=25)`** is applied to `Product`, `Brand`, `Category`, and `ProductType` entities to avoid N+1 SELECT queries when loading paginated product lists.
 
 #### `product_attributes`
 | Column | Kotlin Type | Constraints |
@@ -593,6 +607,106 @@ Soft-archives a product by setting its status to `ARCHIVED`. The product record 
 
 ---
 
+#### `POST /api/products/batch`
+Fetches multiple products in a single request. Products are returned in the same order as the requested IDs.
+
+- **Handler:** `ProductController.batchGet(request: ProductBatchRequest)`
+- **Response:** `200 OK` — `ProductBatchResponse`
+- **Errors:** `400 Bad Request` if `productIds` is empty or exceeds 100 items
+
+**Validation constraints:**
+- `productIds`: `@NotEmpty` — must not be empty
+- `productIds`: `@Size(max=100)` — maximum 100 IDs per request
+
+**Request body (`ProductBatchRequest`):**
+| Field | Type | Constraints |
+|---|---|---|
+| `productIds` | `List<Long>` | required, 1–100 items |
+
+```json
+{ "productIds": [1001, 1002, 1003] }
+```
+
+**Response body (`ProductBatchResponse`):**
+| Field | Type | Description |
+|---|---|---|
+| `products` | `List<ProductResponse>` | Found products, ordered by input ID order |
+| `notFoundIds` | `List<Long>` | IDs from the request that do not exist |
+
+```json
+{
+  "products": [
+    {
+      "id": 1001, "sku": "CPU-001", "name": "Intel Core i9-14900K",
+      "brandId": 1, "categoryId": 101, "productTypeId": 201,
+      "description": null, "status": "ACTIVE",
+      "createdAt": "2024-01-01T00:00:00Z", "updatedAt": "2024-01-01T00:00:00Z"
+    }
+  ],
+  "notFoundIds": [1003]
+}
+```
+
+**Implementation notes:**
+- Uses `ProductRepository.findAllWithRelationsByIds()` — single JPQL query with `JOIN FETCH` for brand, category, and product type. No N+1.
+
+---
+
+#### `GET /api/products/{id}/details`
+Returns full product details including embedded brand, category, product type, and all attribute values with parameter codes and names. Designed for API aggregation and compatibility checks that need complete attribute data.
+
+- **Handler:** `ProductController.getDetails(id: Long)`
+- **Response:** `200 OK` — `ProductDetailsResponse`
+- **Errors:** `404 Not Found`
+
+**Response body (`ProductDetailsResponse`):**
+| Field | Type | Description |
+|---|---|---|
+| `id` | `Long` | |
+| `sku` | `String` | |
+| `name` | `String` | |
+| `description` | `String?` | |
+| `status` | `ProductStatus` | |
+| `brand` | `BrandInfo` | Embedded brand details |
+| `category` | `CategoryInfo` | Embedded category details |
+| `productType` | `ProductTypeInfo` | Embedded product type details |
+| `attributes` | `List<AttributeInfo>` | All product attribute values with parameter metadata |
+| `createdAt` | `Instant` | |
+| `updatedAt` | `Instant` | |
+
+**`BrandInfo`:** `id`, `name`, `websiteUrl?`
+
+**`CategoryInfo`:** `id`, `name`, `slug`
+
+**`ProductTypeInfo`:** `id`, `name`
+
+**`AttributeInfo`:** `code?` (e.g. `"socket_type"`), `name` (e.g. `"Socket Type"`), `value` (e.g. `"LGA1700"`)
+
+```json
+{
+  "id": 1001,
+  "sku": "CPU-001",
+  "name": "Intel Core i9-14900K",
+  "description": "High-performance desktop CPU",
+  "status": "ACTIVE",
+  "brand": { "id": 1, "name": "Intel", "websiteUrl": "https://intel.com" },
+  "category": { "id": 101, "name": "Processors", "slug": "processors" },
+  "productType": { "id": 201, "name": "Desktop CPU" },
+  "attributes": [
+    { "code": "socket_type", "name": "Socket Type", "value": "LGA1700" },
+    { "code": "tdp_watt",    "name": "TDP (W)",     "value": "125" }
+  ],
+  "createdAt": "2024-01-01T00:00:00Z",
+  "updatedAt": "2024-01-01T00:00:00Z"
+}
+```
+
+**Implementation notes:**
+- Query 1: `ProductRepository.findByIdWithRelations()` — `JOIN FETCH` for brand, category, product type.
+- Query 2: `ProductAttributeRepository.findByProductIdWithParameter()` — `JOIN FETCH` for `categoryParameter`. Total: 2 queries, no N+1.
+
+---
+
 ### Product Attributes — `ProductAttributeController` (`/products/{productId}/attributes`)
 
 #### `GET /api/products/{productId}/attributes`
@@ -925,11 +1039,18 @@ Hard-deletes a component.
 
 | Method | Behavior |
 |---|---|
-| `findAll(categoryId, status, pageable)` | Builds a JPA `Specification` dynamically from the nullable filters and delegates to `JpaSpecificationExecutor`. Returns a `Page<Product>`. |
-| `findById(id)` | Throws `ResponseStatusException(404)` if not found. |
-| `create(dto)` | Validates that `brandId`, `categoryId`, and `productTypeId` all exist (each throws 404 if not). Creates the product with `status = DRAFT`. `sku` uniqueness is enforced by the database unique constraint; a violation surfaces as a `DataIntegrityViolationException`. |
+| `findAll(categoryId, status, pageable)` | Builds a JPA `Specification` dynamically from the nullable filters and delegates to `JpaSpecificationExecutor`. Returns a `Page<Product>`. Max page size is capped at 100 via `PageableHandlerMethodArgumentResolverCustomizer`. |
+| `findById(id)` | Throws `ResponseStatusException(404)` if not found. Uses standard `findById` (no JOIN FETCH; relies on `@BatchSize` to avoid N+1 in list contexts). |
+| `batchGet(ids)` | Loads all requested products in one `JOIN FETCH` query (`findAllWithRelationsByIds`). Returns `Pair<List<Product>, List<Long>>` — the found products (ordered by input), and the IDs that were not found. |
+| `findDetails(id)` | Executes two queries: (1) `findByIdWithRelations` — `JOIN FETCH` for brand, category, product type; (2) `findByProductIdWithParameter` — `JOIN FETCH` for category parameters. Returns `ProductWithAttributesDto`. |
+| `create(dto)` | Validates that `brandId`, `categoryId`, and `productTypeId` all exist (each throws 404 if not). Creates the product with `status = DRAFT`. `sku` uniqueness is checked explicitly (409) before insert. |
 | `update(id, dto)` | All fields are optional. If a FK field is `null` in the DTO, the existing FK is retained. If a FK field is provided, the referenced entity is validated. The `sku` field is immutable: `update` always copies `existing.sku`. |
 | `archive(id)` | Sets `status = ARCHIVED` and updates `updatedAt`. Does **not** delete the row. This is the only action performed by `DELETE /api/products/{id}`. |
+
+**N+1 mitigation strategy:**
+- `GET /products` list: `@BatchSize(size=25)` on `Brand`, `Category`, `ProductType`, `Product` entities causes Hibernate to batch-load lazy associations in groups, avoiding per-row SELECT.
+- `POST /products/batch`: explicit `JOIN FETCH` in a single JPQL query.
+- `GET /products/{id}/details`: 2 explicit queries with `JOIN FETCH`.
 
 ### `CategoryParameterService`
 
@@ -965,35 +1086,46 @@ Kafka is not implemented. The `build.gradle.kts` contains no Kafka dependency, a
 
 ## 8. Error Handling
 
-There is **no `@ControllerAdvice` or `@RestControllerAdvice`** in this service. Error handling relies entirely on Spring's built-in `ResponseEntityExceptionHandler` and `ResponseStatusException`.
+`GlobalExceptionHandler` (`com.rest.GlobalExceptionHandler`) is a `@RestControllerAdvice` that maps exceptions to structured JSON error responses.
 
 ### Error response format
 
-Spring Boot's default `/error` endpoint produces:
+**Standard error (4xx / 5xx):**
+```json
+{ "status": 404, "error": "Product 999 not found" }
+```
+
+**Validation error (400):**
 ```json
 {
-  "timestamp": "2024-03-01T12:00:00.000+00:00",
-  "status": 404,
-  "error": "Not Found",
-  "message": "Brand 99 not found",
-  "path": "/api/brands/99"
+  "status": 400,
+  "error": "Validation failed",
+  "details": ["sku: must not be blank", "brandId: must be greater than 0"]
 }
 ```
 
 ### HTTP status mapping
 
-| Scenario | Status |
-|---|---|
-| Entity not found (all services) | `404 Not Found` |
-| Successful read | `200 OK` |
-| Successful create | `201 Created` |
-| Successful delete / archive | `204 No Content` |
-| Successful partial update | `200 OK` |
-| Successful attribute replace | `200 OK` |
-| JSON parse error / type mismatch | `400 Bad Request` (Spring MVC default) |
-| Database constraint violation (e.g., duplicate SKU) | `500 Internal Server Error` (unhandled `DataIntegrityViolationException`) |
+| Scenario | Status | Handler |
+|---|---|---|
+| Entity not found | `404 Not Found` | `ResponseStatusException` → `GlobalExceptionHandler` |
+| SKU already exists | `409 Conflict` | `ResponseStatusException` → `GlobalExceptionHandler` |
+| Validation failure (`@Valid`) | `400 Bad Request` | `MethodArgumentNotValidException` → `GlobalExceptionHandler` |
+| Oversized batch request | `400 Bad Request` | `@Size(max=100)` → `MethodArgumentNotValidException` |
+| Successful read | `200 OK` | — |
+| Successful create | `201 Created` | — |
+| Successful delete / archive | `204 No Content` | — |
+| Unhandled exception | `500 Internal Server Error` | `Exception` → `GlobalExceptionHandler` |
 
-> Note: There is no `@Valid` / `@Validated` annotation on any request body, so Jakarta Bean Validation is **not enforced** at the controller layer. Field-level validation (e.g., blank name, negative ID) is not currently applied.
+### Request validation
+
+`@Valid` is applied to `@RequestBody` on all write endpoints:
+
+| Endpoint | Validated DTO | Constraints |
+|---|---|---|
+| `POST /products` | `ProductCreateRequest` | `sku`: `@NotBlank`; `name`: `@NotBlank`; `brandId`, `categoryId`, `productTypeId`: `@Positive` |
+| `PATCH /products/{id}` | `ProductUpdateRequest` | `name`: `@Size(min=1)` if provided; `brandId`, `categoryId`, `productTypeId`: `@Positive` if provided |
+| `POST /products/batch` | `ProductBatchRequest` | `productIds`: `@NotEmpty`, `@Size(max=100)` |
 
 ---
 
@@ -1066,23 +1198,18 @@ No test classes exist. The directory `src/test/` is absent entirely from the pro
 
 ## 11. Known Limitations and Missing Functionality
 
-### Critical gaps
-
-- **No `@ControllerAdvice`**: Unhandled exceptions (e.g., duplicate `sku` on `POST /products`) result in a `500 Internal Server Error` instead of a meaningful `409 Conflict` or `400 Bad Request`.
-- **No request validation**: No `@Valid` / `@Validated` on any `@RequestBody`. Blank strings, negative IDs, and other invalid input pass through to the service and database layer without rejection.
-
 ### Business logic gaps
 
-- **`PUT /api/products/{productId}/attributes` returns the saved attributes**: The controller returns `200 OK` with the full `List<ProductAttributeResponse>` body after the atomic replace.
-- **`sku` is immutable but there is no explicit error**: Attempting to change the SKU is silently ignored — the update method copies `existing.sku` unconditionally. No `400` or error message is returned.
-- **Category delete does not cascade guard**: Deleting a category that has associated products, product types, or category parameters will produce a database foreign key violation, surfacing as an unhandled `500`.
+- **`sku` is immutable but there is no explicit error**: Attempting to change the SKU is silently ignored — the update method copies `existing.sku` unconditionally. No `400` or explicit error is returned.
+- **Category delete does not cascade-guard**: Deleting a category that has associated products, product types, or category parameters will produce a database foreign key violation, surfacing as an unhandled `500`.
 - **`parentId` on category update cannot be cleared**: Setting `parentId: null` in `CategoryUpdateRequest` will not remove an existing parent — the update logic falls back to `existing.parent`. There is no way to convert a child category to a root category via the API.
-- **`ParameterGroupUpdateRequest.name` and `ComponentUpdateRequest.name` are non-nullable**: These fields are `String` (not `String?`), so the PATCH semantics for these endpoints are effectively a full rename, not a partial update.
+- **`ParameterGroupUpdateRequest.name` and `ComponentUpdateRequest.name` are non-nullable**: PATCH semantics for these endpoints effectively require a name value (full rename, not a partial update).
+- **`GET /products` N+1 for large pages**: `@BatchSize(size=25)` reduces extra queries to `ceil(pageSize/25)` batches per association, but does not eliminate them entirely. For large pages a `JOIN FETCH` with count-query separation would be needed.
 
 ### Infrastructure gaps
 
-- **No Kafka**: No domain events are published when products are created, updated, or archived. Downstream services (e.g., `pricing-service`, `search-service`) have no way to react to catalog changes asynchronously.
-- **No authentication/authorization**: Spring Security is present but configured to permit all requests without any authentication. There is no JWT validation, no role-based access control.
-- **`PostgresConfig.setPackagesToScan` has wrong package**: `pgEntityManagerFactory` calls `setPackagesToScan("zero44.crm.core.data.postgres")` — a stale copy-paste from another project. The correct package is `com.data.entity`. This works at runtime only because `@EntityScan(basePackages = ["com.data.entity"])` on `ProductServiceApplication` takes precedence. This is a latent bug that could cause issues if the configuration is refactored.
-- **No database migrations**: The service relies on `hibernate.hbm2ddl.auto = update` (default). There are no Flyway or Liquibase migration scripts. Schema evolution in production is unmanaged.
-- **Seed data is `init`-mode only**: The `static/data/prod/` directory contains only `category.json`. All other seed files (`brand.json`, `product.json`, etc.) exist only under `static/data/init/`. Running seed with `PRODUCT_SEED_MODE=prod` will fail for all seeders except `CategoryDataSeed`.
+- **No Kafka**: No domain events are published when products are created, updated, or archived. Downstream services have no way to react to catalog changes asynchronously.
+- **No authentication/authorization**: Spring Security is present but configured to permit all requests without any authentication. There is no JWT validation or role-based access control.
+- **No database migrations**: The service relies on `hibernate.hbm2ddl.auto = update`. There are no Flyway or Liquibase migration scripts.
+- **Seed data is `init`-mode only**: The `static/data/prod/` directory contains only `category.json`. Running seed with `PRODUCT_SEED_MODE=prod` will fail for all seeders except `CategoryDataSeed`.
+- **No integration tests**: No test classes exist. `spring-boot-starter-test` is declared but unused. Batch and details endpoints are tested only manually.

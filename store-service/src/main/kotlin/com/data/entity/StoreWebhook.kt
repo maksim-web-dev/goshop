@@ -3,7 +3,12 @@ package com.data.entity
 import jakarta.persistence.*
 
 @Entity
-@Table(name = "store_webhooks")
+@Table(
+    name = "store_webhooks",
+    indexes = [
+        Index(name = "idx_store_webhooks_store_id", columnList = "store_id")
+    ]
+)
 class StoreWebhook(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

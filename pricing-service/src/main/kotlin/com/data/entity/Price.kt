@@ -5,7 +5,15 @@ import java.math.BigDecimal
 import java.time.Instant
 
 @Entity
-@Table(name = "prices")
+@Table(
+    name = "prices",
+    indexes = [
+        Index(name = "idx_prices_product_id", columnList = "product_id"),
+        Index(name = "idx_prices_store_id", columnList = "store_id"),
+        Index(name = "idx_prices_currency_code", columnList = "currency_code"),
+        Index(name = "idx_prices_valid_to", columnList = "valid_to")
+    ]
+)
 class Price(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

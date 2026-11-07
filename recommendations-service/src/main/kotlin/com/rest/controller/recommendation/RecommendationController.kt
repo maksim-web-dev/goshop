@@ -2,6 +2,7 @@ package com.rest.controller.recommendation
 
 import com.rest.controller.recommendation.data.BuildRecommendationRequest
 import com.service.recommendation.RecommendationService
+import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -25,6 +26,6 @@ class RecommendationController(private val recommendationService: Recommendation
         recommendationService.findAccessories(id)
 
     @PostMapping("/build")
-    fun buildForPc(@RequestBody request: BuildRecommendationRequest): Map<Long, List<Long>> =
+    fun buildForPc(@Valid @RequestBody request: BuildRecommendationRequest): Map<Long, List<Long>> =
         recommendationService.buildForPc(request.productIds)
 }

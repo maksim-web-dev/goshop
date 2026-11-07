@@ -23,9 +23,11 @@ The `localization-service` is responsible for storing and serving translations o
 **Core responsibilities:**
 
 - Persist translated values for named fields (e.g. `name`, `description`) of remote entities (products, brands, categories, product types).
-- Serve translations filtered by entity type, entity ID, and language code.
+- Serve translations filtered by entity type, entity ID, and language code (paginated).
+- **Batch translation resolution** (`POST /translations/batch-resolve`) — resolve up to 100 entities × 20 fields in one request; returns found (APPROVED only) and explicitly missing combinations.
 - Resolve the best available translation for a given entity field, with an explicit preferred-language and fallback-language strategy.
 - Track asynchronous translation jobs that represent requests to translate an entity into a target language. The jobs are created and stored; execution is not implemented.
+- Validate language codes on write; reject disabled languages on batch-resolve.
 
 **Data ownership:**
 
@@ -44,6 +46,7 @@ The service owns the `languages`, `translations`, and `translation_jobs` tables.
 | `spring-boot-starter-web` | (managed by Spring Boot 3.3.5) |
 | `spring-boot-starter-data-jpa` | (managed by Spring Boot 3.3.5) |
 | `spring-boot-starter-security` | (managed by Spring Boot 3.3.5) |
+| `spring-boot-starter-validation` | (managed by Spring Boot 3.3.5) |
 | `jackson-module-kotlin` | (managed by Spring Boot 3.3.5) |
 | `springdoc-openapi-starter-webmvc-ui` | 2.6.0 |
 | PostgreSQL JDBC driver | (managed by Spring Boot 3.3.5, runtime only) |
@@ -116,6 +119,13 @@ Table: `translations`
 
 **Unique constraint:** `(entity_type, entity_id, field_name, language_code)` — one translation record per field per language per entity.
 
+**Indexes on `translations`:**
+| Index name | Columns | Purpose |
+|---|---|---|
+| `idx_translations_entity_type_entity_id` | `entity_type, entity_id` | Filtered listing by entity |
+| `idx_translations_language_code` | `language_code` | Filtered lookup by language |
+| _(unique constraint index)_ | `entity_type, entity_id, field_name, language_code` | Point lookups and batch queries |
+
 ---
 
 ### 3.4 Entity: `TranslationJob`
@@ -184,59 +194,39 @@ Security: all requests are permitted without authentication (Spring Security is 
 
 **Controller:** `TranslationController.getAll()`
 
-**Purpose:** Returns translations. When both `entityType` and `entityId` are provided, the result is filtered to that entity. Otherwise all translation records are returned.
+**Purpose:** Returns translations (paginated). When both `entityType` and `entityId` are provided, the result is filtered to that entity; `entityType` alone filters by entity type; neither returns all translations.
 
 **Query parameters:**
 
-| Parameter | Type | Required | Notes |
-|---|---|---|---|
-| `entityType` | `EntityType` | No | One of `PRODUCT`, `BRAND`, `CATEGORY`, `PRODUCT_TYPE` |
-| `entityId` | `Long` | No | ID of the entity |
+| Parameter | Type | Required | Default | Notes |
+|---|---|---|---|---|
+| `entityType` | `EntityType` | No | — | One of `PRODUCT`, `BRAND`, `CATEGORY`, `PRODUCT_TYPE` |
+| `entityId` | `Long` | No | — | ID of the entity; requires `entityType` to filter |
+| `page` | `Int` | No | `0` | Page index |
+| `size` | `Int` | No | `20` | Page size (max 100) |
+| `sort` | `String` | No | — | Sort expression, e.g. `updatedAt,desc` |
 
-Note: filtering only activates when **both** parameters are present. If only one is supplied, all translations are returned.
-
-**Request body:** none.
-
-**Response body:** `List<TranslationResponse>`
-
-| Field | Type |
-|---|---|
-| `id` | `Long` |
-| `entityType` | `EntityType` |
-| `entityId` | `Long` |
-| `fieldName` | `String` |
-| `languageCode` | `String` |
-| `translatedValue` | `String` |
-| `status` | `TranslationStatus` |
-| `updatedAt` | `Instant` (ISO-8601) |
-
-**HTTP status codes:**
-
-| Code | Condition |
-|---|---|
-| `200 OK` | Always |
-
-**Example request:**
-
-```
-GET /api/translations?entityType=PRODUCT&entityId=1001
-```
-
-**Example response:**
+**Response body:** `Page<TranslationResponse>`
 
 ```json
-[
-  {
-    "id": 1,
-    "entityType": "PRODUCT",
-    "entityId": 1001,
-    "fieldName": "name",
-    "languageCode": "en",
-    "translatedValue": "GPU NVIDIA GeForce RTX 4090",
-    "status": "APPROVED",
-    "updatedAt": "2024-10-01T12:00:00Z"
-  }
-]
+{
+  "content": [
+    {
+      "id": 1,
+      "entityType": "PRODUCT",
+      "entityId": 1001,
+      "fieldName": "name",
+      "languageCode": "en",
+      "translatedValue": "GPU NVIDIA GeForce RTX 4090",
+      "status": "APPROVED",
+      "updatedAt": "2024-10-01T12:00:00Z"
+    }
+  ],
+  "totalElements": 1,
+  "totalPages": 1,
+  "size": 20,
+  "number": 0
+}
 ```
 
 ---
@@ -446,7 +436,61 @@ Initial `status` is always set to `DRAFT` by the service layer.
 
 ---
 
-### 4.7 `POST /api/translation-jobs`
+### 4.7 `POST /api/translations/batch-resolve`
+
+**Controller:** `TranslationController.batchResolve()`
+
+**Purpose:** Resolves translations for multiple entities and multiple fields in a single request. Only returns `APPROVED` translations. Missing combinations are explicitly listed in `missingTranslations` — not an error. Rejects disabled or unknown language codes.
+
+This endpoint is designed for `api-service` to fetch up to 100 products × 20 fields with one HTTP call.
+
+**Request body:** `BatchResolveRequest`
+
+| Field | Type | Constraints | Notes |
+|---|---|---|---|
+| `entityType` | `EntityType` | required | One of `PRODUCT`, `BRAND`, `CATEGORY`, `PRODUCT_TYPE` |
+| `entityIds` | `List<Long>` | `@NotEmpty`, `@Size(max=100)` | Entity IDs to resolve |
+| `fieldNames` | `List<String>` | `@NotEmpty`, `@Size(max=20)` | Field names to resolve (e.g. `["name","description"]`) |
+| `languageCode` | `String` | `@NotBlank`, 2–10 chars | Must be an enabled language |
+
+**Response body:** `BatchResolveResponse`
+
+```json
+{
+  "translations": [
+    {
+      "entityId": 1001,
+      "fieldName": "name",
+      "languageCode": "uk",
+      "value": "Відеокарта NVIDIA GeForce RTX 4090",
+      "found": true
+    }
+  ],
+  "missingTranslations": [
+    {
+      "entityId": 1002,
+      "fieldName": "description",
+      "languageCode": "uk"
+    }
+  ]
+}
+```
+
+**HTTP status codes:**
+
+| Code | Condition |
+|---|---|
+| `200 OK` | Query executed (even if all translations are missing) |
+| `400 Bad Request` | Validation failure, unknown language, or disabled language |
+
+**Implementation notes:**
+- Single JPQL query: `WHERE entityType = ? AND entityId IN ? AND fieldName IN ? AND languageCode = ? AND status = APPROVED`.
+- Missing combinations computed in-memory by cross-referencing `entityIds × fieldNames` with the query result.
+- Language validation (exists + enabled) done before the main query.
+
+---
+
+### 4.9 `POST /api/translation-jobs`
 
 **Controller:** `TranslationJobController.create()`
 
@@ -511,7 +555,7 @@ Initial `status` is always set to `DRAFT` by the service layer.
 
 ---
 
-### 4.8 `GET /api/translation-jobs/{id}`
+### 4.10 `GET /api/translation-jobs/{id}`
 
 **Controller:** `TranslationJobController.getById()`
 
@@ -544,32 +588,44 @@ Initial `status` is always set to `DRAFT` by the service layer.
 
 ### 5.1 TranslationService
 
-**`findAll(entityType, entityId)`**
-When both `entityType` and `entityId` are non-null, delegates to `TranslationRepository.findByEntityTypeAndEntityId()`. When either parameter is null, returns all translations via `findAll()`.
+**`findAll(entityType, entityId, pageable)`**
+Routes to the appropriate repository method based on filters. Returns `Page<Translation>`. Max page size capped at 100.
 
 **`findById(id)`**
-Looks up by UUID; throws `ResponseStatusException(404)` if absent.
+Throws `ResponseStatusException(404)` if absent.
 
 **`create(dto)`**
-Loads the `Language` entity by `dto.languageCode` (404 if missing), then saves a new `Translation` with `status = DRAFT` and `updatedAt = Instant.now()`.
+Loads `Language` by `dto.languageCode` (400/404 if missing), saves `Translation` with `status = DRAFT`.
 
 **`update(id, dto)`**
-Loads the existing translation, then saves a new `Translation` instance with the same `id`, `entityType`, `entityId`, `fieldName`, and `language`, but with `translatedValue` and `status` replaced by the DTO values when present, and `updatedAt` refreshed.
+Partial update: `translatedValue` and `status` replaced when non-null; `updatedAt` refreshed unconditionally.
 
 **`delete(id)`**
-Checks existence first (404 if missing), then deletes by ID.
+Checks existence first (404), then deletes.
 
-**`resolve(dto)` — fallback logic**
+**`batchResolve(dto)` — batch resolution**
 
 ```
-1. Query translations table for (entityType, entityId, fieldName, preferredLanguage)
+1. Validate languageCode: load Language entity (400 if not found)
+2. Reject if language.enabled = false (400)
+3. Execute single query:
+   SELECT t WHERE entityType=? AND entityId IN ? AND fieldName IN ? AND languageCode=? AND status=APPROVED
+4. Build foundIndex: Map<(entityId, fieldName), Translation>
+5. Cross-reference entityIds × fieldNames to produce missing list
+6. Return BatchResolveResultDto(found, missing)
+```
+
+No N+1: one query regardless of batch size.
+
+**`resolve(dto)` — single field fallback logic**
+
+```
+1. Query for (entityType, entityId, fieldName, preferredLanguage)
 2. If found → return it
 3. Else query for (entityType, entityId, fieldName, fallbackLanguage)
 4. If found → return it
 5. Else throw ResponseStatusException(404)
 ```
-
-The default value of `fallbackLanguage` in `ResolveTranslationRequest` is `"en"`. The two lookups are executed as separate database queries; there is no JPA join or single-query resolution.
 
 ### 5.2 TranslationJobService
 
@@ -604,30 +660,40 @@ Kafka is not implemented. The `build.gradle.kts` file contains no Kafka dependen
 
 ## 8. Error Handling
 
-There is no `@ControllerAdvice` or `@ExceptionHandler` class in the codebase. All error responses are produced by Spring's default exception handling mechanism via `ResponseStatusException`.
+`GlobalExceptionHandler` (`com.rest.GlobalExceptionHandler`) is a `@RestControllerAdvice` that maps exceptions to structured JSON responses.
 
-Errors thrown by service methods:
+**Standard error format:**
+```json
+{ "status": 404, "error": "Translation 99 not found" }
+```
 
-| Exception | HTTP Status | Message pattern |
-|---|---|---|
-| `ResponseStatusException(NOT_FOUND)` | `404 Not Found` | `Translation <id> not found` |
-| `ResponseStatusException(NOT_FOUND)` | `404 Not Found` | `Language <code> not found` |
-| `ResponseStatusException(NOT_FOUND)` | `404 Not Found` | `Job <id> not found` |
-| `ResponseStatusException(NOT_FOUND)` | `404 Not Found` | `No translation found for <type>/<id>/<field>` |
-
-**Default error response format** (Spring Boot default `BasicErrorController`):
-
+**Validation error format (400):**
 ```json
 {
-  "timestamp": "2024-10-01T12:00:00.000+00:00",
-  "status": 404,
-  "error": "Not Found",
-  "message": "Translation abc not found",
-  "path": "/api/translations/abc"
+  "status": 400,
+  "error": "Validation failed",
+  "details": ["entityIds: must not be empty", "languageCode: must not be blank"]
 }
 ```
 
-Duplicate unique-key violations (e.g. creating a translation that already exists for the same `entity_type/entity_id/field_name/language_code`) are not caught explicitly and will result in a `500 Internal Server Error` from the database constraint.
+| Scenario | Status |
+|---|---|
+| Entity not found | `404 Not Found` |
+| Unknown language code on batch-resolve | `400 Bad Request` |
+| Disabled language on batch-resolve | `400 Bad Request` |
+| `@Valid` constraint failure | `400 Bad Request` |
+| Unhandled exception | `500 Internal Server Error` |
+
+**Request validation on write endpoints:**
+
+| Endpoint | Validated DTO | Key constraints |
+|---|---|---|
+| `POST /translations` | `TranslationCreateRequest` | `entityId: @Positive`; `fieldName`, `languageCode`, `translatedValue`: `@NotBlank` |
+| `PUT /translations/{id}` | `TranslationUpdateRequest` | `translatedValue`: `@Size(min=1)` if provided |
+| `POST /translations/resolve` | `ResolveTranslationRequest` | `entityId: @Positive`; `fieldName`, `preferredLanguage`, `fallbackLanguage`: `@NotBlank` |
+| `POST /translations/batch-resolve` | `BatchResolveRequest` | `entityIds: @NotEmpty @Size(max=100)`; `fieldNames: @NotEmpty @Size(max=20)`; `languageCode: @NotBlank @Size(min=2,max=10)` |
+
+> **Note:** Duplicate unique-key violations (same `entity_type/entity_id/field_name/language_code`) are not caught explicitly and will produce `500 Internal Server Error`.
 
 ---
 
@@ -721,7 +787,7 @@ The `AUTO_TRANSLATED` status value exists in the `TranslationStatus` enum but no
 
 ### ❌ No `languageCode` filter on `GET /api/translations`
 
-The existing README mentions a `languageCode` filter parameter on the list endpoint, but `TranslationController.getAll()` only accepts `entityType` and `entityId`. There is no `languageCode` query parameter in the actual controller or repository.
+`TranslationController.getAll()` accepts `entityType` and `entityId` but not `languageCode`. Filtering by language on the list endpoint is not implemented.
 
 ### ❌ `LanguageService.findByCode()` is unreachable
 

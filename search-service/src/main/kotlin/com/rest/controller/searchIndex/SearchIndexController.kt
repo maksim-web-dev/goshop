@@ -5,6 +5,7 @@ import com.rest.controller.searchIndex.adapter.SearchIndexJobResponseAdapter
 import com.rest.controller.searchIndex.data.ReindexRequest
 import com.rest.controller.searchIndex.data.SearchIndexJobResponse
 import com.service.searchIndex.SearchIndexJobService
+import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.*
 
@@ -14,7 +15,7 @@ class SearchIndexController(private val searchIndexJobService: SearchIndexJobSer
 
     @PostMapping("/reindex")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    fun reindex(@RequestBody request: ReindexRequest): List<SearchIndexJobResponse> =
+    fun reindex(@Valid @RequestBody request: ReindexRequest): List<SearchIndexJobResponse> =
         with(SearchIndexJobResponseAdapter) { searchIndexJobService.reindexAll(request.productIds).toApiModel() }
 
     @GetMapping("/index-jobs/{id}")

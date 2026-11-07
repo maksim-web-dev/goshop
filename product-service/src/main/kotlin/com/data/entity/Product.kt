@@ -1,10 +1,19 @@
 package com.data.entity
 
 import jakarta.persistence.*
+import org.hibernate.annotations.BatchSize
 import java.time.Instant
 
 @Entity
-@Table(name = "products")
+@Table(
+    name = "products",
+    indexes = [
+        Index(name = "idx_products_category_id", columnList = "category_id"),
+        Index(name = "idx_products_product_type_id", columnList = "product_type_id"),
+        Index(name = "idx_products_status", columnList = "status")
+    ]
+)
+@BatchSize(size = 25)
 class Product(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
