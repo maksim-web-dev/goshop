@@ -2,6 +2,7 @@ server:
   port: ${SEARCH_SERVER_PORT:8086}
   servlet:
     context-path: ${SEARCH_API_PREFIX:/api}
+  shutdown: graceful
 
 spring:
   application:
@@ -13,12 +14,30 @@ spring:
     init:
       mode: always
       schema-locations: classpath:schema.sql
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
 
 springdoc:
   api-docs:
     path: /v3/api-docs
   swagger-ui:
     path: /swagger-ui.html
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: always
+  health:
+    livenessState:
+      enabled: true
+    readinessState:
+      enabled: true
 
 app:
   seed:

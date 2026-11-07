@@ -5,6 +5,8 @@ import com.data.entity.DiscountStatus
 import com.data.repository.DiscountRepository
 import com.service.discount.dto.CreateDiscountDto
 import com.service.discount.dto.UpdateDiscountDto
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -14,7 +16,7 @@ import java.time.Instant
 @Service
 class DiscountService(private val discountRepository: DiscountRepository) {
 
-    fun findAll(): List<Discount> = discountRepository.findAll()
+    fun findAll(pageable: Pageable): Page<Discount> = discountRepository.findAll(pageable)
 
     fun findById(id: Long): Discount =
         discountRepository.findById(id)

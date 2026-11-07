@@ -7,6 +7,7 @@ import com.rest.controller.compatibility.data.PairCheckRequest
 import com.service.compatibilityCheck.CompatibilityCheckService
 import com.service.compatibilityCheck.dto.CheckCompatibilityDto
 import com.service.compatibilityCheck.dto.PairCheckDto
+import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -14,7 +15,7 @@ import org.springframework.web.bind.annotation.*
 class CompatibilityController(private val compatibilityCheckService: CompatibilityCheckService) {
 
     @PostMapping("/check")
-    fun check(@RequestBody request: CheckRequest): CheckResponse {
+    fun check(@Valid @RequestBody request: CheckRequest): CheckResponse {
         val result = compatibilityCheckService.check(CheckCompatibilityDto(request.productIds))
         return with(CheckResponseAdapter) { result.toApiModel() }
     }

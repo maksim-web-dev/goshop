@@ -7,6 +7,7 @@ import com.rest.controller.compatibilityRule.data.CompatibilityRuleCreateRequest
 import com.rest.controller.compatibilityRule.data.CompatibilityRuleResponse
 import com.rest.controller.compatibilityRule.data.CompatibilityRuleUpdateRequest
 import com.service.compatibilityRule.CompatibilityRuleService
+import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.*
 
@@ -20,7 +21,7 @@ class CompatibilityRuleController(private val compatibilityRuleService: Compatib
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    fun create(@RequestBody request: CompatibilityRuleCreateRequest): CompatibilityRuleResponse {
+    fun create(@Valid @RequestBody request: CompatibilityRuleCreateRequest): CompatibilityRuleResponse {
         val dto = with(CompatibilityRuleCreateDtoAdapter) { request.toServiceModel() }
         return with(CompatibilityRuleResponseAdapter) { compatibilityRuleService.create(dto).toApiModel() }
     }
