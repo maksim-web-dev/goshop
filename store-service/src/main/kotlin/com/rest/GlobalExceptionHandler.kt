@@ -35,7 +35,7 @@ class GlobalExceptionHandler {
         val status = ex.statusCode.value()
         val reason = HttpStatus.resolve(status)?.reasonPhrase ?: status.toString()
         return ResponseEntity.status(ex.statusCode).body(
-            errorBody(status, reason, ex.reason ?: ex.message)
+            errorBody(status, reason, ex.reason ?: ex.message ?: "Error")
         )
     }
 

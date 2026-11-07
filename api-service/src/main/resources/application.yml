@@ -1,0 +1,51 @@
+server:
+  port: ${API_SERVER_PORT:8080}
+  servlet:
+    context-path: /
+  shutdown: graceful
+
+spring:
+  application:
+    name: api-service
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+  threads:
+    virtual:
+      enabled: true
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: always
+  health:
+    livenessState:
+      enabled: true
+    readinessState:
+      enabled: true
+
+app:
+  downstream:
+    product-service-url: ${PRODUCT_SERVICE_URL:http://localhost:8081}
+    localization-service-url: ${LOCALIZATION_SERVICE_URL:http://localhost:8083}
+    pricing-service-url: ${PRICING_SERVICE_URL:http://localhost:8084}
+    compatibility-service-url: ${COMPATIBILITY_SERVICE_URL:http://localhost:8082}
+    search-service-url: ${SEARCH_SERVICE_URL:http://localhost:8086}
+    recommendations-service-url: ${RECOMMENDATIONS_SERVICE_URL:http://localhost:8085}
+    store-service-url: ${STORE_SERVICE_URL:http://localhost:8087}
+    connect-timeout-ms: ${API_CONNECT_TIMEOUT_MS:3000}
+    read-timeout-ms: ${API_READ_TIMEOUT_MS:10000}

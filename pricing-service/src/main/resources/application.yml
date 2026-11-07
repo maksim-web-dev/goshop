@@ -12,6 +12,10 @@ spring:
       write-dates-as-timestamps: false
   lifecycle:
     timeout-per-shutdown-phase: 30s
+  flyway:
+    enabled: ${PRICING_FLYWAY_ENABLE:true}
+    baseline-on-migrate: true
+    locations: classpath:db/migration
 
 springdoc:
   api-docs:
@@ -52,4 +56,4 @@ app:
       pool-min: ${PRICING_HIKARI_POOL_MIN:2}
       pool-timeout-millis: ${PRICING_HIKARI_POOL_TIMEOUT_MILLIS:30000}
       show-sql: ${PRICING_POSTGRES_SHOW_SQL:true}
-      ddl-auto: ${PRICING_POSTGRES_DDL_AUTO:update}
+      ddl-auto: ${PRICING_POSTGRES_DDL_AUTO:validate}
