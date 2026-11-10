@@ -153,19 +153,15 @@ services:
       PRODUCT_POSTGRES_DDL_AUTO: update
       PRODUCT_POSTGRES_SHOW_SQL: "false"
       PRODUCT_SEED_ENABLE: "false"
-    healthcheck:
-      test:
-        - CMD
-        - curl
-        - -f
-        - http://localhost:8080/actuator/health/readiness
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 60s
     depends_on:
       postgres-product:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 30s
     networks:
       - goshop-network
 
@@ -185,19 +181,15 @@ services:
       COMPATIBILITY_POSTGRES_DDL_AUTO: update
       COMPATIBILITY_POSTGRES_SHOW_SQL: "false"
       COMPATIBILITY_SEED_ENABLE: "false"
-    healthcheck:
-      test:
-        - CMD
-        - curl
-        - -f
-        - http://localhost:8080/actuator/health/readiness
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 60s
     depends_on:
       postgres-compatibility:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8082/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 30s
     networks:
       - goshop-network
 
@@ -217,19 +209,15 @@ services:
       LOCALIZATION_POSTGRES_DDL_AUTO: update
       LOCALIZATION_POSTGRES_SHOW_SQL: "false"
       LOCALIZATION_SEED_ENABLE: "false"
-    healthcheck:
-      test:
-        - CMD
-        - curl
-        - -f
-        - http://localhost:8080/actuator/health/readiness
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 60s
     depends_on:
       postgres-localization:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8083/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 30s
     networks:
       - goshop-network
 
@@ -249,19 +237,15 @@ services:
       PRICING_POSTGRES_DDL_AUTO: update
       PRICING_POSTGRES_SHOW_SQL: "false"
       PRICING_SEED_ENABLE: "false"
-    healthcheck:
-      test:
-        - CMD
-        - curl
-        - -f
-        - http://localhost:8080/actuator/health/readiness
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 60s
     depends_on:
       postgres-pricing:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8084/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 30s
     networks:
       - goshop-network
 
@@ -281,19 +265,15 @@ services:
       RECOMMENDATIONS_POSTGRES_DDL_AUTO: update
       RECOMMENDATIONS_POSTGRES_SHOW_SQL: "false"
       RECOMMENDATIONS_SEED_ENABLE: "false"
-    healthcheck:
-      test:
-        - CMD
-        - curl
-        - -f
-        - http://localhost:8080/actuator/health/readiness
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 60s
     depends_on:
       postgres-recommendations:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8085/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 30s
     networks:
       - goshop-network
 
@@ -313,19 +293,15 @@ services:
       SEARCH_POSTGRES_DDL_AUTO: update
       SEARCH_POSTGRES_SHOW_SQL: "false"
       SEARCH_SEED_ENABLE: "false"
-    healthcheck:
-      test:
-        - CMD
-        - curl
-        - -f
-        - http://localhost:8080/actuator/health/readiness
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 60s
     depends_on:
       postgres-search:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8086/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 30s
     networks:
       - goshop-network
 
@@ -345,19 +321,15 @@ services:
       STORE_POSTGRES_DDL_AUTO: update
       STORE_POSTGRES_SHOW_SQL: "false"
       STORE_SEED_ENABLE: "false"
-    healthcheck:
-      test:
-        - CMD
-        - curl
-        - -f
-        - http://localhost:8080/actuator/health/readiness
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 60s
     depends_on:
       postgres-store:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8087/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 30s
     networks:
       - goshop-network
 
@@ -386,18 +358,24 @@ services:
       timeout: 5s
       retries: 5
       start_period: 60s
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8087/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 30s
     depends_on:
       product-service:
+        condition: service_healthy
+      compatibility-service:
         condition: service_healthy
       localization-service:
         condition: service_healthy
       pricing-service:
         condition: service_healthy
-      compatibility-service:
+      recommendations-service:
         condition: service_healthy
       search-service:
-        condition: service_healthy
-      recommendations-service:
         condition: service_healthy
       store-service:
         condition: service_healthy
