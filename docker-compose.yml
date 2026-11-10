@@ -157,7 +157,7 @@ services:
       postgres-product:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/actuator/health/readiness || exit 1"]
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/api/actuator/health/readiness || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 8
@@ -185,7 +185,7 @@ services:
       postgres-compatibility:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/actuator/health/readiness || exit 1"]
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/api/actuator/health/readiness || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 8
@@ -213,7 +213,7 @@ services:
       postgres-localization:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/actuator/health/readiness || exit 1"]
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/api/actuator/health/readiness || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 8
@@ -241,7 +241,7 @@ services:
       postgres-pricing:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/actuator/health/readiness || exit 1"]
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/api/actuator/health/readiness || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 8
@@ -269,7 +269,7 @@ services:
       postgres-recommendations:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/actuator/health/readiness || exit 1"]
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/api/actuator/health/readiness || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 8
@@ -297,7 +297,7 @@ services:
       postgres-search:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/actuator/health/readiness || exit 1"]
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/api/actuator/health/readiness || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 8
@@ -325,7 +325,7 @@ services:
       postgres-store:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/actuator/health/readiness || exit 1"]
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/api/actuator/health/readiness || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 8
