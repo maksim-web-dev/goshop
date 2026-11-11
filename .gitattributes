@@ -1,0 +1,5 @@
+# Linux Gradle Wrapper
+gradlew text eol=lf
+
+# Windows Gradle Wrapper
+gradlew.bat text eol=crlf
