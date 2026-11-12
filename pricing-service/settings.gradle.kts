@@ -3,3 +3,10 @@ plugins {
 }
 rootProject.name = "pricing-service"
 
+pluginManagement {
+    repositories {
+        mavenLocal()
+        gradlePluginPortal()
+        mavenCentral()
+    }
+}

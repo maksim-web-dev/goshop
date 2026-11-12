@@ -3,3 +3,10 @@ plugins {
 }
 rootProject.name = "store-service"
 
+pluginManagement {
+    repositories {
+        mavenLocal()
+        gradlePluginPortal()
+        mavenCentral()
+    }
+}

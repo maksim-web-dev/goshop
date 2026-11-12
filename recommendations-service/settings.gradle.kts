@@ -3,3 +3,10 @@ plugins {
 }
 rootProject.name = "recommendations-service"
 
+pluginManagement {
+    repositories {
+        mavenLocal()
+        gradlePluginPortal()
+        mavenCentral()
+    }
+}

@@ -3,3 +3,10 @@ plugins {
 }
 rootProject.name = "search-service"
 
+pluginManagement {
+    repositories {
+        mavenLocal()
+        gradlePluginPortal()
+        mavenCentral()
+    }
+}

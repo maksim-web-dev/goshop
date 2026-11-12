@@ -10,3 +10,11 @@ include(
     "compatibility-service",
     "recommendations-service"
 )
+
+pluginManagement {
+    repositories {
+        mavenLocal()
+        gradlePluginPortal()
+        mavenCentral()
+    }
+}

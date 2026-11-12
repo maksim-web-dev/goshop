@@ -10,9 +10,5 @@ subprojects {
     group = "com"
     version = "1.0-SNAPSHOT"
 
-    repositories {
-        mavenCentral()
-    }
-
     extra["flyway.version"] = "10.20.0"
 }
