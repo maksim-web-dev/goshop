@@ -1,3 +1,15 @@
+pluginManagement {
+    repositories {
+        mavenLocal()
+        gradlePluginPortal()
+        mavenCentral()
+    }
+}
+dependencyResolutionManagement {
+    repositories {
+        mavenCentral()
+    }
+}
 rootProject.name = "goshop"
 
 include(
@@ -11,10 +23,3 @@ include(
     "recommendations-service"
 )
 
-pluginManagement {
-    repositories {
-        mavenLocal()
-        gradlePluginPortal()
-        mavenCentral()
-    }
-}

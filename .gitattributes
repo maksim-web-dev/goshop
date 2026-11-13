@@ -1,5 +1,27 @@
-# Linux Gradle Wrapper
-gradlew text eol=lf
+# Default
+* text=auto
 
-# Windows Gradle Wrapper
+# Gradle
+*.gradle.kts text eol=lf
+*.properties text eol=lf
+gradlew text eol=lf
 gradlew.bat text eol=crlf
+
+# Kotlin / Java
+*.kt text eol=lf
+*.java text eol=lf
+
+# Configuration
+*.yaml text eol=lf
+*.yml text eol=lf
+*.json text eol=lf
+
+# Docker / Kubernetes
+Dockerfile text eol=lf
+*.dockerfile text eol=lf
+*.sh text eol=lf
+
+# Windows scripts
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
